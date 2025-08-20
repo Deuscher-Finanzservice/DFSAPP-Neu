@@ -1,69 +1,56 @@
 
-# DFS Versicherungsanalyse-Tool (Netlify Drop)
+# DFS Versicherungsanalyse-Tool
 
-**Struktur (ZIP-Inhalt):**
-```
-dfs-versicherungsmodul/
-├── index.html
-├── assets/
-│   └── logo.png
-├── styles/
-│   └── main.css
-├── scripts/
-│   ├── storage.js
-│   └── util.js
-└── modules/
-    ├── home/
-    │   └── index.html
-    ├── customer/
-    │   └── index.html
-    ├── contracts/
-    │   └── index.html
-    ├── analysis/
-    │   └── index.html
-    ├── dashboard/
-    │   └── index.html
-    ├── print/
-    │   └── index.html
-    └── tools/
-        └── index.html
-```
+## Management-Zusammenfassung
 
-**Nutzung:**
-- Öffne `index.html`. Die Shell lädt die Module in ein `<iframe id="content">`.
-- Navigation in der Sidebar.
-- **Speicherung:** ausschließlich `localStorage` im Browser. Keine externen Calls, keine Cookies.
+### Ziel
+Ein modulares, statisches Web-Tool zur Analyse gewerblicher Versicherungen im DFS-Corporate Design.  
+Einsatz in Beratungsgesprächen, zur Bestandserfassung, Deckungslücken-Analyse, KPI-Darstellung und druckoptimierten Ausgaben (PDF/Print).
 
-**Import/Export:**
-- Hauptmenü: `Export` erzeugt `dfs_export.json` mit allen Schlüsseln.
-- `Import` akzeptiert JSON gleicher Struktur und überschreibt bestehende Werte.
-- `Reset` löscht alle `dfs.*` Keys.
+### Status quo (fertig umgesetzt)
+- **Basis-Shell** mit Sidebar + `<iframe>` (lädt Module).
+- **Module:**
+  1. Home (Übersicht, letzter Kunde/Analyse)
+  2. Kundenstammdaten (CRUD, Speicherung localStorage)
+  3. Verträge & Sparten (Standard-Sparten, Gefahren, Checklisten-Empfehlungen)
+  4. Analyse-Wizard (Heuristiken + KPIs)
+  5. Ergebnis-Dashboard (KPIs + Vertragsliste)
+  6. PDF-Export (druckoptimiert, A4)
+  7. Hilfen & Vorlagen (Textbausteine, persistiert)
 
-**localStorage Keys:**
-- `dfs.customer` – Objekt mit Stammdaten
-- `dfs.contracts` – Array der Verträge
-- `dfs.analysis` – Objekt letzter Analyse
-- `dfs.targetSavingsPct` – gewünschte Einsparquote (0–50)
-- `dfs.tool.basispriv`, `dfs.tool.gkvpkv`, `dfs.tool.vorsorge` – reserviert
-- `dfs.docs.checklists` – Inhalte Hilfen/Vorlagen
-- `dfs.version` – Zeitstempel
+- **Technik:**
+  - Statisch, Vanilla-JS, keine externen Libs außer Google Fonts
+  - Persistenz: aktuell `localStorage`
+  - Import/Export: JSON-Dateien
+  - CI: Hintergrund #00223B, Gold #896c20, Text #fff, Sekundär #C0C0C0, Warnung #D97706
 
-**Datenmodelle:**
-- Entsprechen der Projektvorgabe (siehe `scripts/storage.js`, Funktion `analyze` & Formulare).
+- **Deployment:**
+  - Netlify (statisch, direkt aus GitHub Repo)
+  - Live-URL: https://deutscher-finanzservice.netlify.app/
 
-**Design & CI:**
-- Farben: Hintergrund `#00223B`, Gold `#896c20`, Text `#ffffff`, Sekundär `#C0C0C0`, Warnung `#D97706`
-- Karten: dunkler Hintergrund, 1px Border, Radius 16px
-- Fonts: Inter/Roboto via Google Fonts
+### Nächste geplante Schritte
+1. **Feinschliff (Phase 1.5):**
+   - 404-Seite
+   - Footer mit `dfs.version`
 
-**Druck (A4):**
-- Modul **PDF-Export** bietet eine druckoptimierte Seite (Browser `Drucken` → „Als PDF sichern“).
-- In Print: helle Darstellung, klare Tabellen, Chips als einfache Aufzählung.
+2. **Erweiterungen (Phase 2):**
+   - Vertrags-Editor (Bearbeiten, nicht nur Löschen)
+   - Vergleichsmodul (Alternativ-Versicherer + Beiträge)
+   - Tools: GKV vs PKV, Basis vs Privat, Vorsorge-Preview
 
-**Hinweise:**
-- Alle Pfade sind **relativ** (`./…`). Jede Unterseite funktioniert standalone.
-- Keine externen JS-Libraries, nur Google Fonts im CSS.
-- Fehlerfälle `localStorage` werden mit Toast-Hinweisen abgefangen.
-- „Interner Vermerk“ wird aktuell nicht in Print geführt (nicht implementiert).
+3. **Cloud-Edition (Phase 3):**
+   - Supabase/Postgres mit Auth (E-Mail/Magic-Link)
+   - Multiuser-Fähigkeit (gemeinsames Arbeiten, z. B. du + Frau)
+   - RLS-Policies für Mandantentrennung
+   - Weiterhin statisches Hosting (Netlify + GitHub)
 
-**Version:** 20250820.2104
+---
+
+## Arbeitsweise
+- Updates erfolgen als ZIP mit Projektstruktur (Netlify-Drop-ready).
+- Nutzung: ZIP entpacken → Repo-Ordner (GitHub Desktop) → Commit & Push.
+- Fokus: einfache Bedienung, modulare Erweiterbarkeit, jederzeit auf Cloud erweiterbar.
+
+---
+
+**Version:** 20250820.2126
