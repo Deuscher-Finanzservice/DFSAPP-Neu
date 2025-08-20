@@ -43,28 +43,35 @@
   </main>
 </div>
 
+<!-- Footer mit Version -->
+<footer style="padding:8px;text-align:center;color:var(--muted);font-size:12px;border-top:1px solid var(--border)">
+  DFS Analyse-Tool – Version <span id="ver"></span>
+</footer>
+
 <div id="toast" class="toast"></div>
 
 <script src="./scripts/storage.js"></script>
 <script src="./scripts/util.js"></script>
 <script>
   // Sidebar navigation
-  document.querySelectorAll('.nav button').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.nav button').forEach(function(b){b.classList.remove('active');});
       btn.classList.add('active');
       document.getElementById('content').src = btn.getAttribute('data-target');
     });
   });
 
   // Version
-  try {
-    localStorage.setItem('dfs.version', new Date().toISOString().slice(0,16).replace('T','.'));
-    document.querySelector('#version span').textContent = localStorage.getItem('dfs.version') || '—';
+  try { 
+    const ts = new Date().toISOString().slice(0,16).replace('T','.');
+    localStorage.setItem('dfs.version', ts);
+    document.querySelector('#version span').textContent = ts;
+    document.getElementById('ver').textContent = ts;
   } catch(e){}
 
   // Export / Import
-  document.getElementById('btn-export').addEventListener('click', ()=>{
+  document.getElementById('btn-export').addEventListener('click', function(){
     const payload = window.DFS.exportAll();
     const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
     const a = document.createElement('a');
@@ -72,10 +79,10 @@
     a.download = 'dfs_export.json';
     a.click();
   });
-  document.getElementById('btn-import').addEventListener('click', ()=>{
+  document.getElementById('btn-import').addEventListener('click', function(){
     document.getElementById('file-import').click();
   });
-  document.getElementById('file-import').addEventListener('change', async (e)=>{
+  document.getElementById('file-import').addEventListener('change', async function(e){
     const file = e.target.files[0];
     if(!file) return;
     try{
@@ -83,7 +90,6 @@
       const json = JSON.parse(text);
       window.DFS.importAll(json);
       window.DFS.toast('Import erfolgreich.');
-      // reload iframe
       const ifr = document.getElementById('content');
       const src = ifr.src; ifr.src = src;
     }catch(err){
@@ -91,7 +97,7 @@
       console.error(err);
     }
   });
-  document.getElementById('btn-reset').addEventListener('click', ()=>{
+  document.getElementById('btn-reset').addEventListener('click', function(){
     if(confirm('Alle lokalen Daten löschen?')){
       window.DFS.resetAll();
       window.DFS.toast('Daten gelöscht.');

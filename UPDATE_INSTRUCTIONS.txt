@@ -1,0 +1,30 @@
+
+# Update-Anleitung
+
+1. Kopiere die Datei **404.html** ins Hauptverzeichnis deines Repos (neben index.html).  
+   → Damit zeigt Netlify bei falschen URLs eine eigene Fehlerseite.
+
+2. Öffne deine `index.html` und füge direkt VOR `</body>` folgenden Block ein:
+
+
+<!-- FOOTER START -->
+
+<footer style="padding:8px;text-align:center;color:var(--muted);font-size:12px;border-top:1px solid var(--border)">
+  DFS Analyse-Tool – Version <span id="ver"></span>
+</footer>
+<script>
+  document.getElementById('ver').textContent = localStorage.getItem('dfs.version') || '—';
+</script>
+
+<!-- FOOTER END -->
+
+
+3. Committe die Änderungen mit GitHub Desktop und Message:
+
+    Add 404 page and footer with version info
+
+4. Push → Netlify aktualisiert automatisch.
+
+---
+
+Version: 20250820.2130
