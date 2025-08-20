@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ergebnis-Dashboard – DFS Modul</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="left">
+      <img class="logo" src="./assets/logo.png" alt="DFS Logo" />
+      <div class="title">Ergebnis-Dashboard <span class="badge">Modul 5</span></div>
+    </div>
+    <div class="right">
+      <a class="button secondary" href="../../index.html" target="_top">Zur Shell</a>
+      <a class="button" href="../pdf/index.html">Zum PDF-Export</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="grid">
+      <div class="col-8">
+        <div class="card">
+          <h2 style="margin:0 0 6px 0;">Überblick</h2>
+          <div class="kpi">
+            <div class="tile">
+              <div class="small">Risiko-Score</div>
+              <div class="val" id="kpiScore">–</div>
+              <div class="progress" style="margin-top:8px;"><div id="scoreBar"></div></div>
+            </div>
+            <div class="tile">
+              <div class="small">Summe Jahresbeiträge</div>
+              <div class="val" id="kpiSum">–</div>
+            </div>
+            <div class="tile">
+              <div class="small">Einsparziel</div>
+              <div class="val" id="kpiTarget">–</div>
+              <div class="small">monatlich: <span id="kpiMonthly">–</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="card">
+          <h3 style="margin:0 0 6px 0;">Ampel</h3>
+          <div id="ampel" class="pill">–</div>
+          <p class="small" style="margin-top:8px;">Grün ≥ 80 · Orange 60–79 · Rot &lt; 60</p>
+        </div>
+      </div>
+
+      <div class="col-8">
+        <div class="card">
+          <h3 style="margin:0 0 6px 0;">Empfehlungen</h3>
+          <table class="table" id="tblRecs">
+            <thead><tr><th>Bereich</th><th>Empfehlung</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="card">
+          <h3 style="margin:0 0 6px 0;">Warnungen</h3>
+          <div id="warnList"></div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="card">
+          <h3 style="margin:0 0 6px 0;">Verträge (Bestand)</h3>
+          <table class="table" id="tblContracts">
+            <thead>
+              <tr>
+                <th>Sparte</th><th>Versicherer/Produkt</th><th>Police</th>
+                <th>Beginn–Ende</th><th>Jahresbeitrag</th><th>Deckung</th><th>SB</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <p class="disclaimer" style="margin-top:10px;">Hinweis: Empfehlungen sind generisch; finale Ausgestaltung erfolgt in der Beratung.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="./scripts/dashboard.js"></script>
+</body>
+</html>

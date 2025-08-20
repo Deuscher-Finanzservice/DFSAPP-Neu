@@ -1,0 +1,104 @@
+
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DFS – Versicherungsanalyse</title>
+  <link rel="stylesheet" href="./styles/main.css">
+</head>
+<body>
+<div class="container">
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="./assets/logo.png" alt="DFS">
+      <div>
+        <div class="title">DFS Analyse-Tool</div>
+        <div class="badge" id="version">v<span></span></div>
+      </div>
+    </div>
+    <div class="nav">
+      <button data-target="./modules/home/index.html" class="active">🏠 Übersicht</button>
+      <button data-target="./modules/customer/index.html">👤 Kundenstammdaten</button>
+      <button data-target="./modules/contracts/index.html">📄 Verträge & Sparten</button>
+      <button data-target="./modules/analysis/index.html">🧭 Analyse-Wizard</button>
+      <button data-target="./modules/dashboard/index.html">📊 Ergebnis-Dashboard</button>
+      <button data-target="./modules/print/index.html">🖨️ PDF-Export</button>
+      <button data-target="./modules/tools/index.html">🧰 Hilfen & Vorlagen</button>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <div>Projekt: <strong>Deutscher Finanzservice</strong></div>
+      <div class="row no-print">
+        <button class="btn-outline" id="btn-export">Export</button>
+        <input type="file" id="file-import" class="no-print" accept="application/json" style="display:none">
+        <button class="btn-outline" id="btn-import">Import</button>
+        <button class="btn-outline" id="btn-reset">Reset</button>
+      </div>
+    </div>
+    <div class="iframe-wrap">
+      <iframe id="content" src="./modules/home/index.html" title="Inhalt"></iframe>
+    </div>
+  </main>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="./scripts/storage.js"></script>
+<script src="./scripts/util.js"></script>
+<script>
+  // Sidebar navigation
+  document.querySelectorAll('.nav button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('content').src = btn.getAttribute('data-target');
+    });
+  });
+
+  // Version
+  try {
+    localStorage.setItem('dfs.version', new Date().toISOString().slice(0,16).replace('T','.'));
+    document.querySelector('#version span').textContent = localStorage.getItem('dfs.version') || '—';
+  } catch(e){}
+
+  // Export / Import
+  document.getElementById('btn-export').addEventListener('click', ()=>{
+    const payload = window.DFS.exportAll();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'dfs_export.json';
+    a.click();
+  });
+  document.getElementById('btn-import').addEventListener('click', ()=>{
+    document.getElementById('file-import').click();
+  });
+  document.getElementById('file-import').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    try{
+      const text = await file.text();
+      const json = JSON.parse(text);
+      window.DFS.importAll(json);
+      window.DFS.toast('Import erfolgreich.');
+      // reload iframe
+      const ifr = document.getElementById('content');
+      const src = ifr.src; ifr.src = src;
+    }catch(err){
+      window.DFS.toast('Import fehlgeschlagen.');
+      console.error(err);
+    }
+  });
+  document.getElementById('btn-reset').addEventListener('click', ()=>{
+    if(confirm('Alle lokalen Daten löschen?')){
+      window.DFS.resetAll();
+      window.DFS.toast('Daten gelöscht.');
+      const ifr = document.getElementById('content');
+      const src = ifr.src; ifr.src = src;
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+
+<!doctype html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../styles/main.css">
+<title>Hilfen & Vorlagen</title></head><body>
+<div class="card">
+  <h2>Hilfen & Vorlagen</h2>
+  <p>Kurze Sammlung von Textbausteinen: Telefonleitfaden, Beratungsablauf, Quittung, Beratungsverzicht (Sach & AK/AV).</p>
+  <div class="row">
+    <div class="col card">
+      <strong>Telefonleitfaden</strong>
+      <textarea id="leitfaden" rows="8" placeholder="Einstieg, Bedarf, nächster Schritt…"></textarea>
+      <div style="margin-top:8px"><button class="btn" id="save1">Speichern</button></div>
+    </div>
+    <div class="col card">
+      <strong>Beratungsablauf</strong>
+      <textarea id="ablauf" rows="8" placeholder="Ist-Aufnahme → Analyse → Empfehlung → Entscheidung…"></textarea>
+      <div style="margin-top:8px"><button class="btn" id="save2">Speichern</button></div>
+    </div>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <div class="col card">
+      <strong>Quittung</strong>
+      <textarea id="quittung" rows="6" placeholder="Quittungstext…"></textarea>
+      <div style="margin-top:8px"><button class="btn" id="save3">Speichern</button></div>
+    </div>
+    <div class="col card">
+      <strong>Beratungsverzicht</strong>
+      <textarea id="verzicht" rows="6" placeholder="Hinweistext…"></textarea>
+      <div style="margin-top:8px"><button class="btn" id="save4">Speichern</button></div>
+    </div>
+  </div>
+  <div style="margin-top:8px">
+    <button class="btn-outline" onclick="window.print()">Drucken</button>
+  </div>
+</div>
+<script src='../../scripts/storage.js'></script>
+<script>
+  const key = DFS.KEYS.docsChecklists;
+  const data = DFS.safeGet(key, {});
+  function bind(id){ document.getElementById(id).value = data[id]||''; document.getElementById('save'+id.slice(-1)).onclick = ()=>{ data[id]=document.getElementById(id).value; DFS.safeSet(key, data); DFS.toast('Gespeichert.'); } }
+  ['leitfaden','ablauf','quittung','verzicht'].forEach(bind);
+</script>
+</body></html>

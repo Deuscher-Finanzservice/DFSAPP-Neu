@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analyse-Wizard – DFS Modul</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="left">
+      <img class="logo" src="./assets/logo.png" alt="DFS Logo" />
+      <div class="title">Analyse-Wizard <span class="badge">Modul 4</span></div>
+    </div>
+    <div class="right">
+      <a class="button secondary" href="../../index.html" target="_top">Zur Shell</a>
+      <button class="button" id="btnExport">Analyse als JSON exportieren</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="progress"><div id="progress"></div></div>
+    <div class="steps" id="steps"></div>
+
+    <!-- Step 1: Basisdaten -->
+    <section class="card" id="step1">
+      <h2 style="margin:0 0 6px 0;">1) Basisdaten laden</h2>
+      <div class="grid">
+        <div class="col-6">
+          <div class="box">
+            <div class="label">Kunde (dfs.customer):</div>
+            <table class="table" id="tblCustomer"><tbody></tbody></table>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="box">
+            <div class="label">Verträge (dfs.contracts):</div>
+            <table class="table" id="tblContracts"><tbody></tbody></table>
+          </div>
+        </div>
+        <div class="col-12 actions">
+          <button class="button" id="btnReload">Neu laden</button>
+          <button class="button" id="btnNext1">Weiter</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 2: Risiko-/Lücken-Check -->
+    <section class="card hidden" id="step2">
+      <h2 style="margin:0 0 6px 0;">2) Risiko-/Lücken-Check</h2>
+      <div class="kpi">
+        <div class="tile">
+          <div class="label">Risiko-Score (0–100)</div>
+          <div class="val" id="scoreVal">–</div>
+          <div class="ampel" style="margin-top:6px;"></div>
+        </div>
+        <div class="tile">
+          <div class="label">Warnungen</div>
+          <div class="val" id="warnCount">–</div>
+        </div>
+        <div class="tile">
+          <div class="label">Zeitkritisch</div>
+          <div class="val" id="timeCrit">–</div>
+        </div>
+      </div>
+
+      <h3>Erkannte Warnungen</h3>
+      <div class="list" id="warnList"></div>
+
+      <div class="actions">
+        <button class="button secondary" id="btnBack2">Zurück</button>
+        <button class="button" id="btnNext2">Weiter</button>
+      </div>
+      <p class="disclaimer" style="margin-top:10px;">Vorläufige, regelbasierte Einschätzung – kein Ersatz für individuelle Risikoprüfung.</p>
+    </section>
+
+    <!-- Step 3: Einsparpotenzial -->
+    <section class="card hidden" id="step3">
+      <h2 style="margin:0 0 6px 0;">3) Einsparpotenzial</h2>
+      <div class="grid">
+        <div class="col-4">
+          <div class="box">
+            <div class="label">Summe Jahresbeiträge</div>
+            <div class="val" id="sumPremium">–</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="box">
+            <div class="label">Einsparziel (%)</div>
+            <div class="val" id="targetPct">–</div>
+            <div class="small">Quelle: <code>dfs.targetSavingsPct</code> oder Default.</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="box">
+            <div class="label">Schätzung (Bandbreite)</div>
+            <div class="val" id="savingsEst">–</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="button secondary" id="btnBack3">Zurück</button>
+        <button class="button" id="btnNext3">Weiter</button>
+      </div>
+    </section>
+
+    <!-- Step 4: Zusammenfassung -->
+    <section class="card hidden" id="step4">
+      <h2 style="margin:0 0 6px 0;">4) Zusammenfassung & Übergabe</h2>
+      <div class="grid">
+        <div class="col-12">
+          <div class="box">
+            <div class="label">Analyse-Objekt (dfs.analysis)</div>
+            <pre id="analysisJson" style="white-space:pre-wrap;"></pre>
+          </div>
+        </div>
+        <div class="col-12 actions">
+          <button class="button secondary" id="btnBack4">Zurück</button>
+          <a class="button" href="../ergebnis/index.html">Weiter zum Ergebnis-Dashboard (Platzhalter)</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="./scripts/wizard.js"></script>
+</body>
+</html>

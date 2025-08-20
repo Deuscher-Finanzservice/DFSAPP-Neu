@@ -1,0 +1,43 @@
+
+<!doctype html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../styles/main.css">
+<title>Kundenstammdaten</title></head><body>
+<div class="card">
+  <h2>Kundenstammdaten</h2>
+  <div class="row">
+    <div class="col"><label>Firma</label><input id="firma"></div>
+    <div class="col"><label>Ansprechpartner</label><input id="ansprech"></div>
+    <div class="col"><label>E-Mail (optional)</label><input id="email" type="email" placeholder="optional"></div>
+    <div class="col"><label>Telefon</label><input id="telefon"></div>
+    <div class="col"><label>Branche (optional)</label><input id="branche" placeholder="optional"></div>
+    <div class="col"><label>Mitarbeiter (optional)</label><input id="mitarbeiter" type="number" placeholder="optional"></div>
+    <div class="col"><label>Umsatz (optional)</label><input id="umsatz" type="number" placeholder="optional"></div>
+    <div class="col"><label>Gründung (Jahr, optional)</label><input id="gruendung" type="number" placeholder="optional"></div>
+    <div class="col"><label>Standort (optional)</label><input id="standort" placeholder="optional"></div>
+  </div>
+  <div class="row">
+    <button class="btn" id="save">Speichern</button>
+    <button class="btn-outline" id="clear">Felder leeren</button>
+  </div>
+</div>
+<script src='../../scripts/storage.js'></script>
+<script>
+  const fields = ["firma","ansprech","email","telefon","branche","mitarbeiter","umsatz","gruendung","standort"];
+  function load(){
+    const c = DFS.getCustomer();
+    fields.forEach(k=>{ const el = document.getElementById(k); if(c && typeof c[k] !== 'undefined' && c[k]!==null) el.value = c[k]; else el.value=''; });
+  }
+  load();
+  document.getElementById('save').onclick = ()=>{
+    const obj = {};
+    fields.forEach(k=>{ obj[k] = document.getElementById(k).value; });
+    obj.mitarbeiter = obj.mitarbeiter ? Number(obj.mitarbeiter) : null;
+    obj.umsatz = obj.umsatz ? Number(obj.umsatz) : null;
+    obj.gruendung = obj.gruendung ? Number(obj.gruendung) : null;
+    DFS.setCustomer(obj);
+    DFS.toast('Gespeichert.');
+  };
+  document.getElementById('clear').onclick = ()=>{ fields.forEach(k=>document.getElementById(k).value=''); };
+</script>
+</body></html>

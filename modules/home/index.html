@@ -1,0 +1,36 @@
+
+<!doctype html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../styles/main.css">
+<title>Übersicht</title></head><body>
+<div class="card">
+  <h2>Willkommen</h2>
+  <p>Nutze die Sidebar, um Module zu öffnen. Daten werden ausschließlich lokal im Browser gespeichert.</p>
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <strong>Kundenstatus</strong>
+        <div id="cust"></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card">
+        <strong>Letzte Analyse</strong>
+        <div id="ana"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../../scripts/storage.js"></script>
+<script>
+  const c = DFS.getCustomer();
+  document.getElementById('cust').innerHTML = c && (c.firma||c.ansprech) ?
+    (c.firma||'') + ' – ' + (c.ansprech||'') :
+    'Noch keine Daten erfasst.';
+
+  const a = DFS.getAnalysis();
+  document.getElementById('ana').innerHTML = a ?
+    ('Risikoscore: <strong>'+a.riskScore+'</strong><br>Jahresprämie: <strong>'+DFS.currencyDE(a.sumAnnual)+'</strong>') :
+    'Noch nicht analysiert.';
+</script>
+</body></html>

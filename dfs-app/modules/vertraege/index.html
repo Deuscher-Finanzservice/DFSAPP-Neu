@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verträge & Sparten – DFS Modul</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="left">
+      <img class="logo" src="./assets/logo.png" alt="DFS Logo" />
+      <div class="title">Verträge & Sparten <span class="badge">Modul 3</span></div>
+    </div>
+    <div class="right">
+      <a class="button secondary" href="../../index.html" target="_top">Zur Shell</a>
+      <button class="button" id="btnAdd">Vertrag hinzufügen</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <div class="grid">
+        <div class="col-6">
+          <label class="label" for="targetPct">Einsparziel (%)</label>
+          <input id="targetPct" class="number" type="number" min="0" max="50" step="0.5" placeholder="z. B. 8">
+          <div class="small">Wird als <code>dfs.targetSavingsPct</code> gespeichert.</div>
+        </div>
+        <div class="col-6" style="display:flex; align-items:flex-end; gap:8px;">
+          <button class="button secondary" id="btnSaveTarget">Speichern</button>
+          <span class="small" id="targetSaved" style="display:none;">✅ gespeichert</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:16px;">
+      <div class="row" style="justify-content:space-between;">
+        <div class="small">localStorage-Key: <code>dfs.contracts</code></div>
+        <div class="row">
+          <button class="button secondary" id="btnExport">Export (.json)</button>
+          <label class="button ghost" for="fileImport" style="cursor:pointer;">Import (.json)</label>
+          <input id="fileImport" type="file" accept="application/json" style="display:none;">
+          <button class="button" id="btnToAnalyse">Weiter zur Analyse</button>
+        </div>
+      </div>
+
+      <table class="table" id="tbl">
+        <thead>
+          <tr>
+            <th>Sparte</th>
+            <th>Versicherer / Produkt</th>
+            <th>Police</th>
+            <th>Beginn – Ende</th>
+            <th>Hauptfälligkeit</th>
+            <th>Zahlweise</th>
+            <th>Jahresbeitrag (€)</th>
+            <th>Deckung</th>
+            <th>SB</th>
+            <th>Frist</th>
+            <th>Aktion</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="footerbar">
+        <div class="small">Hinweis: Pflichtfelder pro Vertrag sind *Sparte*, *Versicherer*, *Police-Nr.*, *Beginn*, *Jahresbeitrag*.</div>
+        <div><strong>Summe Jahresbeiträge:</strong> <span id="sum">0,00</span> €</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <h3 id="modalTitle" style="margin:0;">Vertrag</h3>
+        <button class="close" id="btnClose">Schließen</button>
+      </div>
+      <hr class="sep" />
+      <div class="grid">
+        <div class="col-4">
+          <label class="label" for="m_sparte">Sparte *</label>
+          <select id="m_sparte" class="select">
+            <option value="">Bitte wählen…</option>
+            <option>Betriebshaftpflicht (BHV)</option>
+            <option>Inhalt</option>
+            <option>Ertragsausfall/BU</option>
+            <option>Gebäude</option>
+            <option>Cyber</option>
+            <option>Rechtsschutz</option>
+            <option>D&O</option>
+            <option>Gruppenunfall</option>
+            <option>Kfz-Flotte</option>
+            <option value="__free">— Freitext —</option>
+          </select>
+          <input id="m_sparte_free" class="input" placeholder="Eigene Sparte" style="margin-top:8px; display:none;">
+        </div>
+        <div class="col-4">
+          <label class="label" for="m_versicherer">Versicherer *</label>
+          <input id="m_versicherer" class="input" placeholder="z. B. Signal Iduna">
+        </div>
+        <div class="col-4">
+          <label class="label" for="m_produkt">Produkt/Tarif</label>
+          <input id="m_produkt" class="input" placeholder="Tarif">
+        </div>
+
+        <div class="col-4">
+          <label class="label" for="m_police">Police-Nr. *</label>
+          <input id="m_police" class="input" placeholder="ABC-123456">
+        </div>
+        <div class="col-4">
+          <label class="label" for="m_beginn">Beginn *</label>
+          <input id="m_beginn" type="date" class="input">
+        </div>
+        <div class="col-4">
+          <label class="label" for="m_ende">Ende</label>
+          <input id="m_ende" type="date" class="input">
+        </div>
+
+        <div class="col-4">
+          <label class="label" for="m_hauptfaellig">Hauptfälligkeit (z. B. 01.01.)</label>
+          <input id="m_hauptfaellig" class="input" placeholder="TT.MM.">
+        </div>
+        <div class="col-4">
+          <label class="label" for="m_zahlweise">Zahlweise</label>
+          <select id="m_zahlweise" class="select">
+            <option>jährlich</option>
+            <option>halbjährlich</option>
+            <option>vierteljährlich</option>
+            <option>monatlich</option>
+          </select>
+        </div>
+        <div class="col-4">
+          <label class="label" for="m_beitrag">Jahresbeitrag (brutto) *</label>
+          <input id="m_beitrag" type="number" step="0.01" min="0" class="number" placeholder="0,00">
+        </div>
+
+        <div class="col-4">
+          <label class="label" for="m_deckung">Deckungssumme</label>
+          <input id="m_deckung" type="number" step="1" min="0" class="number" placeholder="z. B. 5000000">
+        </div>
+        <div class="col-4">
+          <label class="label" for="m_sb">Selbstbehalt</label>
+          <input id="m_sb" type="number" step="1" min="0" class="number" placeholder="z. B. 500">
+        </div>
+        <div class="col-4">
+          <label class="label" for="m_fr" title="Kündigungsfrist">Kündigungsfrist</label>
+          <input id="m_fr" class="input" placeholder="z. B. 3 Monate">
+        </div>
+
+        <div class="col-6">
+          <label class="label" for="m_risiko">Risikostandort (PLZ/Ort)</label>
+          <input id="m_risiko" class="input" placeholder="65439 Flörsheim">
+        </div>
+        <div class="col-6">
+          <label class="label" for="m_vermittler">Vermittlernummer</label>
+          <input id="m_vermittler" class="input" placeholder="">
+        </div>
+
+        <div class="col-12">
+          <label class="label" for="m_notes">Notizen</label>
+          <textarea id="m_notes" class="input" rows="3" placeholder=""></textarea>
+        </div>
+
+        <div class="col-12 row" style="justify-content:flex-end; gap:8px; margin-top:6px;">
+          <button class="button ghost" id="m_delete" style="display:none;">Löschen</button>
+          <button class="button" id="m_save">Speichern</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="./scripts/app.js"></script>
+</body>
+</html>
