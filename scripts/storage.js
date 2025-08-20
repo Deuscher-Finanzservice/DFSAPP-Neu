@@ -1,4 +1,5 @@
 
+// DFS storage & logic – "altes System" mit sparten-spezifischen Empfehlungen (wie in den Screenshots)
 window.DFS = (function(){
   const KEYS = {
     customer: 'dfs.customer',
@@ -45,7 +46,6 @@ window.DFS = (function(){
   }
   ensureDefaults();
 
-  // === Standards & Empfehlungen pro Sparte ===
   const STD = {
     gefahrenBySparte: {
       "Betriebshaftpflicht (BHV)":["Personen-/Sachschäden","Vermögensfolgeschäden","Produkthaftpflicht","Mietsachschäden","Umwelt-Haftpflicht"],
@@ -58,86 +58,73 @@ window.DFS = (function(){
       "Gruppenunfall":["Unfalltod","Invalidität","Krankenhaustagegeld"]
     },
     defaultGefahren:["Feuer","Leitungswasser","Sturm/Hagel","Einbruchdiebstahl","Elementar"],
-    // Basiselemente, die (fast) immer sinnvoll sind
-    empfehlungenBase:[
-      "Versicherungssumme prüfen",
-      "Umstellung ins neue Tarifwerk prüfen"
-    ],
-    // Kontextspezifische Empfehlungen pro Sparte
-    empfehlungenBySparte:{
+
+    // ---- Alte-Software-Logik: Empfehlungen je Sparte (laut deinen Screenshots) ----
+    alteEmpfehlungenBySparte: {
       "Betriebshaftpflicht (BHV)": [
-        "Deckungssumme mind. 10 Mio. pauschal",
-        "Produkthaftpflicht einschließen/prüfen",
-        "Tätigkeits-/Bearbeitungsschäden einschließen",
-        "Mietsachschäden an Räumen ausreichend",
-        "Schlüsselverlust (fremde Schlüssel) mitversichern",
-        "Umwelt-Haftpflicht/-Schaden einschließen",
-        "Subunternehmer mitversichert",
-        "Ausland/USA-Kanada-Klausel prüfen"
+        "sonstige Tätigkeitsschäden mitversichert",
+        "viele Deckungserweiterungen",
+        "höhere Deckungssumme",
+        "Spezielles Deckungskonzept",
+        "erweiterte Produkthaftung",
+        "Nachbesserungsbegleitschäden mitversichert",
+        "Obhutsschäden mitversichert",
+        "Be- und Entladeschäden mitversichert",
+        "Privat-/ Hundehalterhaftpflicht inklusive",
+        "Basis Deckung",
+        "Premium Deckung",
+        "Umstellung ins neue Tarifwerk prüfen"
       ],
-      "Inhalt":[
-        "Neuwert / Unterversicherungsschutz vereinbaren",
-        "Elementar inkl. Starkregen/Rückstau prüfen",
-        "Einbruchdiebstahl + Vandalismus nach Einbruch",
-        "Überspannung/Induktionsschäden einschließen",
-        "Außenversicherung (weltweit) und Transport mitversichern",
-        "Kühlgut/Kälteanlagen (Verderb) prüfen",
-        "Allgefahren/All-Risk-Deckung prüfen"
+      "Inhalt": [
+        "Versicherungssumme prüfen",
+        "Erhöhung Versicherungssumme",
+        "Betriebsunterbrechung mitversichert",
+        "Vers.summe Betriebsunterbrechung erhöht",
+        "viele Deckungserweiterungen",
+        "erweiterte Neuwertentschädigung",
+        "Sachen auf Baustellen (5.000 € bis 15.000 €) mitversichert",
+        "Umstellung ins neue Tarifwerk prüfen"
       ],
-      "Gebäude":[
-        "Grobe Fahrlässigkeit bis 100%",
-        "Rückstau ausreichend versichert",
-        "Ableitungsrohre innen/außen einschließen",
-        "Photovoltaik/Solarthermie mitversichern",
-        "Mietausfall/Mietwert absichern",
-        "Glasbausteine/Glasschäden regeln"
+      "Gebäude": [
+        "Versicherungssumme prüfen",
+        "Erhöhung Versicherungssumme",
+        "viele Deckungserweiterungen",
+        "erweiterte Neuwertentschädigung",
+        "Umstellung ins neue Tarifwerk prüfen"
       ],
-      "Ertragsausfall/BU":[
-        "Haftzeit auf 18/24/36 Monate prüfen",
-        "Deckungsbasis: entgangener Gewinn + fortlaufende Kosten + Mehrkosten",
-        "Rückwirkungsschäden Zulieferer/Abnehmer einschließen",
-        "Behördliche Anordnungen (Seuchen/AVB-Klauseln) prüfen",
-        "Wiederanlauffrist und Sublimits prüfen"
+      "Ertragsausfall/BU": [
+        "Vers.summe Betriebsunterbrechung erhöht",
+        "viele Deckungserweiterungen",
+        "Umstellung ins neue Tarifwerk prüfen"
       ],
-      "Cyber":[
-        "Bausteine: Haftpflicht, Eigenschäden, Forensik, BU vollständig",
-        "Social Engineering/CEO-Fraud abdecken",
-        "Datenwiederherstellung & Forensik ausreichend",
-        "Ransomware/Lösegeld-Kosten (rechtlich zulässig) regeln",
-        "Mindestanforderungen (MFA/Backups/Patching) erfüllen",
-        "Krisenkommunikation & PR einschließen"
+      "Cyber": [
+        "viele Deckungserweiterungen",
+        "Umstellung ins neue Tarifwerk prüfen"
       ],
-      "Rechtsschutz":[
-        "Arbeits-, Vertrags- und Straf-Rechtsschutz einschließen",
-        "Spezial-Straf-Rechtsschutz für Organe",
-        "Vertrags-RS für gewerbliche Verträge prüfen",
-        "Mediation/Schlichtung optional vereinbaren"
+      "Rechtsschutz": [
+        "viele Deckungserweiterungen",
+        "Umstellung ins neue Tarifwerk prüfen"
       ],
-      "D&O":[
-        "Deckungssumme & Selbstbehalt prüfen",
-        "Nachmeldefrist/Nachhaftung mind. 5 Jahre",
-        "Innen- und Außenhaftung einschließen",
-        "Anstellungsvertrags-RS ergänzen"
+      "D&O": [
+        "viele Deckungserweiterungen",
+        "Umstellung ins neue Tarifwerk prüfen"
       ],
-      "Gruppenunfall":[
-        "Invaliditätssumme & Progression (350%/500%)",
-        "Unfallrente prüfen",
-        "Krankenhaus-/Genesungsgeld",
-        "24/7-Deckung statt nur Dienst",
-        "Wegeunfälle mitversichern"
+      "Gruppenunfall": [
+        "viele Deckungserweiterungen",
+        "Umstellung ins neue Tarifwerk prüfen"
       ]
     }
   };
 
-  function getEmpfehlungenForSparten(sparten){
-    const set = new Set(STD.empfehlungenBase);
+  function getAlteEmpfehlungen(sparten){
+    const set = new Set();
     (sparten||[]).forEach(s=>{
-      (STD.empfehlungenBySparte[s]||[]).forEach(x=>set.add(x));
+      (STD.alteEmpfehlungenBySparte[s]||[]).forEach(x=>set.add(x));
     });
     return Array.from(set);
   }
 
-  // Formatting helpers & math
+  // Formatting helpers & KPIs
   function currencyDE(n){ try{ return (n||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});}catch(e){ return n; } }
   function parseNum(v){ const x = (v||'').toString().replace(/\./g,'').replace(',','.'); const n = parseFloat(x); return isNaN(n) ? 0 : n; }
 
@@ -184,7 +171,7 @@ window.DFS = (function(){
   function analyze(){
     const contracts = getContracts();
     const warnings = [];
-    // Heuristics
+    // Heuristik (Baseline)
     contracts.forEach(c=>{
       const sparten = c.sparten||[];
       sparten.forEach(s=>{
@@ -200,10 +187,10 @@ window.DFS = (function(){
       });
     });
 
-    // Missing lines of business
+    // Fehlende Sparten (Empfehlungen auf Gesamtbestand)
     const spartenSet = new Set(contracts.flatMap(c=>c.sparten||[]));
     const recommendations = [];
-    if(!spartenSet.has("Cyber")) recommendations.push("Cyber ergänzen (Haftpflicht, Eigenschäden, Forensik…).");
+    if(!spartenSet.has("Cyber")) recommendations.push("Betriebsunterbrechung durch Cyber prüfen / Cyber ergänzen.");
     if(!spartenSet.has("Ertragsausfall/BU")) recommendations.push("Betriebsunterbrechung absichern.");
     if(!spartenSet.has("Rechtsschutz")) recommendations.push("Rechtsschutz prüfen und ergänzen.");
 
@@ -225,6 +212,6 @@ window.DFS = (function(){
     toast, currencyDE, parseNum, analyze,
     getCustomer, setCustomer, getContracts, setContracts,
     getTargetPct, setTargetPct, getAnalysis,
-    getEmpfehlungenForSparten
+    getAlteEmpfehlungen
   };
 })();

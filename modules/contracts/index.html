@@ -79,7 +79,7 @@
         <select id="gefahren" multiple size="8"></select>
       </div>
       <div class="col">
-        <label>Empfehlungen (kontextbasiert)</label>
+        <label>Empfehlungen (altes System je Sparte)</label>
         <div id="empf" class="chips"></div>
       </div>
     </div>
@@ -102,7 +102,7 @@
   <div style="margin-top:8px;color:var(--muted)">Summe: <span id="sum"></span></div>
 </div>
 
-<script src='../../scripts/storage.js'></script>
+<script src='../../scripts/storage.js?v=old-per-sparte-001'></script>
 <script>
   const selSparten = document.getElementById('sparten');
   const selGefahren = document.getElementById('gefahren');
@@ -131,7 +131,7 @@
 
   function renderEmpf(){
     const selectedSparten = Array.from(selSparten.selectedOptions).map(o=>o.value);
-    const items = DFS.getEmpfehlungenForSparten(selectedSparten);
+    const items = DFS.getAlteEmpfehlungen(selectedSparten);
     empfWrap.innerHTML='';
     items.forEach((e,i)=>{
       const chip = document.createElement('div'); chip.className='chip'; chip.textContent=e; chip.dataset.idx=i;
