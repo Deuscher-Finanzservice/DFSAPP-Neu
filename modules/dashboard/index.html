@@ -1,45 +1,27 @@
-
-<!doctype html><html lang="de"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="../../styles/main.css">
-<title>Ergebnis-Dashboard</title></head><body>
-<div class="card">
-  <h2>Ergebnis-Dashboard</h2>
-  <div id="kpis"></div>
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Ergebnis-Dashboard</title>
+  <link rel="stylesheet" href="../../styles/base.css"/>
+</head>
+<body>
+  <div class="page" style="padding:16px;">
+    <div class="row">
+      <div class="col-12"><div class="card"><h2 style="margin:4px 0 10px;">Ergebnis-Dashboard</h2>
+<div class="row">
+  <div class="col-3"><div class="card" id="kpi-aktuell"></div></div>
+  <div class="col-3"><div class="card" id="kpi-empfohlen"></div></div>
+  <div class="col-3"><div class="card" id="kpi-ersparnis"></div></div>
+  <div class="col-3"><div class="card" id="kpi-warnungen"></div></div>
+  <div class="col-6"><div class="card"><h3>Top Warnungen</h3><div id="warnungen"></div></div></div>
+  <div class="col-6"><div class="card"><h3>Top Empfehlungen</h3><div id="empfehlungen"></div></div></div>
+  <div class="col-12"><div class="card"><h3>Story</h3><ol id="story"></ol></div></div>
 </div>
-<div class="card" style="margin-top:12px">
-  <h3>Bestand (Kurz)</h3>
-  <table class="table" id="tbl"><thead><tr>
-    <th>Versicherer</th><th>Sparten</th><th>Beitrag/Jahr</th><th>Gefahren</th>
-  </tr></thead><tbody></tbody></table>
-</div>
-
-<script src='../../scripts/storage.js'></script>
-<script>
-  function render(){
-    const a = DFS.getAnalysis() || DFS.analyze();
-    document.getElementById('kpis').innerHTML = `
-      <div class="row">
-        <div class="col card"><strong>Jahresprämie</strong><div>${DFS.currencyDE(a.sumAnnual)}</div></div>
-        <div class="col card"><strong>Ziel-Einsparung</strong><div>${a.targetPct}% → mtl. ${DFS.currencyDE(a.monthlySaving)}</div></div>
-        <div class="col card"><strong>Risiko-Score</strong><div>${a.riskScore}</div></div>
-      </div>
-      <div class="row">
-        <div class="col card"><strong>Warnungen</strong><div class="chips">${a.warnings.map(w=>'<span class="chip warn">'+w+'</span>').join(' ') || '—'}</div></div>
-        <div class="col card"><strong>Empfehlungen</strong><div class="chips">${a.recommendations.map(w=>'<span class="chip">'+w+'</span>').join(' ') || '—'}</div></div>
-      </div>
-    `;
-    const tbody = document.querySelector('#tbl tbody');
-    tbody.innerHTML='';
-    (DFS.getContracts()||[]).forEach(c=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = '<td>'+ (c.versicherer||'') +'</td>'+
-      '<td>'+ (c.sparten||[]).join(', ') +'</td>'+
-      '<td>'+ DFS.currencyDE(c.jahresbeitragBrutto||0) +'</td>'+
-      '<td>'+ (c.gefahren||[]).join(', ') +'</td>';
-      tbody.appendChild(tr);
-    });
-  }
-  render();
-</script>
+</div></div>
+    </div>
+  </div>
+  <script>parent.postMessage({type:'set-title', value: 'Ergebnis-Dashboard'}, '*');</script>
+  <script src="./module.js"></script>
 </body></html>

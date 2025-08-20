@@ -1,0 +1,77 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Roboto:wght@300;400;700&display=swap');
+
+:root {
+  --bg: #00223B;
+  --gold: #896c20;
+  --text: #ffffff;
+  --muted: #C0C0C0;
+  --warn: #D97706;
+  --card-bg: rgba(255,255,255,0.04);
+  --card-border: rgba(255,255,255,0.08);
+  --radius: 16px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; color: var(--text); background: var(--bg); font-family: Inter, Roboto, system-ui, -apple-system, Segoe UI, Arial, sans-serif; }
+
+a { color: var(--muted); text-decoration: none; }
+a:hover { color: #fff; }
+
+.container { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+.sidebar { background: #021a2e; padding: 16px; border-right: 1px solid var(--card-border); }
+.sidebar .logo { display: flex; align-items: center; gap: 10px; padding: 8px 0 18px; margin-bottom: 12px; border-bottom: 1px solid var(--card-border); }
+.sidebar img { width: 44px; height: 44px; border-radius: 10px; }
+.sidebar h1 { font-size: 16px; margin: 0; font-weight: 700; letter-spacing: .3px; }
+.nav { display: grid; gap: 6px; margin-top: 8px; }
+.nav button { text-align: left; background: transparent; color: var(--text); border: 1px solid var(--card-border); border-radius: 12px; padding: 10px 12px; cursor: pointer; }
+.nav button.active, .btn-primary { background: var(--gold); border-color: var(--gold); color: #fff; }
+.nav button:hover { border-color: var(--gold); }
+.footer { font-size: 12px; color: var(--muted); margin-top: 12px; }
+
+.main { display: grid; grid-template-rows: 64px 1fr; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--card-border); }
+.topbar h2 { font-size: 18px; margin: 0; font-weight: 600;}
+.content { position: relative; }
+#content { width: 100%; height: calc(100vh - 64px); border: 0; background: #031e35; }
+
+.card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 12px; }
+.row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; }
+.col-6 { grid-column: span 6; }
+.col-4 { grid-column: span 4; }
+.col-3 { grid-column: span 3; }
+.col-12 { grid-column: span 12; }
+
+label { display:block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+input[type="text"], input[type="number"], input[type="date"], select, textarea {
+  width: 100%; padding: 10px; border-radius: 12px; border: 1px solid var(--card-border); background: #06263f; color: #fff;
+}
+textarea { min-height: 80px; }
+input::placeholder { color: #9fb3c6; }
+
+.btn { padding: 10px 12px; border-radius: 12px; border: 1px solid var(--card-border); background: #0a2e4d; color: #fff; cursor: pointer; }
+.btn:hover { border-color: var(--gold); }
+.btn-primary { background: var(--gold); border-color: var(--gold); color:#fff; }
+.btn-outline { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
+
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th, .table td { border-bottom: 1px solid var(--card-border); padding: 8px 10px; text-align: left; }
+.table th { color: var(--muted); font-weight: 600; }
+.badge { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius: 999px; border: 1px solid var(--card-border); background: #0b2b43; font-size: 12px; color:#dbeafe; margin: 2px 4px 2px 0; }
+.badge.warn { background: #3b1f06; color:#fde68a; border-color:#7c3a02; }
+.badge.gold { background: #2e2615; color:#f3e8c3; border-color: #896c20; }
+
+.toast { position: fixed; right: 18px; bottom: 18px; padding: 10px 14px; background: rgba(0,0,0,0.7); backdrop-filter: blur(3px); color: #fff; border-radius: 10px; display:none; }
+
+/* PRINT (A4) */
+@media print {
+  :root { --text: #000; }
+  body { background: #fff; color: #000; }
+  .container, .sidebar, .topbar { display: block; }
+  .sidebar, .topbar { border: none; }
+  a, .btn, .nav, .footer { display:none !important; }
+  #content { height: auto; }
+  .card { background: #fff; border-color: #ddd; }
+  .table th, .table td { border-color:#ddd; }
+  @page { size: A4; margin: 14mm; }
+}

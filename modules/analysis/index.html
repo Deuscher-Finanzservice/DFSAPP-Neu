@@ -1,53 +1,24 @@
-
-<!doctype html><html lang="de"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="../../styles/main.css">
-<title>Analyse-Wizard</title></head><body>
-<div class="card">
-  <h2>Analyse-Wizard</h2>
-  <div class="row">
-    <div class="col"><label>Ziel-Einsparung in %</label>
-      <input id="target" type="number" min="0" max="50" step="1" placeholder="z. B. 15">
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Analyse-Wizard</title>
+  <link rel="stylesheet" href="../../styles/base.css"/>
+</head>
+<body>
+  <div class="page" style="padding:16px;">
+    <div class="row">
+      <div class="col-12"><div class="card"><h2 style="margin:4px 0 10px;">Analyse-Wizard</h2>
+<div class="row">
+  <div class="col-12"><div class="card"><p>Starte die Analyse. Das Tool wendet Heuristiken an, um <b>Warnungen</b> und <b>Empfehlungen</b> zu erzeugen und KPIs zu berechnen.</p>
+  <button class="btn btn-primary" id="run">Analyse starten</button>
+  <div id="out" style="margin-top:12px;"></div>
+  </div></div>
+</div>
+</div></div>
     </div>
   </div>
-  <div class="row">
-    <button class="btn" id="run">Analyse starten</button>
-  </div>
-</div>
-
-<div class="card" style="margin-top:12px" id="out"></div>
-
-<script src='../../scripts/storage.js'></script>
-<script>
-  document.getElementById('target').value = DFS.getTargetPct();
-  document.getElementById('run').onclick = ()=>{
-    const v = Number(document.getElementById('target').value || 0);
-    DFS.setTargetPct(Math.max(0, Math.min(50, v)));
-    const res = DFS.analyze();
-    render(res);
-    DFS.toast('Analyse aktualisiert.');
-  };
-  function render(res){
-    const el = document.getElementById('out');
-    if(!res){ el.innerHTML='Noch nicht analysiert.'; return; }
-    el.innerHTML = `
-      <div class="row">
-        <div class="col card"><strong>Jahresprämie</strong><div>${DFS.currencyDE(res.sumAnnual)}</div></div>
-        <div class="col card"><strong>Ziel-Einsparung</strong><div>${res.targetPct}% → mtl. ${DFS.currencyDE(res.monthlySaving)}</div></div>
-        <div class="col card"><strong>Risiko-Score</strong><div>${res.riskScore}</div></div>
-      </div>
-      <div class="row">
-        <div class="col">
-          <h3>Warnungen</h3>
-          <div class="chips">${res.warnings.map(w=>'<span class="chip warn">'+w+'</span>').join(' ') || '—'}</div>
-        </div>
-        <div class="col">
-          <h3>Empfehlungen</h3>
-          <div class="chips">${res.recommendations.map(w=>'<span class="chip">'+w+'</span>').join(' ') || '—'}</div>
-        </div>
-      </div>
-    `;
-  }
-  render(DFS.getAnalysis());
-</script>
+  <script>parent.postMessage({type:'set-title', value: 'Analyse-Wizard'}, '*');</script>
+  <script src="./module.js"></script>
 </body></html>

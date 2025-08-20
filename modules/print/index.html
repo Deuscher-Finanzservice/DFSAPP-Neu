@@ -1,46 +1,30 @@
-
-<!doctype html><html lang="de"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="../../styles/main.css">
-<title>PDF-Export</title></head><body>
-<div class="no-print" style="padding:8px">
-  <button class="btn" onclick="window.print()">Als PDF speichern</button>
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>PDF-Export</title>
+  <link rel="stylesheet" href="../../styles/base.css"/>
+</head>
+<body>
+  <div class="page" style="padding:16px;">
+    <div class="row">
+      <div class="col-12"><div class="card"><h2 style="margin:4px 0 10px;">PDF-Export</h2>
+<div class="row">
+  <div class="col-12"><div class="card">
+    <h3>Management Summary</h3>
+    <div id="kpis"></div>
+    <h3>Warnungen</h3><div id="warn"></div>
+    <h3>Empfehlungen</h3><div id="recs"></div>
+    <h3>Vertragsübersicht</h3>
+    <table class="table" id="t"><thead><tr><th>Versicherer</th><th>Sparten</th><th>Aktuell</th><th>Empfehlung</th><th>Ersparnis</th></tr></thead><tbody></tbody></table>
+    <div style="margin-top:12px;"><button class="btn btn-primary" onclick="window.print()">Als PDF speichern</button></div>
+    <p style="font-size:12px;color:var(--muted);margin-top:12px;">Interner Vermerk wird nicht gedruckt.</p>
+  </div></div>
 </div>
-<div class="print-container">
-  <div class="print-h1">DFS Analyse – Ergebnisbericht</div>
-  <div id="kpis"></div>
-  <h2 class="print-h2">Warnungen</h2>
-  <div id="warn"></div>
-  <h2 class="print-h2">Empfehlungen</h2>
-  <div id="rec"></div>
-  <h2 class="print-h2">Vertragsübersicht</h2>
-  <table id="tbl"><thead><tr>
-    <th>Versicherer</th><th>Police</th><th>Sparten</th><th>Beitrag/Jahr</th><th>Deckung</th><th>Gefahren</th>
-  </tr></thead><tbody></tbody></table>
-</div>
-<script src='../../scripts/storage.js'></script>
-<script>
-  const a = DFS.getAnalysis() || DFS.analyze();
-  document.getElementById('kpis').innerHTML = `
-    <table><tr>
-      <td style="padding-right:14px"><strong>Jahresprämie:</strong></td><td>${DFS.currencyDE(a.sumAnnual)}</td>
-      <td style="padding-right:14px"><strong>Ziel-Einsparung:</strong></td><td>${a.targetPct}% → mtl. ${DFS.currencyDE(a.monthlySaving)}</td>
-      <td style="padding-right:14px"><strong>Risiko-Score:</strong></td><td>${a.riskScore}</td>
-    </tr></table>`;
-
-  document.getElementById('warn').innerHTML = a.warnings.length? a.warnings.map(w=>'• '+w).join('<br>') : '—';
-  document.getElementById('rec').innerHTML = a.recommendations.length? a.recommendations.map(w=>'• '+w).join('<br>') : '—';
-
-  const tbody = document.querySelector('#tbl tbody');
-  (DFS.getContracts()||[]).forEach(c=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = '<td>'+ (c.versicherer||'') +'</td>'+
-    '<td>'+ (c.policeNr||'') +'</td>'+
-    '<td>'+ (c.sparten||[]).join(', ') +'</td>'+
-    '<td>'+ DFS.currencyDE(c.jahresbeitragBrutto||0) +'</td>'+
-    '<td>'+ (c.deckungssumme? DFS.currencyDE(c.deckungssumme):'–') +'</td>'+
-    '<td>'+ (c.gefahren||[]).join(', ') +'</td>';
-    tbody.appendChild(tr);
-  });
-</script>
+</div></div>
+    </div>
+  </div>
+  <script>parent.postMessage({type:'set-title', value: 'PDF-Export'}, '*');</script>
+  <script src="./module.js"></script>
 </body></html>

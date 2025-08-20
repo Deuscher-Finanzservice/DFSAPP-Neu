@@ -1,110 +1,37 @@
-
 <!doctype html>
 <html lang="de">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>DFS – Versicherungsanalyse</title>
-  <link rel="stylesheet" href="./styles/main.css">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>DFS Versicherungsanalyse</title>
+  <link rel="stylesheet" href="./styles/base.css"/>
 </head>
 <body>
 <div class="container">
   <aside class="sidebar">
-    <div class="brand">
-      <img src="./assets/logo.png" alt="DFS">
-      <div>
-        <div class="title">DFS Analyse-Tool</div>
-        <div class="badge" id="version">v<span></span></div>
-      </div>
+    <div class="logo">
+      <img src="./assets/logo.png" alt="DFS Logo"/>
+      <h1>DFS Analyse-Tool</h1>
     </div>
-    <div class="nav">
-      <button data-target="./modules/home/index.html" class="active">🏠 Übersicht</button>
-      <button data-target="./modules/customer/index.html">👤 Kundenstammdaten</button>
-      <button data-target="./modules/contracts/index.html">📄 Verträge & Sparten</button>
-      <button data-target="./modules/analysis/index.html">🧭 Analyse-Wizard</button>
-      <button data-target="./modules/dashboard/index.html">📊 Ergebnis-Dashboard</button>
-      <button data-target="./modules/print/index.html">🖨️ PDF-Export</button>
-      <button data-target="./modules/tools/index.html">🧰 Hilfen & Vorlagen</button>
+    <div class="nav" id="nav">
+      <button data-href="./modules/dashboard/index.html" class="active">🏠 Dashboard</button>
+      <button data-href="./modules/customers/index.html">👤 Kunden</button>
+      <button data-href="./modules/contracts/index.html">📑 Verträge</button>
+      <button data-href="./modules/gaps/index.html">🧩 Deckungslücken</button>
+      <button data-href="./modules/savings/index.html">💶 Ersparnisse</button>
+      <button data-href="./modules/analysis/index.html">🧠 Analyse</button>
+      <button data-href="./modules/print/index.html">🖨️ PDF-Export</button>
+      <button data-href="./modules/help/index.html">❓ Hilfe/Tools</button>
     </div>
+    <div class="footer">v20250820.2232 • dfs.version im localStorage</div>
   </aside>
   <main class="main">
-    <div class="topbar">
-      <div>Projekt: <strong>Deutscher Finanzservice</strong></div>
-      <div class="row no-print">
-        <button class="btn-outline" id="btn-export">Export</button>
-        <input type="file" id="file-import" class="no-print" accept="application/json" style="display:none">
-        <button class="btn-outline" id="btn-import">Import</button>
-        <button class="btn-outline" id="btn-reset">Reset</button>
-      </div>
-    </div>
-    <div class="iframe-wrap">
-      <iframe id="content" src="./modules/home/index.html" title="Inhalt"></iframe>
+    <div class="topbar"><h2 id="title">Dashboard</h2><div></div></div>
+    <div class="content">
+      <iframe id="content" src="./modules/dashboard/index.html"></iframe>
     </div>
   </main>
 </div>
-
-<!-- Footer mit Version -->
-<footer style="padding:8px;text-align:center;color:var(--muted);font-size:12px;border-top:1px solid var(--border)">
-  DFS Analyse-Tool – Version <span id="ver"></span>
-</footer>
-
-<div id="toast" class="toast"></div>
-
-<script src="./scripts/storage.js"></script>
-<script src="./scripts/util.js"></script>
-<script>
-  // Sidebar navigation
-  document.querySelectorAll('.nav button').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      document.querySelectorAll('.nav button').forEach(function(b){b.classList.remove('active');});
-      btn.classList.add('active');
-      document.getElementById('content').src = btn.getAttribute('data-target');
-    });
-  });
-
-  // Version
-  try { 
-    const ts = new Date().toISOString().slice(0,16).replace('T','.');
-    localStorage.setItem('dfs.version', ts);
-    document.querySelector('#version span').textContent = ts;
-    document.getElementById('ver').textContent = ts;
-  } catch(e){}
-
-  // Export / Import
-  document.getElementById('btn-export').addEventListener('click', function(){
-    const payload = window.DFS.exportAll();
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'dfs_export.json';
-    a.click();
-  });
-  document.getElementById('btn-import').addEventListener('click', function(){
-    document.getElementById('file-import').click();
-  });
-  document.getElementById('file-import').addEventListener('change', async function(e){
-    const file = e.target.files[0];
-    if(!file) return;
-    try{
-      const text = await file.text();
-      const json = JSON.parse(text);
-      window.DFS.importAll(json);
-      window.DFS.toast('Import erfolgreich.');
-      const ifr = document.getElementById('content');
-      const src = ifr.src; ifr.src = src;
-    }catch(err){
-      window.DFS.toast('Import fehlgeschlagen.');
-      console.error(err);
-    }
-  });
-  document.getElementById('btn-reset').addEventListener('click', function(){
-    if(confirm('Alle lokalen Daten löschen?')){
-      window.DFS.resetAll();
-      window.DFS.toast('Daten gelöscht.');
-      const ifr = document.getElementById('content');
-      const src = ifr.src; ifr.src = src;
-    }
-  });
-</script>
-</body>
-</html>
+<div class="toast" id="toast"></div>
+<script src="./scripts/shell.js"></script>
+</body></html>

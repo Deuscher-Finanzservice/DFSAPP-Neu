@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Kundenstammdaten</title>
+  <link rel="stylesheet" href="../../styles/base.css"/>
+</head>
+<body>
+  <div class="page" style="padding:16px;">
+    <div class="row">
+      <div class="col-12"><div class="card"><h2 style="margin:4px 0 10px;">Kundenstammdaten</h2>
+<form id="f">
+  <div class="row">
+    <div class="col-6"><label>Firma</label><input required name="firma" type="text" placeholder="Muster GmbH"/></div>
+    <div class="col-6"><label>Ansprechpartner</label><input required name="ansprech" type="text" placeholder="Max Mustermann"/></div>
+    <div class="col-6"><label>Telefon</label><input required name="telefon" type="text" placeholder="+49 ..."/></div>
+    <div class="col-6"><label>E-Mail (optional)</label><input name="email" type="text" placeholder="name@firma.de"/></div>
+    <div class="col-4"><label>Branche (optional)</label><input name="branche" type="text" placeholder="Handwerk"/></div>
+    <div class="col-4"><label>Standort (optional)</label><input name="standort" type="text" placeholder="PLZ Ort"/></div>
+    <div class="col-2"><label>Mitarbeiter (optional)</label><input name="mitarbeiter" type="number" min="0"/></div>
+    <div class="col-2"><label>Gründung (optional)</label><input name="gruendung" type="number" min="1900" max="2100"/></div>
+  </div>
+  <div style="margin-top:12px; display:flex; gap:10px;">
+    <button class="btn btn-primary" type="submit">Speichern</button>
+    <button class="btn" id="fill">Demo-Daten</button>
+  </div>
+</form>
+</div></div>
+    </div>
+  </div>
+  <script>parent.postMessage({type:'set-title', value: 'Kundenstammdaten'}, '*');</script>
+  <script src="./module.js"></script>
+</body></html>
