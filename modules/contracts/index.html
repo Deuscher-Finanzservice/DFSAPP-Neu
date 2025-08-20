@@ -79,7 +79,7 @@
         <select id="gefahren" multiple size="8"></select>
       </div>
       <div class="col">
-        <label>Empfehlungen (Checkliste)</label>
+        <label>Empfehlungen (kontextbasiert)</label>
         <div id="empf" class="chips"></div>
       </div>
     </div>
@@ -123,12 +123,17 @@
       const opt = document.createElement('option'); opt.textContent=g; selGefahren.appendChild(opt);
     });
   }
-  selSparten.addEventListener('change', refreshGefahren);
+  selSparten.addEventListener('change', function(){
+    refreshGefahren();
+    renderEmpf();
+  });
   refreshGefahren();
 
   function renderEmpf(){
+    const selectedSparten = Array.from(selSparten.selectedOptions).map(o=>o.value);
+    const items = DFS.getEmpfehlungenForSparten(selectedSparten);
     empfWrap.innerHTML='';
-    DFS.STD.empfehlungenChecklist.forEach((e,i)=>{
+    items.forEach((e,i)=>{
       const chip = document.createElement('div'); chip.className='chip'; chip.textContent=e; chip.dataset.idx=i;
       chip.onclick = ()=> chip.classList.toggle('warn');
       empfWrap.appendChild(chip);
@@ -137,7 +142,7 @@
   renderEmpf();
 
   function field(id){ return document.getElementById(id).value; }
-  function clearFields(){ ["versicherer","produkt","police","beginn","ende","beitrag","deckung","sb","kf","hf"].forEach(id=>document.getElementById(id).value=''); selSparten.selectedIndex=-1; refreshGefahren(); Array.from(empfWrap.children).forEach(ch=>ch.classList.remove('warn')); }
+  function clearFields(){ ["versicherer","produkt","police","beginn","ende","beitrag","deckung","sb","kf","hf"].forEach(id=>document.getElementById(id).value=''); selSparten.selectedIndex=-1; refreshGefahren(); renderEmpf(); }
 
   function add(){
     const cts = DFS.getContracts();
