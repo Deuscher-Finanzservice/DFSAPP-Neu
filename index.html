@@ -4,40 +4,86 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>DFS Versicherungsanalyse</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <!-- Styles -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles/main.css" />
-  <!-- Loads Supabase keys from Netlify env and stores them in localStorage -->
-  <script defer src="./scripts/supabase-env-loader.js"></script>
+  <link rel="stylesheet" href="/styles/min.css" />
+
   <style>
-    body{background:#00223B;color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0}
-    .shell{display:flex;min-height:100vh}
-    aside{width:260px;background:rgba(255,255,255,.04);border-right:1px solid rgba(255,255,255,.08);padding:16px}
-    main{flex:1}
-    .nav a{display:block;padding:10px 12px;border-radius:10px;color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.08);margin-bottom:8px}
-    .nav a:hover{border-color:#896c20}
-    header{padding:16px;border-bottom:1px solid rgba(255,255,255,.08)}
-    iframe{border:0;width:100%;height:calc(100vh - 64px);background:#071d31}
-    .brand{font-weight:600;letter-spacing:.3px}
+    body{background:#0E223B;color:#fff;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    .shell{display:grid;grid-template-columns:260px 1fr;gap:16px;min-height:100vh}
+    aside{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);padding:16px}
+    .brand{font-weight:600;letter-spacing:.3px;margin-bottom:12px}
+    nav a{display:block;padding:10px 12px;border-radius:10px;color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.08);margin-bottom:8px}
+    nav a:hover{border-color:#1896c0}
+    header{display:flex;align-items:center;justify-content:space-between;margin:4px 0 12px 0}
+    .pill{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.2)}
+    iframe{border:0;width:100%;height:calc(100vh - 80px)}
+    .btn{background:#E5B74B;border:0;color:#1b2430;font-weight:600;padding:8px 10px;border-radius:10px}
   </style>
 </head>
 <body>
   <div class="shell">
     <aside>
       <div class="brand">Deutscher Finanzservice</div>
-      <nav class="nav" aria-label="Module">
-        <a href="./modules/home/index.html" target="content">Start</a>
-        <a href="./modules/customer/index.html" target="content">Kunden</a>
-        <a href="./modules/contracts/index.html" target="content">Verträge</a>
-        <a href="./modules/analyse/index.html" target="content">Analyse</a>
-        <a href="./modules/dashboard/index.html" target="content">Dashboard</a>
-        <a href="./modules/print/index.html" target="content">PDF/Print</a>
+      <nav aria-label="Module">
+        <a href="/modules/home/index.html"     target="content">Start</a>
+        <a href="/modules/customer/index.html" target="content">Kunden</a>
+        <a href="/modules/contracts/index.html" target="content">Verträge</a>
+        <a href="/modules/analyse/index.html"  target="content">Analyse</a>
+        <a href="/modules/dashboard/index.html" target="content">Dashboard</a>
+        <a href="/modules/print/index.html"    target="content">PDF/Print</a>
       </nav>
     </aside>
+
     <main>
-      <header>DFS Versicherungsanalyse</header>
-      <iframe id="content" name="content" src="./modules/home/index.html" title="Inhalt"></iframe>
+      <header>
+        <h1 style="margin:0;padding:0;font-size:16px;">Projekt: Deutscher Finanzservice</h1>
+        <div>
+          <span id="sb-status" class="pill">Supabase: <span id="sb-state">getrennt</span></span>
+        </div>
+      </header>
+
+      <!-- Standard-Startseite im iFrame -->
+      <iframe id="content" name="content" src="/modules/home/index.html" title="Inhalt"></iframe>
     </main>
   </div>
+
+  <!-- Supabase Client (enthält deine URL + Anon-Key) -->
+  <script type="module" src="/scripts/supabaseClient.js"></script>
+
+  <!-- Kleiner Verbindungs-Check & Nav-Verhalten -->
+  <script type="module">
+    import { supabase } from "/scripts/supabaseClient.js";
+
+    // Einfaches Ping: zählt nur Kopfzeilen (schnell + sicher)
+    async function checkConnection(){
+      const badge = document.getElementById("sb-state");
+      try{
+        const { error } = await supabase
+          .from("customer")
+          .select("id", { count: "exact", head: true })
+          .limit(1);
+        if (error) throw error;
+        badge.textContent = "verbunden";
+      }catch(e){
+        badge.textContent = "getrennt";
+        console.debug("Supabase check failed:", e.message);
+      }
+    }
+
+    // Links im Sidebar in das iFrame laden (bleibt SPA‑Gefühl)
+    document.querySelectorAll("nav a").forEach(a=>{
+      a.addEventListener("click", (ev)=>{
+        ev.preventDefault();
+        const href = a.getAttribute("href");
+        document.getElementById("content").src = href;
+      });
+    });
+
+    checkConnection();
+  </script>
 </body>
 </html>
