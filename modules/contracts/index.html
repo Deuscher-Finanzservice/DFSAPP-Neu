@@ -1,83 +1,92 @@
-<!doctype html>
-<html lang="de">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Verträge/Sparten</title>
-  <link rel="stylesheet" href="../../styles/base.css"/>
-</head>
-<body>
-  <div class="page" style="padding:16px;">
-    <div class="row">
-      <div class="col-12"><div class="card"><h2 style="margin:4px 0 10px;">Verträge/Sparten</h2>
-<div class="row">
-  <div class="col-12">
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <h3 style="margin:0;">Verträge</h3>
-        <div style="display:flex; gap:8px;">
-          <button class="btn" id="import">Import JSON</button>
-          <button class="btn" id="export">Export JSON</button>
-          <button class="btn btn-primary" id="add">Neu</button>
-        </div>
-      </div>
-      <table class="table" id="table">
-        <thead><tr><th>Versicherer</th><th>Sparten</th><th>Beitrag/Jahr</th><th>Empfehlung</th><th>Ersparnis</th><th></th></tr></thead>
-        <tbody></tbody>
-      </table>
+
+<!doctype html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../styles/main.css"><title>Verträge</title></head><body>
+<div class="card">
+  <h2>Verträge & Sparten</h2>
+  <div class="row">
+    <div class="col"><label>Versicherer</label>
+      <input list="versicherer" id="v">
+      <datalist id="versicherer"><option value="Allianz"><option value="AXA"><option value="Signal Iduna"><option value="HUK-Coburg"><option value="ERGO"><option value="Zurich"><option value="HDI"></datalist>
     </div>
+    <div class="col"><label>Police</label><input id="p"></div>
+    <div class="col"><label>Beginn</label><input type="date" id="b"></div>
+    <div class="col"><label>Beitrag/Jahr</label><input id="j"></div>
+  </div>
+  <div class="row">
+    <div class="col"><label>Sparten</label>
+      <select id="s" multiple size="6"><option>Betriebshaftpflicht (BHV)</option><option>Inhalt</option><option>Gebäude</option><option>Ertragsausfall/BU</option><option>Cyber</option><option>Rechtsschutz</option></select>
+    </div>
+    <div class="col"><label>Gefahren</label><select id="g" multiple size="8"></select></div>
+    <div class="col"><label>Empfehlungen</label><div id="e" class="chips"></div></div>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <button class="btn" id="add">+ Vertrag hinzufügen</button>
+    <button class="btn-outline" id="clear">Felder leeren</button>
+    <button class="btn" id="saveCloud">Alle Verträge in Cloud speichern</button>
+    <button class="btn-outline" id="loadCloud">Cloud → Lokal laden</button>
   </div>
 </div>
 
-<div id="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); align-items:center; justify-content:center;">
-  <div class="card" style="width:860px; max-width:95vw; background:#032540;">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3 id="m-title">Vertrag</h3>
-      <button class="btn" id="m-close">ESC</button>
-    </div>
-    <form id="m-form">
-      <div class="row">
-        <div class="col-6"><label>Versicherer</label><input name="versicherer" required type="text"></div>
-        <div class="col-6"><label>Produkt (optional)</label><input name="produkt" type="text"></div>
-        <div class="col-4"><label>Police-Nr.</label><input name="policeNr" required type="text"></div>
-        <div class="col-4"><label>Beginn</label><input name="beginn" required type="date"></div>
-        <div class="col-4"><label>Zahlweise</label>
-          <select name="zahlweise">
-            <option>jährlich</option><option>halbjährlich</option><option>vierteljährlich</option><option>monatlich</option>
-          </select>
-        </div>
-        <div class="col-4"><label>Jahresbeitrag Brutto (€)</label><input name="jahresbeitragBrutto" required type="number" step="0.01"></div>
-        <div class="col-4"><label>Deckungssumme (optional, €)</label><input name="deckungssumme" type="number" step="0.01"></div>
-        <div class="col-4"><label>Selbstbehalt (optional, €)</label><input name="selbstbehalt" type="number" step="0.01"></div>
-        <div class="col-12"><label>Sparten (Mehrfachauswahl)</label>
-          <select name="sparten" multiple size="6">
-            <option>Betriebshaftpflicht</option><option>Inhalt</option><option>Gebäude</option><option>Ertragsausfall/BU</option><option>Cyber</option><option>Rechtsschutz</option><option>D&O</option><option>Gruppenunfall</option>
-          </select>
-        </div>
-        <div class="col-12"><label>Versicherte Gefahren (Mehrfachauswahl)</label>
-          <select name="gefahren" multiple size="7">
-            <option>Feuer</option><option>Leitungswasser</option><option>Einbruchdiebstahl</option><option>Sturm/Hagel</option><option>Elementar</option><option>Haftpflicht</option><option>Eigenschäden</option><option>Forensik</option><option>Datenwiederherstellung</option><option>Betriebsunterbrechung</option><option>Organhaftung</option><option>Arbeits-RS</option><option>Vertrags-RS</option><option>Straf-RS</option><option>Unfalltod</option><option>Invalidität</option><option>Krankenhaustagegeld</option>
-          </select>
-        </div>
-        <div class="col-12"><label>Empfehlungen (optional, Komma-getrennt)</label><input name="empfehlungen" type="text" placeholder="Versicherungssumme prüfen, Umstellung ins neue Tarifwerk prüfen"></div>
-        <div class="col-6"><label>Vergleich (Direkt) Versicherer</label><input name="vergleichDirektVersicherer" type="text"></div>
-        <div class="col-3"><label>Vergleich Beitrag (€)</label><input name="vergleichDirektBeitrag" type="number" step="0.01"></div>
-        <div class="col-6"><label>Empfehlung Versicherer</label><input name="empfehlungVersicherer" type="text"></div>
-        <div class="col-3"><label>Empfehlung Beitrag (€)</label><input name="empfehlungBeitrag" type="number" step="0.01"></div>
-        <div class="col-12"><label>Hinweise Vertrag (optional)</label><textarea name="hinweiseVertrag"></textarea></div>
-        <div class="col-12"><label>Interner Vermerk (nur intern, nicht im Druck)</label><textarea name="internVermerk"></textarea></div>
-      </div>
-      <div style="display:flex; gap:8px; margin-top:12px;">
-        <button class="btn btn-primary" type="submit">Speichern</button>
-        <button class="btn" type="button" id="m-cancel">Abbrechen</button>
-      </div>
-    </form>
-  </div>
+<div class="card"><strong>Bestand</strong>
+  <table class="table" id="tbl"><thead><tr><th>Versicherer</th><th>Police</th><th>Sparten</th><th>Beitrag</th><th></th></tr></thead><tbody></tbody></table>
+  <div style="margin-top:8px;color:#C0C0C0">Summe: <span id="sum"></span></div>
 </div>
-<input type="file" id="file" accept="application/json" style="display:none"/>
-</div></div>
-    </div>
-  </div>
-  <script>parent.postMessage({type:'set-title', value: 'Verträge/Sparten'}, '*');</script>
-  <script src="./module.js"></script>
+
+<script src='../../scripts/storage.js'></script>
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+  const url = localStorage.getItem('dfs.supabase.url'); const key = localStorage.getItem('dfs.supabase.key');
+  let sb = null; if(url && key){ sb = createClient(url, key); }
+
+  const selS = document.getElementById('s'), selG=document.getElementById('g'), recDiv=document.getElementById('e');
+
+  function refreshGefahren(){
+    const selected = Array.from(selS.selectedOptions).map(o=>o.value);
+    const set = new Set(); if(selected.length===0){ DFS.STD.defaultGefahren.forEach(x=>set.add(x)); }
+    selected.forEach(s=> (DFS.STD.gefahrenBySparte[s]||DFS.STD.defaultGefahren).forEach(g=>set.add(g)));
+    selG.innerHTML=''; Array.from(set).forEach(g=>{const o=document.createElement('option');o.textContent=g; selG.appendChild(o);});
+  }
+  function renderRecs(){
+    const sp = Array.from(selS.selectedOptions).map(o=>o.value);
+    const items = DFS.getRecs(sp); recDiv.innerHTML='';
+    items.forEach(t=>{const c=document.createElement('div'); c.className='chip'; c.textContent=t; recDiv.appendChild(c);});
+  }
+  selS.addEventListener('change', ()=>{refreshGefahren(); renderRecs();}); refreshGefahren(); renderRecs();
+
+  function add(){
+    const cts = DFS.get(DFS.KEYS.contracts,[]);
+    cts.push({id:crypto.randomUUID(), sparten:Array.from(selS.selectedOptions).map(o=>o.value), versicherer:document.getElementById('v').value, policeNr:document.getElementById('p').value, beginn:document.getElementById('b').value, jahresbeitrag:DFS.parseNum(document.getElementById('j').value), gefahren:Array.from(selG.selectedOptions).map(o=>o.value)});
+    DFS.set(DFS.KEYS.contracts, cts); table();
+  }
+  function del(id){ const cts=DFS.get(DFS.KEYS.contracts,[]).filter(x=>x.id!==id); DFS.set(DFS.KEYS.contracts,cts); table(); }
+  function table(){
+    const tbody=document.querySelector('#tbl tbody'); tbody.innerHTML=''; const cts=DFS.get(DFS.KEYS.contracts,[]);
+    cts.forEach(c=>{const tr=document.createElement('tr'); tr.innerHTML='<td>'+c.versicherer+'</td><td>'+c.policeNr+'</td><td>'+c.sparten.join(', ')+'</td><td>'+DFS.currencyDE(c.jahresbeitrag||0)+'</td><td><button class="btn-danger" data-id="'+c.id+'">Löschen</button></td>'; tbody.appendChild(tr);});
+    tbody.querySelectorAll('button').forEach(b=>b.onclick=()=>del(b.dataset.id));
+    const sum=DFS.get(DFS.KEYS.contracts,[]).reduce((a,c)=>a+(c.jahresbeitrag||0),0); document.getElementById('sum').textContent=DFS.currencyDE(sum);
+  }
+  table();
+  document.getElementById('add').onclick=add;
+  document.getElementById('clear').onclick=()=>{['v','p','b','j'].forEach(id=>document.getElementById(id).value=''); selS.selectedIndex=-1; refreshGefahren(); renderRecs();};
+
+  async function saveCloud(){
+    if(!sb){ alert('Supabase Keys fehlen.'); return;}
+    const custId = localStorage.getItem('dfs.customer.id');
+    const cts = DFS.get(DFS.KEYS.contracts,[]);
+    // simple approach: delete all then insert
+    await sb.from('contracts').delete().neq('id','');
+    if(cts.length){ const payload = cts.map(c=>({id:c.id, customer_id:custId, sparten:c.sparten, versicherer:c.versicherer, police_nr:c.policeNr, beginn:c.beginn, jahresbeitrag:c.jahresbeitrag, gefahren:c.gefahren})); const {error}=await sb.from('contracts').insert(payload); if(error){console.error(error); alert('Speichern fehlgeschlagen'); return;}}
+    alert('Verträge in Cloud gespeichert.');
+  }
+  async function loadCloud(){
+    if(!sb){ alert('Supabase Keys fehlen.'); return;}
+    const {data,error}=await sb.from('contracts').select('*');
+    if(error){console.error(error); alert('Laden fehlgeschlagen'); return;}
+    const mapped = (data||[]).map(r=>({id:r.id, sparten:r.sparten||[], versicherer:r.versicherer, policeNr:r.police_nr, beginn:r.beginn, jahresbeitrag:r.jahresbeitrag, gefahren:r.gefahren||[]}));
+    DFS.set(DFS.KEYS.contracts, mapped); table(); alert('Cloud → Lokal übernommen.');
+  }
+  document.getElementById('saveCloud').onclick=saveCloud;
+  document.getElementById('loadCloud').onclick=loadCloud;
+</script>
 </body></html>

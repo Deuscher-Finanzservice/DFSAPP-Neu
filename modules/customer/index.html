@@ -1,43 +1,60 @@
 
 <!doctype html><html lang="de"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="../../styles/main.css">
-<title>Kundenstammdaten</title></head><body>
+<link rel="stylesheet" href="../../styles/main.css"><title>Kunden</title></head><body>
 <div class="card">
   <h2>Kundenstammdaten</h2>
   <div class="row">
     <div class="col"><label>Firma</label><input id="firma"></div>
     <div class="col"><label>Ansprechpartner</label><input id="ansprech"></div>
-    <div class="col"><label>E-Mail (optional)</label><input id="email" type="email" placeholder="optional"></div>
+    <div class="col"><label>E-Mail</label><input id="email"></div>
     <div class="col"><label>Telefon</label><input id="telefon"></div>
-    <div class="col"><label>Branche (optional)</label><input id="branche" placeholder="optional"></div>
-    <div class="col"><label>Mitarbeiter (optional)</label><input id="mitarbeiter" type="number" placeholder="optional"></div>
-    <div class="col"><label>Umsatz (optional)</label><input id="umsatz" type="number" placeholder="optional"></div>
-    <div class="col"><label>Gründung (Jahr, optional)</label><input id="gruendung" type="number" placeholder="optional"></div>
-    <div class="col"><label>Standort (optional)</label><input id="standort" placeholder="optional"></div>
+    <div class="col"><label>Branche</label><input id="branche"></div>
+    <div class="col"><label>Mitarbeiter</label><input id="mitarbeiter" type="number"></div>
+    <div class="col"><label>Umsatz</label><input id="umsatz"></div>
+    <div class="col"><label>Gründung (YYYY)</label><input id="gruendung" type="number"></div>
+    <div class="col"><label>Standort</label><input id="standort"></div>
   </div>
-  <div class="row">
-    <button class="btn" id="save">Speichern</button>
-    <button class="btn-outline" id="clear">Felder leeren</button>
+  <div class="row" style="margin-top:10px">
+    <button class="btn" id="saveLocal">Lokal speichern</button>
+    <button class="btn-outline" id="loadLocal">Lokal laden</button>
+    <button class="btn" id="saveCloud">In Cloud speichern</button>
+    <button class="btn-outline" id="loadCloud">Aus Cloud laden</button>
   </div>
 </div>
 <script src='../../scripts/storage.js'></script>
-<script>
-  const fields = ["firma","ansprech","email","telefon","branche","mitarbeiter","umsatz","gruendung","standort"];
-  function load(){
-    const c = DFS.getCustomer();
-    fields.forEach(k=>{ const el = document.getElementById(k); if(c && typeof c[k] !== 'undefined' && c[k]!==null) el.value = c[k]; else el.value=''; });
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+  const url = localStorage.getItem('dfs.supabase.url'); const key = localStorage.getItem('dfs.supabase.key');
+  let sb = null; if(url && key){ sb = createClient(url, key); }
+
+  function readUI(){ return {firma:firma.value,ansprech:ansprech.value,email:email.value,telefon:telefon.value,branche:branche.value,mitarbeiter:Number(mitarbeiter.value)||null,umsatz:DFS.parseNum(umsatz.value)||null,gruendung:Number(gruendung.value)||null,standort:standort.value}; }
+  function writeUI(c){ if(!c) return; firma.value=c.firma||'';ansprech.value=c.ansprech||'';email.value=c.email||'';telefon.value=c.telefon||'';branche.value=c.branche||'';mitarbeiter.value=c.mitarbeiter||'';umsatz.value=c.umsatz||'';gruendung.value=c.gruendung||'';standort.value=c.standort||''; }
+  function saveLocal(){ DFS.set(DFS.KEYS.customer, readUI()); DFS.toast('Lokal gespeichert.'); }
+  function loadLocal(){ writeUI(DFS.get(DFS.KEYS.customer,{})); }
+
+  async function saveCloud(){
+    if(!sb){ alert('Supabase Keys fehlen. Bitte in der Shell verbinden.'); return; }
+    const c = readUI();
+    // einfache Strategie: es gibt genau 1 Kunden-Datensatz
+    // upsert auf basis fester id
+    const fixedId = localStorage.getItem('dfs.customer.id') || crypto.randomUUID();
+    localStorage.setItem('dfs.customer.id', fixedId);
+    const {error} = await sb.from('customers').upsert({id:fixedId, firma:c.firma,ansprech:c.ansprech,email:c.email,telefon:c.telefon,branche:c.branche,mitarbeiter:c.mitarbeiter,umsatz:c.umsatz,gruendung:c.gruendung,standort:c.standort});
+    if(error){ console.error(error); alert('Cloud-Speichern fehlgeschlagen'); } else { alert('In Cloud gespeichert'); }
   }
-  load();
-  document.getElementById('save').onclick = ()=>{
-    const obj = {};
-    fields.forEach(k=>{ obj[k] = document.getElementById(k).value; });
-    obj.mitarbeiter = obj.mitarbeiter ? Number(obj.mitarbeiter) : null;
-    obj.umsatz = obj.umsatz ? Number(obj.umsatz) : null;
-    obj.gruendung = obj.gruendung ? Number(obj.gruendung) : null;
-    DFS.setCustomer(obj);
-    DFS.toast('Gespeichert.');
-  };
-  document.getElementById('clear').onclick = ()=>{ fields.forEach(k=>document.getElementById(k).value=''); };
+
+  async function loadCloud(){
+    if(!sb){ alert('Supabase Keys fehlen.'); return; }
+    const { data, error } = await sb.from('customers').select('*').limit(1);
+    if(error){ console.error(error); alert('Cloud-Laden fehlgeschlagen'); return; }
+    if(data && data[0]){ writeUI(data[0]); DFS.set(DFS.KEYS.customer, data[0]); }
+  }
+
+  document.getElementById('saveLocal').onclick = saveLocal;
+  document.getElementById('loadLocal').onclick = loadLocal;
+  document.getElementById('saveCloud').onclick = saveCloud;
+  document.getElementById('loadCloud').onclick = loadCloud;
+  loadLocal();
 </script>
 </body></html>

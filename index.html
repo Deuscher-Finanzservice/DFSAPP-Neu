@@ -1,37 +1,50 @@
-<!doctype html>
-<html lang="de">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>DFS Versicherungsanalyse</title>
-  <link rel="stylesheet" href="./styles/base.css"/>
-</head>
-<body>
+
+<!doctype html><html lang="de"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DFS – Analyse (Supabase)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles/main.css">
+</head><body>
 <div class="container">
   <aside class="sidebar">
-    <div class="logo">
-      <img src="./assets/logo.png" alt="DFS Logo"/>
-      <h1>DFS Analyse-Tool</h1>
+    <div class="brand">
+      <img src="./assets/logo.png" alt="DFS">
+      <div><div style="font-weight:600">DFS Analyse-Tool</div><div style="font-size:12px;color:#C0C0C0">Supabase</div></div>
     </div>
-    <div class="nav" id="nav">
-      <button data-href="./modules/dashboard/index.html" class="active">🏠 Dashboard</button>
-      <button data-href="./modules/customers/index.html">👤 Kunden</button>
-      <button data-href="./modules/contracts/index.html">📑 Verträge</button>
-      <button data-href="./modules/gaps/index.html">🧩 Deckungslücken</button>
-      <button data-href="./modules/savings/index.html">💶 Ersparnisse</button>
-      <button data-href="./modules/analysis/index.html">🧠 Analyse</button>
-      <button data-href="./modules/print/index.html">🖨️ PDF-Export</button>
-      <button data-href="./modules/help/index.html">❓ Hilfe/Tools</button>
+    <div class="nav">
+      <button data-target="./modules/home/index.html" class="active">🏠 Übersicht</button>
+      <button data-target="./modules/customer/index.html">👤 Kunden</button>
+      <button data-target="./modules/contracts/index.html">📄 Verträge</button>
+      <button data-target="./modules/print/index.html">🖨️ PDF</button>
     </div>
-    <div class="footer">v20250820.2232 • dfs.version im localStorage</div>
   </aside>
   <main class="main">
-    <div class="topbar"><h2 id="title">Dashboard</h2><div></div></div>
-    <div class="content">
-      <iframe id="content" src="./modules/dashboard/index.html"></iframe>
+    <div class="topbar">
+      <div>Projekt: <strong>Deutscher Finanzservice</strong></div>
+      <div class="row">
+        <button class="btn-outline" id="btn-keys">Supabase verbinden</button>
+      </div>
     </div>
+    <div class="iframe-wrap"><iframe id="content" src="./modules/home/index.html"></iframe></div>
   </main>
 </div>
-<div class="toast" id="toast"></div>
-<script src="./scripts/shell.js"></script>
+<div id="toast" class="toast"></div>
+<script src="./scripts/storage.js"></script>
+<script type="module" src="./scripts/supabase.js"></script>
+<script>
+  document.querySelectorAll('.nav button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('content').src = btn.getAttribute('data-target');
+    });
+  });
+  document.getElementById('btn-keys').onclick = ()=>{
+    const url = prompt('SUPABASE_URL? (https://...supabase.co)', localStorage.getItem('dfs.supabase.url')||'');
+    if(!url) return;
+    const key = prompt('SUPABASE_ANON_KEY? (public anon)', localStorage.getItem('dfs.supabase.key')||'');
+    if(!key) return;
+    window.DFS.setSupabaseKeys(url, key);
+  };
+</script>
 </body></html>
