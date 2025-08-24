@@ -85,5 +85,79 @@
 
     checkConnection();
   </script>
+  <script type="module">
+  import { saveCustomerToCloud, loadCustomers, loadCustomerContractDetails } from '../../scripts/supabase.js';
+
+  // Feld-Helper
+  const $ = (id) => document.getElementById(id);
+
+  // IDs deiner Inputs – bitte so benennen wie in der Seite vorhanden:
+  const fields = {
+    firma: $('cust-firma') || document.querySelector('[name="firma"]'),
+    branche: $('cust-branche') || document.querySelector('[name="branche"]'),
+    email: $('cust-email') || document.querySelector('[name="email"]'),
+    telefon: $('cust-telefon') || document.querySelector('[name="telefon"]'),
+    mitarbeiter: $('cust-mitarbeiter') || document.querySelector('[name="mitarbeiter"]'),
+    umsatz: $('cust-umsatz') || document.querySelector('[name="umsatz"]'),
+    gruendung: $('cust-gruendung') || document.querySelector('[name="gruendung"]'),
+    standort: $('cust-standort') || document.querySelector('[name="standort"]'),
+  };
+
+  // Buttons (über ihre Labels in der UI)
+  const btnSaveCloud = Array.from(document.querySelectorAll('button, a'))
+    .find(el => /in cloud speichern/i.test(el.textContent));
+  const btnLoadCloud = Array.from(document.querySelectorAll('button, a'))
+    .find(el => /aus cloud laden/i.test(el.textContent));
+
+  function readForm() {
+    const v = (el) => (el && 'value' in el ? el.value : '');
+    return {
+      firma: v(fields.firma),
+      branche: v(fields.branche),
+      email: v(fields.email),
+      telefon: v(fields.telefon),
+      mitarbeiter: Number(v(fields.mitarbeiter) || 0),
+      umsatz: Number(v(fields.umsatz) || 0),
+      gruendung: Number(v(fields.gruendung) || 0),
+      standort: v(fields.standort),
+    };
+  }
+
+  function toast(msg, isErr=false) {
+    console[isErr ? 'error' : 'log'](msg);
+    // optional: hier später hübsche UI-Toast einbauen
+    alert(msg);
+  }
+
+  if (btnSaveCloud) {
+    btnSaveCloud.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        const payload = readForm();
+        if (!payload.firma) return toast('Firma ist Pflicht.', true);
+        const saved = await saveCustomerToCloud(payload);
+        toast(`Gespeichert: ${saved.firma}`);
+      } catch (err) {
+        toast(`Cloud-Speichern fehlgeschlagen: ${err.message}`, true);
+      }
+    });
+  }
+
+  if (btnLoadCloud) {
+    btnLoadCloud.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        // wähle hier, ob du nur Kunden oder gleich die View laden willst:
+        // const rows = await loadCustomers();
+        const rows = await loadCustomerContractDetails();
+        if (!rows?.length) return toast('Keine Daten in der Cloud gefunden.');
+        console.table(rows);
+        toast(`Geladen: ${rows.length} Datensätze (Konsole zeigt Details)`);
+      } catch (err) {
+        toast(`Cloud-Laden fehlgeschlagen: ${err.message}`, true);
+      }
+    });
+  }
+</script>
 </body>
 </html>
