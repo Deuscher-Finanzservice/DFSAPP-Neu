@@ -1,8 +1,9 @@
 // scripts/supabaseClient.js
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// 👉 deine echten Zugangsdaten (aus deinen Screenshots)
-const SUPABASE_URL = "https://guzrujufvavyujqpwtiix.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1enJ1anVmdmF5dWpxcHd0aXR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwMjY1MzksImV4cCI6MjA3MTYwMjUzOX0.ZQ64MC0Hgaxk6ZIFG-BILfGyULdi1wkgTNDTtZYz14c";
+// Deine echten Supabase-Zugangsdaten
+const SUPABASE_URL = "https://guzrujufvayujqpwtix.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_m66OvSIQzzStuvGz4HRQ_G41o_V3i";
 
+// Supabase-Client erstellen
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
