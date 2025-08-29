@@ -17,6 +17,7 @@ let contracts = readLS();
 initUI();
 renderTable();
 wireEvents();
+calculateDates();
 
 // ===== Helpers =====
 function readLS() {
@@ -39,6 +40,10 @@ function initUI(){
   const sel = $('c-freq');
   if (sel) sel.innerHTML = FREQ.map(f=>`<option>${f}</option>`).join('');
 
+  // Laufzeit (3/5 Jahre)
+  const term = $('c-term');
+  if (term) term.innerHTML = '<option value="3">3 Jahre</option><option value="5">5 Jahre</option>';
+
   // Risiken-Checkboxen
   const box = $('risk-boxes');
   if (box) box.innerHTML = RISK_CATALOG.map(r=>`
@@ -57,6 +62,9 @@ function wireEvents(){
   // Platzhalter: werden in späteren Blocks befüllt
   const sC = $('btn-save-cloud'); if (sC) sC.onclick = ()=>alert('Cloud-Speichern kommt in Block 3');
   const lC = $('btn-load-cloud'); if (lC) lC.onclick = ()=>alert('Cloud-Laden kommt in Block 3');
+
+  const start = $('c-start'); if (start) start.addEventListener('change', calculateDates);
+  const term = $('c-term'); if (term) term.addEventListener('change', calculateDates);
 }
 
 // ===== Form <-> Objekt =====
@@ -64,12 +72,22 @@ function getForm(){
   const risks = [...document.querySelectorAll('#risk-boxes input[type=checkbox]:checked')].map(x=>x.value);
   const num = v => (v===''||v==null) ? null : Number(String(v).replace(',','.'))||0;
 
+  const startVal = $('c-start')?.value || new Date().toISOString().slice(0,10);
+  const termYears = parseInt($('c-term')?.value || '3', 10);
+  const endDate = new Date(startVal);
+  endDate.setFullYear(endDate.getFullYear() + termYears);
+  const reminderDate = new Date(endDate);
+  reminderDate.setMonth(reminderDate.getMonth() - 3);
+
   return {
     insurer: $('c-insurer')?.value?.trim()||'',
     policyNumber: $('c-policy')?.value?.trim()||'',
     product: $('c-product')?.value?.trim()||'',
     risks,
-    startDate: $('c-start')?.value || new Date().toISOString().slice(0,10),
+    startDate: startVal,
+    termYears,
+    endDate: endDate.toISOString().split('T')[0],
+    reminderDate: reminderDate.toISOString().split('T')[0],
     paymentFrequency: $('c-freq')?.value || FREQ[0],
     annualPremium: num($('c-premium')?.value)||0,
     coverage: num($('c-coverage')?.value),
@@ -78,9 +96,10 @@ function getForm(){
   };
 }
 function clearForm(){
-  ['c-insurer','c-policy','c-product','c-start','c-premium','c-coverage','c-deductible','c-notes']
+  ['c-insurer','c-policy','c-product','c-start','c-premium','c-coverage','c-deductible','c-notes','c-end','c-reminder']
     .forEach(id=>{ const el=$(id); if(el) el.value=''; });
   if ($('c-freq')) $('c-freq').value = FREQ[0];
+  if ($('c-term')) $('c-term').value = '3';
   document.querySelectorAll('#risk-boxes input[type=checkbox]').forEach(cb=>cb.checked=false);
 }
 
@@ -96,7 +115,11 @@ function addContract(){
 function editContract(id){
   const it = contracts.find(c=>c.id===id); if(!it) return;
   $('c-insurer').value = it.insurer||''; $('c-policy').value=it.policyNumber||''; $('c-product').value=it.product||'';
-  $('c-start').value = (it.startDate||'').slice(0,10); $('c-freq').value = it.paymentFrequency||FREQ[0];
+  $('c-start').value = (it.startDate||'').slice(0,10);
+  $('c-term').value = String(it.termYears||3);
+  $('c-end').value = (it.endDate||'').slice(0,10);
+  $('c-reminder').value = (it.reminderDate||'').slice(0,10);
+  $('c-freq').value = it.paymentFrequency||FREQ[0];
   $('c-premium').value = it.annualPremium??0; $('c-coverage').value = it.coverage??''; $('c-deductible').value = it.deductible??'';
   $('c-notes').value = it.notes??'';
   document.querySelectorAll('#risk-boxes input[type=checkbox]').forEach(cb=>cb.checked = (it.risks||[]).includes(cb.value));
@@ -147,6 +170,29 @@ function exportJSON(){
   const blob = new Blob([JSON.stringify(contracts,null,2)],{type:'application/json'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'contracts.json'; a.click();
   URL.revokeObjectURL(a.href);
+}
+
+// ===== Laufzeit-Berechnung =====
+function calculateDates(){
+  const startInput = $('c-start');
+  const termInput = $('c-term');
+  const endInput = $('c-end');
+  const reminderInput = $('c-reminder');
+
+  if (!startInput || !termInput || !endInput || !reminderInput) return;
+  if (!startInput.value || !termInput.value) return;
+
+  const startDate = new Date(startInput.value);
+  const termYears = parseInt(termInput.value, 10);
+
+  const endDate = new Date(startDate);
+  endDate.setFullYear(endDate.getFullYear() + termYears);
+
+  const reminderDate = new Date(endDate);
+  reminderDate.setMonth(reminderDate.getMonth() - 3);
+
+  endInput.value = endDate.toISOString().split('T')[0];
+  reminderInput.value = reminderDate.toISOString().split('T')[0];
 }
 function importJSON(e){
   const f = e.target.files?.[0]; if(!f) return;

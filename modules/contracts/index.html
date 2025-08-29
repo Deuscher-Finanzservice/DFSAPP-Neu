@@ -32,6 +32,18 @@
       </div>
 
       <div><label class="label">Beginn</label><input class="input" id="c-start" type="date"></div>
+
+      <div><label class="label" for="c-term">Laufzeit</label>
+        <select class="input" id="c-term" data-testid="term">
+          <option value="3">3 Jahre</option>
+          <option value="5">5 Jahre</option>
+        </select>
+      </div>
+
+      <div><label class="label" for="c-end">Enddatum</label><input class="input" id="c-end" type="date" readonly data-testid="endDate"></div>
+
+      <div><label class="label" for="c-reminder">Kündigungserinnerung (spätestens)</label><input class="input" id="c-reminder" type="date" readonly data-testid="reminderDate"></div>
+
       <div><label class="label">Zahlweise</label><select class="input" id="c-freq"></select></div>
       <div><label class="label">Jahresbeitrag (€)</label><input class="input" id="c-premium" type="number" step="0.01" min="0"></div>
 
