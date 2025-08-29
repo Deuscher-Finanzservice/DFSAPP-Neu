@@ -32,8 +32,17 @@
       </div>
 
       <div><label class="label">Beginn</label><input class="input" id="c-start" type="date"></div>
+      <div><label class="label">Laufzeit</label>
+        <select class="input" id="c-term">
+          <option value="3" selected>3 Jahre</option>
+          <option value="5">5 Jahre</option>
+        </select>
+      </div>
+      <div><label class="label">Enddatum</label><input class="input" id="c-end" type="date" readonly></div>
+
       <div><label class="label">Zahlweise</label><select class="input" id="c-freq"></select></div>
       <div><label class="label">Jahresbeitrag (€)</label><input class="input" id="c-premium" type="number" step="0.01" min="0"></div>
+      <div><label class="label">Kündbar ab</label><input class="input" id="c-cancelable" type="text" readonly></div>
 
       <div><label class="label">Deckungssumme (€)</label><input class="input" id="c-coverage" type="number" step="1" min="0"></div>
       <div><label class="label">Selbstbehalt (€)</label><input class="input" id="c-deductible" type="number" step="1" min="0"></div>
@@ -57,13 +66,15 @@
             <th>Police</th>
             <th>Risiken</th>
             <th>Zahlweise</th>
+            <th>Enddatum</th>
+            <th>Reminder (nächster)</th>
             <th class="right">Beitrag (€/J)</th>
             <th>Aktion</th>
           </tr>
         </thead>
         <tbody></tbody>
         <tfoot>
-          <tr><td colspan="4"><strong>Summe</strong></td><td class="right" id="sum-cell">0,00 €</td><td></td></tr>
+          <tr><td colspan="6"><strong>Summe</strong></td><td class="right" id="sum-cell">0,00 €</td><td></td></tr>
         </tfoot>
       </table>
     </div>
