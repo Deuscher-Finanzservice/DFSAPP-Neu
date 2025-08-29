@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kunde bearbeiten</title>
+  <link rel="stylesheet" href="../../styles/base.css">
+  <style>
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    @media (max-width:720px){.grid{grid-template-columns:1fr}}
+  </style>
+  <script>
+    // no module needed for simple qs helper
+    window._qs = new URLSearchParams(location.search);
+  </script>
+</head>
+<body>
+  <div class="card">
+    <h2>Kundenstammdaten</h2>
+    <div class="grid">
+      <div><label class="label">Firma</label><input class="input" id="firma"></div>
+      <div><label class="label">Ansprechpartner</label><input class="input" id="ansprech"></div>
+      <div><label class="label">E‑Mail</label><input class="input" id="email" type="email"></div>
+      <div><label class="label">Telefon</label><input class="input" id="telefon"></div>
+      <div><label class="label">Straße</label><input class="input" id="strasse"></div>
+      <div><label class="label">PLZ</label><input class="input" id="plz"></div>
+      <div><label class="label">Ort</label><input class="input" id="ort"></div>
+      <div style="grid-column:1/-1"><label class="label">Notizen</label><textarea class="input" id="notizen" rows="4"></textarea></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn" id="save">Speichern</button>
+      <button class="btn outline" id="delete" style="display:none">Löschen</button>
+      <a class="btn outline" href="../customers/index.html">Zur Liste</a>
+    </div>
+  </div>
+  <script type="module">
+    import { saveCustomerToCloud, deleteCustomerFromCloud } from '../../scripts/firebase.js';
+    const KEY='dfs.customers';
+    const $=id=>document.getElementById(id);
+    function getLocal(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch{ return []; } }
+    function setLocal(a){ localStorage.setItem(KEY, JSON.stringify(a)); }
+    function fill(c){ if(!c) return; ['firma','ansprech','email','telefon','strasse','plz','ort','notizen'].forEach(k=>{ const el=$(k); if(el) el.value=c[k]||''; }); }
+    let id = window._qs.get('id') || null;
+    let list = getLocal();
+    let current = id ? list.find(x=>x.id===id) : null;
+    if(current){ $('delete').style.display='inline-block'; }
+    fill(current);
+    function collect(){
+      return {
+        id: id || (crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random().toString(36).slice(2)}`),
+        firma: $('firma').value.trim(),
+        ansprech: $('ansprech').value.trim(),
+        email: $('email').value.trim(),
+        telefon: $('telefon').value.trim(),
+        strasse: $('strasse').value.trim(),
+        plz: $('plz').value.trim(),
+        ort: $('ort').value.trim(),
+        notizen: $('notizen').value.trim(),
+        updatedAt: new Date().toISOString(),
+        createdAt: current?.createdAt || new Date().toISOString()
+      };
+    }
+    document.getElementById('save').onclick = async ()=>{
+      const c = collect();
+      const arr = getLocal();
+      const idx = arr.findIndex(x=>x.id===c.id);
+      if(idx>=0) arr[idx]=c; else arr.push(c);
+      setLocal(arr);
+      try{ await saveCustomerToCloud(c); }catch(e){ console.warn('Cloud save failed', e); }
+      if(!id){ id=c.id; history.replaceState({},'',`?id=${encodeURIComponent(id)}`); $('delete').style.display='inline-block'; }
+      alert('Gespeichert');
+    };
+    document.getElementById('delete').onclick = async ()=>{
+      if(!id) return;
+      if(!confirm('Diesen Kunden löschen?')) return;
+      const next = getLocal().filter(x=>x.id!==id);
+      setLocal(next);
+      try{ await deleteCustomerFromCloud(id); }catch(e){ console.warn('Cloud delete failed', e); }
+      location.href = '../customers/index.html';
+    };
+  </script>
+</body>
+</html>

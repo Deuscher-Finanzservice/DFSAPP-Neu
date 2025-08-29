@@ -78,10 +78,10 @@
     // Cloud: speichert/lädt die drei Hauptblobs
     document.getElementById('btn-save-cloud').addEventListener('click', async () => {
       try {
-        const customer  = JSON.parse(localStorage.getItem('dfs.customer')  || 'null');
+        const customers = JSON.parse(localStorage.getItem('dfs.customers') || 'null');
         const contracts = JSON.parse(localStorage.getItem('dfs.contracts') || 'null');
         const analysis  = JSON.parse(localStorage.getItem('dfs.analysis')  || 'null');
-        await saveAllDFSBlobs({ customer, contracts, analysis });
+        await saveAllDFSBlobs({ customers, contracts, analysis });
         toast('In Cloud gespeichert');
       } catch (e) {
         console.error(e); toast('Fehler beim Speichern');
@@ -90,8 +90,8 @@
 
     document.getElementById('btn-load-cloud').addEventListener('click', async () => {
       try {
-        const { customer, contracts, analysis } = await loadAllDFSBlobs();
-        if (customer)  localStorage.setItem('dfs.customer',  JSON.stringify(customer));
+        const { customers, contracts, analysis } = await loadAllDFSBlobs();
+        if (customers) localStorage.setItem('dfs.customers', JSON.stringify(customers));
         if (contracts) localStorage.setItem('dfs.contracts', JSON.stringify(contracts));
         if (analysis)  localStorage.setItem('dfs.analysis',  JSON.stringify(analysis));
         toast('Aus Cloud geladen');

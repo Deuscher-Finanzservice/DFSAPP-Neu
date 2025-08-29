@@ -18,5 +18,5 @@ export async function loadCustomersFromCloud({limitTo}={}){const db=getDB();let 
 export async function deleteCustomerFromCloud(id){await deleteDoc(doc(getDB(),'customers',id));return{id,ok:true};}
 
 // --- DFS blobs convenience ---
-export async function saveAllDFSBlobs({customer,contracts,analysis}={}){const r={}; if(customer!==undefined) r.customer=await saveToCloud('dfs.customer',customer); if(contracts!==undefined) r.contracts=await saveToCloud('dfs.contracts',contracts); if(analysis!==undefined) r.analysis=await saveToCloud('dfs.analysis',analysis); return r;}
-export async function loadAllDFSBlobs(){const [customer,contracts,analysis]=await Promise.all([loadFromCloud('dfs.customer'),loadFromCloud('dfs.contracts'),loadFromCloud('dfs.analysis')]);return{customer,contracts,analysis};}
+export async function saveAllDFSBlobs({customers,contracts,analysis}={}){const r={}; if(customers!==undefined) r.customers=await saveToCloud('dfs.customers',customers); if(contracts!==undefined) r.contracts=await saveToCloud('dfs.contracts',contracts); if(analysis!==undefined) r.analysis=await saveToCloud('dfs.analysis',analysis); return r;}
+export async function loadAllDFSBlobs(){const [customers,contracts,analysis]=await Promise.all([loadFromCloud('dfs.customers'),loadFromCloud('dfs.contracts'),loadFromCloud('dfs.analysis')]);return{customers,contracts,analysis};}

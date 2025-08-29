@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDF-Export</title>
+  <link rel="stylesheet" href="../../styles/base.css">
+</head>
+<body>
+  <div class="card">
+    <h2>Bericht</h2>
+    <div class="card" id="kunde"></div>
+    <div class="card" style="margin-top:12px">
+      <h3>Verträge</h3>
+      <table id="tbl"><thead><tr><th>Versicherer</th><th>Police</th><th>Sparten</th><th>Beitrag (€/J)</th></tr></thead><tbody></tbody><tfoot><tr><td colspan="3"><strong>Summe</strong></td><td id="sum"></td></tr></tfoot></table>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h3>Analyse</h3>
+      <div>Jahressumme: <strong id="sumAnnual">–</strong></div>
+      <div>Zielersparnis: <strong id="pct">–</strong></div>
+      <div>Monatliche Ersparnis (Soll): <strong id="saving">–</strong></div>
+      <div>Risiko-Score: <strong id="risk">–</strong></div>
+      <div style="margin-top:8px"><span class="label">Warnungen</span><div id="warn"></div></div>
+      <div style="margin-top:8px"><span class="label">Empfehlungen</span><div id="recs"></div></div>
+    </div>
+  </div>
+  <script>
+    const fmt=(n)=> (Number(n)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+    const customers = JSON.parse(localStorage.getItem('dfs.customers')||'[]');
+    const contracts = JSON.parse(localStorage.getItem('dfs.contracts')||'[]');
+    const a = JSON.parse(localStorage.getItem('dfs.analysis')||'{}');
+    // Kunde (erste Zeile als „aktuell“)
+    const k = Array.isArray(customers)&&customers.length? customers[0] : null;
+    document.getElementById('kunde').innerHTML = k ? `
+      <div><span class="label">Firma</span><strong>${k.firma||''}</strong></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px">
+        <div><span class="label">Ansprechpartner</span>${k.ansprech||''}</div>
+        <div><span class="label">E‑Mail</span>${k.email||''}</div>
+        <div><span class="label">Telefon</span>${k.telefon||''}</div>
+      </div>
+      <div style="margin-top:8px"><span class="label">Adresse</span>${[k.strasse,k.plz,k.ort].filter(Boolean).join(', ')}</div>
+    ` : '<span style="color:var(--muted)">Kein Kunde erfasst</span>';
+    // Verträge
+    const tbody=document.querySelector('#tbl tbody');
+    tbody.innerHTML = (Array.isArray(contracts)?contracts:[]).map(c=>`
+      <tr><td>${c.versicherer||''}</td><td>${c.policeNr||''}</td><td>${(c.sparten||[]).join(', ')}</td><td>${fmt(c.jahresbeitragBrutto||0)}</td></tr>
+    `).join('');
+    document.getElementById('sum').textContent = fmt((contracts||[]).reduce((a,c)=>a+(Number(c.jahresbeitragBrutto)||0),0));
+    // Analyse
+    document.getElementById('sumAnnual').textContent = fmt(a.sumAnnual||0);
+    document.getElementById('pct').textContent = `${a.targetPct??(localStorage.getItem('dfs.targetSavingsPct')||15)} %`;
+    document.getElementById('saving').textContent = fmt(a.monthlySaving||0);
+    document.getElementById('risk').textContent = a.riskScore??'–';
+    document.getElementById('warn').innerHTML = (a.warnings||[]).length? a.warnings.map(w=>`<div class="badge">${w}</div>`).join('') : '<span style="color:var(--muted)">Keine</span>';
+    document.getElementById('recs').innerHTML = (a.recommendations||[]).length? a.recommendations.map(w=>`<div class="badge">${w}</div>`).join('') : '<span style="color:var(--muted)">Keine</span>';
+  </script>
+</body>
+</html>
