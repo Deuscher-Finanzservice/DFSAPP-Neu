@@ -7,7 +7,6 @@
   <style>
     .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
     @media (max-width:720px){.grid{grid-template-columns:1fr}}
-    pre.preview{white-space:pre-wrap;background:rgba(255,255,255,.06);border:1px solid var(--card-bd);border-radius:12px;padding:12px;max-height:240px;overflow:auto}
   </style>
   <script>
     // no module needed for simple qs helper
@@ -33,9 +32,33 @@
       <button class="btn outline" id="delete" style="display:none">Löschen</button>
       <a class="btn outline" href="../customers/index.html">Zur Liste</a>
     </div>
-    <div class="card" style="margin-top:12px">
-      <div class="label">Key im Browser: dfs.customers</div>
-      <pre id="preview" class="preview">[]</pre>
+    <div class="card" id="customer-contracts-card" style="margin-top:16px">
+      <h3>Verträge dieses Kunden</h3>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <a id="btn-create-contract" class="btn" href="#" data-cid="">Vertrag anlegen</a>
+      </div>
+      <div class="table-wrapper">
+        <table class="table" id="contracts-by-customer">
+          <thead>
+            <tr>
+              <th>Versicherer</th>
+              <th>Police</th>
+              <th>Risiken</th>
+              <th>Zahlweise</th>
+              <th>Beitrag (€/J)</th>
+              <th>Aktion</th>
+            </tr>
+          </thead>
+          <tbody><!-- dynamic --></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4" style="text-align:right"><strong>Summe</strong></td>
+              <td id="contracts-sum" style="text-align:right">0,00 €</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   </div>
   <script type="module">
@@ -44,7 +67,6 @@
     const $=id=>document.getElementById(id);
     function getLocal(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch{ return []; } }
     function setLocal(a){ localStorage.setItem(KEY, JSON.stringify(a)); }
-    function renderPreview(){ const arr=getLocal(); $('preview').textContent = JSON.stringify(arr, null, 2); }
     function fill(c){ if(!c) return; ['firma','ansprech','email','telefon','branche','mitarbeiter','umsatz','gruendung','standort'].forEach(k=>{ const el=$(k); if(!el) return; const v=c[k]; el.value = (v===undefined||v===null)? '' : String(v); }); }
     const genId = () => (crypto && typeof crypto.randomUUID==='function') ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     let id = window._qs.get('id') || null;
@@ -78,7 +100,7 @@
       setLocal(arr);
       try{ await saveCustomerToCloud(c); }catch(e){ console.warn('Cloud save failed', e); }
       if(!window._qs.get('id')){ history.replaceState({},'',`?id=${encodeURIComponent(id)}`); $('delete').style.display='inline-block'; }
-      renderPreview();
+      if(window.__dfsCustomersRenderContractsSummary) window.__dfsCustomersRenderContractsSummary();
       alert('Gespeichert');
     };
     document.getElementById('delete').onclick = async ()=>{
@@ -89,7 +111,68 @@
       try{ await deleteCustomerFromCloud(id); }catch(e){ console.warn('Cloud delete failed', e); }
       location.href = '../customers/index.html';
     };
-    renderPreview();
+    (function(){
+      function fmtMoney(n){
+        try{ return (Number(n)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR',minimumFractionDigits:2}); }
+        catch(e){ return (Number(n)||0).toFixed(2)+' €'; }
+      }
+      function getCurrentCustomerId(){
+        var hid = document.getElementById('id');
+        if(hid && hid.value) return hid.value;
+        var p=new URLSearchParams(location.search);
+        if(p.get('id')) return p.get('id');
+        try{
+          var name = (document.querySelector('input[id="firma"]')||{}).value||'';
+          var email = (document.querySelector('input[id="email"]')||{}).value||'';
+          var arr = JSON.parse(localStorage.getItem('dfs.customers')||'[]');
+          var hit = arr.find(c=> (c.firma||'')===name && (c.email||'')===email );
+          return hit ? hit.id : null;
+        }catch(e){}
+        return null;
+      }
+      function readContracts(){
+        try{ return JSON.parse(localStorage.getItem('dfs.contracts')||'[]'); }
+        catch(e){ return []; }
+      }
+      function renderContractsSummary(){
+        var cid = getCurrentCustomerId();
+        var btnCreate = document.getElementById('btn-create-contract');
+        if(btnCreate){
+          if(cid){ btnCreate.dataset.cid = cid; btnCreate.href = '../contracts/index.html?cid='+encodeURIComponent(cid); }
+          else { btnCreate.dataset.cid=''; btnCreate.href='../contracts/index.html'; }
+        }
+        var tbody = document.querySelector('#contracts-by-customer tbody');
+        var sumEl = document.getElementById('contracts-sum');
+        if(!tbody||!sumEl) return;
+
+        tbody.innerHTML = '';
+        var list = readContracts();
+        var rows = cid ? list.filter(x=> String(x.customerId||'')===String(cid)) : [];
+
+        var total = 0;
+        rows.forEach(function(r){
+          var tr = document.createElement('tr');
+          var risks = Array.isArray(r.risks) ? r.risks.join(', ') : (r.risks||'');
+          var pay = r.paymentFrequency||r.payCycle||r.pay||'';
+          var premium = Number(r.annualPremium||r.annual||r.premiumYear||r.premium||0) || 0;
+          total += premium;
+
+          tr.innerHTML = [
+            `<td>${r.insurer||''}</td>`,
+            `<td>${r.policyNumber||r.policyNo||r.policy||''}</td>`,
+            `<td>${risks}</td>`,
+            `<td>${pay}</td>`,
+            `<td style="text-align:right">${fmtMoney(premium)}</td>`,
+            `<td><a class="btn btn-small" href="../contracts/index.html?cid=${encodeURIComponent(cid||'')}">Öffnen</a></td>`
+          ].join('');
+          tbody.appendChild(tr);
+        });
+
+        sumEl.textContent = fmtMoney(total);
+      }
+      document.addEventListener('DOMContentLoaded', renderContractsSummary);
+      window.__dfsCustomersRenderContractsSummary = renderContractsSummary;
+    })();
   </script>
 </body>
 </html>

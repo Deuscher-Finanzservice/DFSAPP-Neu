@@ -1,13 +1,5 @@
 diff a/modules/contracts/index.html b/modules/contracts/index.html	(rejected hunks)
-@@ -10,65 +10,74 @@
-     @media(max-width:900px){.grid{grid-template-columns:1fr}}
-     .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-     .chip{display:inline-flex;align-items:center;gap:6px;background:var(--card-bg);border:1px solid var(--card-bd);border-radius:999px;padding:6px 10px;margin:0 6px 6px 0}
-     .chip input{accent-color:var(--gold)}
-     .right{text-align:right}
-   </style>
- </head>
- <body>
+@@ -18,57 +18,59 @@
    <div class="card">
      <h2>Verträge</h2>
      <div class="grid">
@@ -25,13 +17,6 @@ diff a/modules/contracts/index.html b/modules/contracts/index.html	(rejected hun
        </div>
  
        <div><label class="label">Beginn</label><input class="input" id="c-start" type="date"></div>
-+      <div><label class="label" for="c-term">Laufzeit</label>
-+        <select class="input" id="c-term">
-+          <option value="3" selected>3 Jahre</option>
-+          <option value="5">5 Jahre</option>
-+        </select>
-+      </div>
-+      <div><label class="label" for="c-enddate">Enddatum</label><input class="input" id="c-enddate" type="date" readonly></div>
        <div><label class="label">Zahlweise</label><select class="input" id="c-freq"></select></div>
        <div><label class="label">Jahresbeitrag (€)</label><input class="input" id="c-premium" type="number" step="0.01" min="0"></div>
  
@@ -40,6 +25,7 @@ diff a/modules/contracts/index.html b/modules/contracts/index.html	(rejected hun
        <div><label class="label">Notizen</label><input class="input" id="c-notes"></div>
      </div>
  
++    <input type="hidden" id="cid" value="">
      <div class="toolbar">
        <button class="btn" id="btn-add">Vertrag hinzufügen</button>
        <button class="btn outline" id="btn-export">Export (JSON)</button>
@@ -49,6 +35,7 @@ diff a/modules/contracts/index.html b/modules/contracts/index.html	(rejected hun
        <button class="btn outline" id="btn-load-cloud">Aus Cloud laden</button>
      </div>
  
++    <a id="link-back-customer" class="btn" href="#" style="float:right; margin-top:8px; margin-bottom:8px; display:none;">Zum Kunden</a>
      <div class="card" style="margin-top:12px">
        <table id="contracts-table">
          <thead>
@@ -57,16 +44,13 @@ diff a/modules/contracts/index.html b/modules/contracts/index.html	(rejected hun
              <th>Police</th>
              <th>Risiken</th>
              <th>Zahlweise</th>
-+            <th>Enddatum</th>
-+            <th>Reminder</th>
              <th class="right">Beitrag (€/J)</th>
              <th>Aktion</th>
            </tr>
          </thead>
          <tbody></tbody>
          <tfoot>
--          <tr><td colspan="4"><strong>Summe</strong></td><td class="right" id="sum-cell">0,00 €</td><td></td></tr>
-+          <tr><td colspan="6"><strong>Summe</strong></td><td class="right" id="sum-cell">0,00 €</td><td></td></tr>
+           <tr><td colspan="4"><strong>Summe</strong></td><td class="right" id="sum-cell">0,00 €</td><td></td></tr>
          </tfoot>
        </table>
      </div>
