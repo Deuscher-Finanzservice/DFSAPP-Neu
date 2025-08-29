@@ -6,6 +6,12 @@
   <title>DFS Versicherungsanalyse</title>
   <link rel="icon" href="./favicon.ico">
   <link rel="stylesheet" href="./styles/base.css">
+  <style>
+    /* minimal Navigation-Styles für Gruppen */
+    .nav-group{margin:8px 0 4px;color:var(--muted);font-weight:700;padding:6px 12px;border-radius:12px}
+    .nav-group.active{color:#fff;background:rgba(255,255,255,.06)}
+    .nav-sub a{padding-left:22px}
+  </style>
 </head>
 <body>
   <div class="shell">
@@ -18,8 +24,11 @@
       <!-- SHELL-NAVIGATION -->
       <nav class="nav">
         <a href="#" class="active" data-target="./modules/dashboard/index.html">Dashboard</a>
-        <a href="#" data-target="./modules/customers/index.html">Kunden (Liste)</a>
-        <a href="#" data-target="./modules/customer/index.html">Kunden (Editor)</a>
+        <div class="nav-group">Kunden</div>
+        <div class="nav-sub">
+          <a href="#" data-target="./modules/customer/index.html">Kunden anlegen</a>
+          <a href="#" data-target="./modules/customers/index.html">Kundenliste</a>
+        </div>
         <a href="#" data-target="./modules/contracts/index.html">Verträge</a>
         <a href="#" data-target="./modules/analysis/index.html">Analyse</a>
         <a href="#" data-target="./modules/print/index.html">PDF-Export</a>
@@ -65,7 +74,19 @@
       links.forEach(n => n.classList.remove('active'));
       a.classList.add('active');
       iframe.src = a.dataset.target;
+      // Gruppen-Highlight aktualisieren
+      updateGroupActive();
     }));
+
+    function updateGroupActive(){
+      document.querySelectorAll('.nav-group').forEach(g => {
+        const sub = g.nextElementSibling;
+        const isActive = sub && sub.matches('.nav-sub') && !!sub.querySelector('a.active');
+        g.classList.toggle('active', isActive);
+      });
+    }
+    // initialer Zustand
+    updateGroupActive();
 
     // Toast helper
     const toast = (msg) => {
