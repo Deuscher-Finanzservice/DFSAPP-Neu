@@ -1,5 +1,5 @@
 diff a/modules/dashboard/index.html b/modules/dashboard/index.html	(rejected hunks)
-@@ -1,36 +1,36 @@
+@@ -1,36 +1,46 @@
  <!doctype html>
  <html lang="de">
  <head>
@@ -14,15 +14,15 @@ diff a/modules/dashboard/index.html b/modules/dashboard/index.html	(rejected hun
      <div class="grid">
 -      <div class="card"><div class="label">Kunden</div><div id="nCustomers" style="font-size:28px;font-weight:700">0</div><div style="margin-top:8px"><a class="btn outline" href="../customers/index.html" target="_parent">Zur Kundenliste</a></div></div>
 -      <div class="card"><div class="label">Verträge</div><div id="nContracts" style="font-size:28px;font-weight:700">0</div><div style="margin-top:8px"><a class="btn outline" href="../contracts/index.html" target="_parent">Zu Verträgen</a></div></div>
-+      <div class="card"><div class="label">Kunden</div><div id="nCustomers" style="font-size:28px;font-weight:700">0</div><div style="margin-top:8px"><a class="btn outline" href="#" onclick="parent.navigateTo('modules/customers/index.html');return false;">Zur Kundenliste</a></div></div>
-+      <div class="card"><div class="label">Verträge</div><div id="nContracts" style="font-size:28px;font-weight:700">0</div><div style="margin-top:8px"><a class="btn outline" href="#" onclick="parent.navigateTo('modules/contracts/index.html');return false;">Zu Verträgen</a></div></div>
++        <div class="card"><div class="label">Kunden</div><div id="nCustomers" style="font-size:28px;font-weight:700">0</div><div style="margin-top:8px"><button class="btn outline" data-target="./modules/customers/index.html">Zur Kundenliste</button></div></div>
++        <div class="card"><div class="label">Verträge</div><div id="nContracts" style="font-size:28px;font-weight:700">0</div><div style="margin-top:8px"><button class="btn outline" data-target="./modules/contracts/index.html">Zu Verträgen</button></div></div>
        <div class="card">
          <div class="label">Analyse</div>
          <div>Jahressumme: <strong id="sumAnnual">–</strong></div>
          <div>Monatliche Ersparnis (Soll): <strong id="saving">–</strong></div>
          <div>Risiko-Score: <strong id="risk">–</strong></div>
 -        <div style="margin-top:8px"><a class="btn outline" href="../analysis/index.html" target="_parent">Zur Analyse</a></div>
-+        <div style="margin-top:8px"><a class="btn outline" href="#" onclick="parent.navigateTo('modules/analysis/index.html');return false;">Zur Analyse</a></div>
++          <div style="margin-top:8px"><button class="btn outline" data-target="./modules/analysis/index.html">Zur Analyse</button></div>
        </div>
      </div>
    </div>
@@ -36,6 +36,16 @@ diff a/modules/dashboard/index.html b/modules/dashboard/index.html	(rejected hun
      document.getElementById('sumAnnual').textContent = fmt(a.sumAnnual||0);
      document.getElementById('saving').textContent = fmt(a.monthlySaving||0);
      document.getElementById('risk').textContent = a.riskScore??'–';
++
++    document.querySelectorAll('button[data-target]').forEach(btn=>{
++      btn.addEventListener('click',()=>{
++        if(parent && typeof parent.navigateTo==='function'){
++          parent.navigateTo(btn.dataset.target);
++        }else{
++          parent.location.href = btn.dataset.target;
++        }
++      });
++    });
    </script>
  </body>
  </html>
