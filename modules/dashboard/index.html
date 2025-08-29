@@ -23,14 +23,22 @@
   </div>
   <script>
     const fmt=(n)=> (Number(n)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
-    const customers = JSON.parse(localStorage.getItem('dfs.customers')||'[]');
-    const contracts = JSON.parse(localStorage.getItem('dfs.contracts')||'[]');
-    const a = JSON.parse(localStorage.getItem('dfs.analysis')||'{}');
-    document.getElementById('nCustomers').textContent = Array.isArray(customers)?customers.length:0;
-    document.getElementById('nContracts').textContent = Array.isArray(contracts)?contracts.length:0;
-    document.getElementById('sumAnnual').textContent = fmt(a.sumAnnual||0);
-    document.getElementById('saving').textContent = fmt(a.monthlySaving||0);
-    document.getElementById('risk').textContent = a.riskScore??'–';
+    function renderDashboard(){
+      const customers = JSON.parse(localStorage.getItem('dfs.customers')||'[]');
+      const contracts = JSON.parse(localStorage.getItem('dfs.contracts')||'[]');
+      const a = JSON.parse(localStorage.getItem('dfs.analysis')||'{}');
+      document.getElementById('nCustomers').textContent = Array.isArray(customers)?customers.length:0;
+      document.getElementById('nContracts').textContent = Array.isArray(contracts)?contracts.length:0;
+      document.getElementById('sumAnnual').textContent = fmt(a.sumAnnual||0);
+      document.getElementById('saving').textContent = fmt(a.monthlySaving||0);
+      document.getElementById('risk').textContent = a.riskScore??'–';
+    }
+    renderDashboard();
+    window.addEventListener('dfs.contracts-changed', renderDashboard);
+    window.addEventListener('dfs.analysis-changed', renderDashboard);
+    window.addEventListener('storage', (e)=>{
+      if(['dfs.contracts','dfs.analysis','dfs.customers'].includes(e.key)) renderDashboard();
+    });
   </script>
 </body>
 </html>

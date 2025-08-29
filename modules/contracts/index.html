@@ -9,9 +9,7 @@
     .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
     @media(max-width:900px){.grid{grid-template-columns:1fr}}
     .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-    .chip{display:inline-flex;align-items:center;gap:6px;background:var(--card-bg);border:1px solid var(--card-bd);border-radius:999px;padding:6px 10px;margin:0 6px 6px 0}
-    .chip input{accent-color:var(--gold)}
-    .right{text-align:right}
+    .num{text-align:right}
   </style>
 </head>
 <body>
@@ -19,56 +17,74 @@
     <h2>Verträge</h2>
     <div class="grid">
       <div>
-        <label class="label">Versicherer</label>
-        <input class="input" id="c-insurer" list="insurer-list">
-        <datalist id="insurer-list"></datalist>
+        <label class="label" for="insurer">Versicherer</label>
+        <input class="input" id="insurer" data-testid="insurer">
       </div>
-      <div><label class="label">Police-Nr.</label><input class="input" id="c-policy"></div>
-      <div><label class="label">Produkt (optional)</label><input class="input" id="c-product"></div>
-
+      <div>
+        <label class="label" for="policyNo">Police-Nr.</label>
+        <input class="input" id="policyNo" data-testid="policyNo">
+      </div>
+      <div>
+        <label class="label" for="product">Produkt</label>
+        <input class="input" id="product" data-testid="product">
+      </div>
       <div style="grid-column:1/-1">
-        <label class="label">Risiken / Sparten</label>
-        <div id="risk-boxes"></div>
+        <label class="label" for="lines">Sparten</label>
+        <input class="input" id="lines" data-testid="lines" placeholder="z. B. BHV, Inhalt, Cyber">
       </div>
-
-      <div><label class="label">Beginn</label><input class="input" id="c-start" type="date"></div>
-      <div><label class="label">Zahlweise</label><select class="input" id="c-freq"></select></div>
-      <div><label class="label">Jahresbeitrag (€)</label><input class="input" id="c-premium" type="number" step="0.01" min="0"></div>
-
-      <div><label class="label">Deckungssumme (€)</label><input class="input" id="c-coverage" type="number" step="1" min="0"></div>
-      <div><label class="label">Selbstbehalt (€)</label><input class="input" id="c-deductible" type="number" step="1" min="0"></div>
-      <div><label class="label">Notizen</label><input class="input" id="c-notes"></div>
+      <div>
+        <label class="label" for="begin">Beginn</label>
+        <input class="input" id="begin" data-testid="begin" type="date">
+      </div>
+      <div>
+        <label class="label" for="payCycle">Zahlweise</label>
+        <select class="input" id="payCycle" data-testid="payCycle">
+          <option value="jährlich">jährlich</option>
+          <option value="halbjährlich">halbjährlich</option>
+          <option value="vierteljährlich">vierteljährlich</option>
+          <option value="monatlich">monatlich</option>
+        </select>
+      </div>
+      <div>
+        <label class="label" for="premiumYear">Jahresbeitrag (€/J)</label>
+        <input class="input" id="premiumYear" data-testid="premiumYear" inputmode="decimal" placeholder="0,00">
+      </div>
+      <div>
+        <label class="label" for="coverage">Deckungssumme</label>
+        <input class="input" id="coverage" data-testid="coverage" inputmode="decimal" placeholder="optional">
+      </div>
+      <div>
+        <label class="label" for="deductible">Selbstbehalt</label>
+        <input class="input" id="deductible" data-testid="deductible" inputmode="decimal" placeholder="optional">
+      </div>
     </div>
 
     <div class="toolbar">
-      <button class="btn" id="btn-add">Vertrag hinzufügen</button>
-      <button class="btn outline" id="btn-export">Export (JSON)</button>
-      <button class="btn outline" id="btn-import">Import</button>
-      <input type="file" id="file-import" accept=".json" style="display:none">
-      <button class="btn outline" id="btn-save-cloud">In Cloud speichern</button>
-      <button class="btn outline" id="btn-load-cloud">Aus Cloud laden</button>
+      <button class="btn" id="btnAdd">Vertrag hinzufügen</button>
+      <button class="btn outline" id="btnExport">Export (JSON)</button>
+      <button class="btn outline" id="btnImport">Import</button>
+      <button class="btn outline" id="btnCloudLoad">Cloud laden</button>
     </div>
 
     <div class="card" style="margin-top:12px">
-      <table id="contracts-table">
+      <table>
         <thead>
           <tr>
             <th>Versicherer</th>
             <th>Police</th>
-            <th>Risiken</th>
-            <th>Zahlweise</th>
-            <th class="right">Beitrag (€/J)</th>
+            <th>Sparten</th>
+            <th class="num">Beitrag (€/J)</th>
             <th>Aktion</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="tblBody"></tbody>
         <tfoot>
-          <tr><td colspan="4"><strong>Summe</strong></td><td class="right" id="sum-cell">0,00 €</td><td></td></tr>
+          <tr><td colspan="3">Summe</td><td class="num" id="sumPremium">0,00 €</td><td></td></tr>
         </tfoot>
       </table>
     </div>
   </div>
 
-  <script type="module" src="./contracts.js"></script>
+  <script src="./index.js"></script>
 </body>
 </html>

@@ -1,0 +1,31 @@
+diff a/modules/contracts/index.html b/modules/contracts/index.html	(rejected hunks)
+@@ -47,28 +47,28 @@
+       <input type="file" id="file-import" accept=".json" style="display:none">
+       <button class="btn outline" id="btn-save-cloud">In Cloud speichern</button>
+       <button class="btn outline" id="btn-load-cloud">Aus Cloud laden</button>
+     </div>
+ 
+     <div class="card" style="margin-top:12px">
+       <table id="contracts-table">
+         <thead>
+           <tr>
+             <th>Versicherer</th>
+             <th>Police</th>
+             <th>Risiken</th>
+             <th>Zahlweise</th>
+             <th class="right">Beitrag (€/J)</th>
+             <th>Aktion</th>
+           </tr>
+         </thead>
+         <tbody></tbody>
+         <tfoot>
+           <tr><td colspan="4"><strong>Summe</strong></td><td class="right" id="sum-cell">0,00 €</td><td></td></tr>
+         </tfoot>
+       </table>
+     </div>
+   </div>
+ 
+-  <script type="module" src="./contracts.js"></script>
++  <script type="module" src="./index.js"></script>
+ </body>
+ </html>
