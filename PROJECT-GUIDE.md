@@ -1,20 +1,68 @@
-# PROJECT-GUIDE – DFS Versicherungsanalyse
-Version: 1.3.0
-Stand: 2025-08-29 07:44
-Autor: Björn Weber
+---
 
-## Ziele
-- Modulares, statisches Analyse-Tool im DFS-CI
-- Keine Backends, nur localStorage + Firestore
-- Druckoptimierte Seiten statt PDF-Generierung
+### 2) `PROJECT-GUIDE.md` (ersetzen)
 
-## Module (Stand 1.3.0)
-1. Shell & Layout ✔
-2. Kunden ✔
-3. Verträge/Sparten ✔
-4. Analyse ✔
-5. Dashboard ✔
-6. Print ✔
+```markdown
+# PROJECT GUIDE
 
-## Versionierung
-- 1.3.0: Alle Kernmodule integriert, Clean Rename abgeschlossen
+## Ziel
+Schnelle, robuste Datenerfassung (Kunden, Verträge) mit lokalem Arbeiten und optionalem Cloud-Sync. Fokus: klare UI, null Abhängigkeiten, nachvollziehbarer Code.
+
+## Module & Navigation
+- **Shell**: `index.html` (Sidebar, lädt Module per `<iframe>` / `src=./modules/.../index.html?v=DFS_VERSION`)
+- **Dashboard**: Kennzahlen + Links
+- **Kunden**: Liste/Editor → `dfs.customers`
+- **Verträge**: Editor + Tabelle → `dfs.contracts`
+- **Analysen/PDF**: Platzhalter
+
+## Wichtige DOM-IDs (Verträge)
+Form:
+- `c-insurer`, `insurer-list`, `c-policy`, `c-product`, `risk-boxes`,  
+  `c-start`, `c-freq`, `c-premium`, `c-coverage`, `c-deductible`, `c-notes`
+Buttons:
+- `btn-add`, `btn-export`, `btn-import`, `btn-save-cloud`, `btn-load-cloud`
+Tabelle:
+- `contracts-table` (mit `<tbody>`), Summenzelle: `sum-cell`
+
+> **Hinweis:** Die Script-Einbindung am Ende von `modules/contracts/index.html` zeigt auf:
+> ```html
+> <script type="module" src="./contracts.js"></script>
+> ```
+
+## LocalStorage-Konventionen
+- Keynamen: `dfs.customers` / `dfs.contracts`
+- Immer **Array** speichern.
+- Objekte enthalten `id`, `createdAt`, `updatedAt`.
+- Migrations-Snippet (bei Strukturänderungen) lieber **einmalig** in der Console laufen lassen und danach entfernen.
+
+## Cloud-Sync (Firebase)
+- `scripts/firebaseClient.js` initialisiert App + liefert `db`.
+- `scripts/firebase.js` enthält Hilfsfunktionen (load/save, merge, Konfliktstrategie).
+- Standard-Sammlungen: `customers`, `contracts` (pro Projekt/Umgebung konfigurierbar).
+- GitHub Actions deployen automatisch nach `main`.
+
+## Versions-/Cache-Busting
+- `window.DFS_VERSION = "YYYYMMDD.HHMM"` in `index.html`.
+- Helper `withVersion(url)` hängt `?v=DFS_VERSION` an.
+
+## Arbeitsweise mit Codex (Cloud)
+- **Blöcke**: 1) Navigation/Versioning, 2) Verträge-CRUD, 3) Cloud-Sync Verträge, 4) Analyse
+- **Modus**: Non-interactive + Auto
+- **Status-Prompt** (Quick):
+STATUS-CHECK (Cloud)
+	•	git status
+	•	kurz diff header (3-5 Zeilen)
+	•	wenn ok: commit “feat: block X ready” & push
+	•	antworte [DONE]
+    ## Qualitätssicherung (leichtgewichtig)
+- Manuelle Checks:
+- Eingaben bleiben bei Reload erhalten (LS).
+- Export/Import JSON funktioniert.
+- Summen aktualisieren korrekt.
+- Cloud-Buttons: keine Fehler in Console.
+- Bei UI-Änderungen: IDs unverändert lassen oder an allen Stellen refaktorieren.
+
+## Troubleshooting
+- **Nichts aktualisiert sich?** → `DFS_VERSION` hochziehen und hart neu laden.
+- **Firebase 404/favicon** → ignorierbar; prüfe Hosting-Deploys.
+- **Git fragt nach Passwort** → auf **SSH** umstellen; Key unter GitHub „SSH and GPG keys“ hinterlegen.
