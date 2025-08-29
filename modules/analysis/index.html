@@ -31,7 +31,7 @@
     function render(){
       const contracts = JSON.parse(localStorage.getItem('dfs.contracts')||'[]');
       const a=getA();
-      const sum = Array.isArray(contracts)?contracts.reduce((acc,c)=>acc+(Number(c.annualPremium)||0),0):0;
+      const sum = Array.isArray(contracts)?contracts.reduce((acc,c)=>acc+(Number(c.premiumYear||c.annualPremium||c.annual||c.premium)||0),0):0;
       a.sumAnnual = sum;
       const pct = Number(localStorage.getItem('dfs.targetSavingsPct')||'15');
       document.getElementById('sumAnnual').textContent = fmt(a.sumAnnual||0);

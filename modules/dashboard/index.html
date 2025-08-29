@@ -17,6 +17,10 @@
         <div>Jahressumme: <strong id="sumAnnual">–</strong></div>
         <div>Monatliche Ersparnis (Soll): <strong id="saving">–</strong></div>
         <div>Risiko-Score: <strong id="risk">–</strong></div>
+        <div style="margin-top:8px">
+          <div class="label">Reminder (nächste 90 Tage)</div>
+          <div id="reminders">Keine</div>
+        </div>
         <div style="margin-top:8px"><a class="btn outline" href="../analysis/index.html" target="_parent">Zur Analyse</a></div>
       </div>
     </div>
@@ -32,6 +36,24 @@
       document.getElementById('sumAnnual').textContent = fmt(a.sumAnnual||0);
       document.getElementById('saving').textContent = fmt(a.monthlySaving||0);
       document.getElementById('risk').textContent = a.riskScore??'–';
+      try{
+        const now = new Date();
+        const in90 = new Date(now.getTime()); in90.setDate(in90.getDate()+90);
+        const list = (Array.isArray(contracts)?contracts:[]).map(c=>{
+          let d = c.reminderDate || '';
+          if(!d && c.beginISO){ // fallback compute if missing
+            const b = new Date(c.beginISO+'T00:00:00'); const t=new Date(b.getTime()); t.setFullYear(t.getFullYear()+3); t.setMonth(t.getMonth()-3);
+            d = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+          }
+          return {insurer:c.insurer, policyNo:(c.policyNo||c.policyNumber||''), reminderDate:d};
+        }).filter(x=>x.reminderDate).map(x=>({
+          ...x, date:new Date(x.reminderDate+'T00:00:00')
+        })).filter(x=> x.date>=now && x.date<=in90 ).sort((a,b)=> a.date-b.date);
+        document.getElementById('reminders').innerHTML = list.length? list.map(x=>{
+          const d=`${x.date.getDate().toString().padStart(2,'0')}.${(x.date.getMonth()+1).toString().padStart(2,'0')}.${x.date.getFullYear()}`;
+          return `<div class="badge">${d}: ${x.insurer||'–'} ${x.policyNo?('('+x.policyNo+')'):''}</div>`;
+        }).join('') : '<span style="color:var(--muted)">Keine</span>';
+      }catch(e){ document.getElementById('reminders').textContent = '—'; }
     }
     renderDashboard();
     window.addEventListener('dfs.contracts-changed', renderDashboard);
