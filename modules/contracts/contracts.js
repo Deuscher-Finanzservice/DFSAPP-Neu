@@ -29,6 +29,53 @@ function $(id){ return document.getElementById(id); }
 function fmtEUR(n){ return (Number(n)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'}); }
 function esc(s){ return (s??'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;' }[m])); }
 
+// === Date helpers ===
+function formatISO(d){
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,'0');
+  const day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function parseISO(s){
+  const [y,m,d]=s.split('-').map(Number);
+  return new Date(y,m-1,d);
+}
+function addYearsMinusOneDay(start,years){
+  const end=new Date(start.getTime());
+  end.setFullYear(end.getFullYear()+years);
+  end.setDate(end.getDate()-1);
+  return end;
+}
+function minusMonths(date,months){
+  const d=new Date(date.getTime());
+  const day=d.getDate();
+  d.setMonth(d.getMonth()-months);
+  if(d.getDate()!==day){ d.setDate(0); }
+  return d;
+}
+
+// === Field refs ===
+const elStart   = document.querySelector('#c-start');
+const elTerm    = document.querySelector('#c-term');
+const elEndDate = document.querySelector('#c-enddate');
+
+function recomputeDates(){
+  if(!elStart || !elTerm || !elEndDate) return;
+  const startVal = elStart.value?.trim();
+  if(!startVal){ elEndDate.value=''; return; }
+  const start = parseISO(startVal);
+  const termYears = Number(elTerm.value || 3);
+  const end = addYearsMinusOneDay(start, termYears);
+  const reminder = minusMonths(end,3);
+  elEndDate.value = formatISO(end);
+  elEndDate.dataset.reminder = formatISO(reminder);
+  elEndDate.dataset.termYears = String(termYears);
+}
+
+if(elStart) elStart.addEventListener('change', recomputeDates);
+if(elTerm)  elTerm.addEventListener('change', recomputeDates);
+recomputeDates();
+
 // ===== UI Init =====
 function initUI(){
   // Versicherer datalist
@@ -64,12 +111,26 @@ function getForm(){
   const risks = [...document.querySelectorAll('#risk-boxes input[type=checkbox]:checked')].map(x=>x.value);
   const num = v => (v===''||v==null) ? null : Number(String(v).replace(',','.'))||0;
 
+  const startDate = $('c-start')?.value || new Date().toISOString().slice(0,10);
+  const termYears = Number($('c-term')?.value || 3);
+  let endDate = '';
+  let reminderDate = '';
+  if(startDate){
+    const s=parseISO(startDate);
+    const e=addYearsMinusOneDay(s, termYears);
+    const r=minusMonths(e,3);
+    endDate=formatISO(e);
+    reminderDate=formatISO(r);
+  }
   return {
     insurer: $('c-insurer')?.value?.trim()||'',
     policyNumber: $('c-policy')?.value?.trim()||'',
     product: $('c-product')?.value?.trim()||'',
     risks,
-    startDate: $('c-start')?.value || new Date().toISOString().slice(0,10),
+    startDate,
+    termYears,
+    endDate,
+    reminderDate,
     paymentFrequency: $('c-freq')?.value || FREQ[0],
     annualPremium: num($('c-premium')?.value)||0,
     coverage: num($('c-coverage')?.value),
@@ -78,9 +139,10 @@ function getForm(){
   };
 }
 function clearForm(){
-  ['c-insurer','c-policy','c-product','c-start','c-premium','c-coverage','c-deductible','c-notes']
+  ['c-insurer','c-policy','c-product','c-start','c-enddate','c-premium','c-coverage','c-deductible','c-notes']
     .forEach(id=>{ const el=$(id); if(el) el.value=''; });
   if ($('c-freq')) $('c-freq').value = FREQ[0];
+  if ($('c-term')) $('c-term').value = '3';
   document.querySelectorAll('#risk-boxes input[type=checkbox]').forEach(cb=>cb.checked=false);
 }
 
@@ -96,10 +158,15 @@ function addContract(){
 function editContract(id){
   const it = contracts.find(c=>c.id===id); if(!it) return;
   $('c-insurer').value = it.insurer||''; $('c-policy').value=it.policyNumber||''; $('c-product').value=it.product||'';
-  $('c-start').value = (it.startDate||'').slice(0,10); $('c-freq').value = it.paymentFrequency||FREQ[0];
+  $('c-start').value = (it.startDate||'').slice(0,10);
+  $('c-term').value = String(it.termYears||3);
+  $('c-enddate').value = it.endDate||'';
+  $('c-freq').value = it.paymentFrequency||FREQ[0];
   $('c-premium').value = it.annualPremium??0; $('c-coverage').value = it.coverage??''; $('c-deductible').value = it.deductible??'';
   $('c-notes').value = it.notes??'';
   document.querySelectorAll('#risk-boxes input[type=checkbox]').forEach(cb=>cb.checked = (it.risks||[]).includes(cb.value));
+
+  recomputeDates();
 
   const btn = $('btn-add');
   btn.textContent = 'Vertrag speichern';
@@ -127,6 +194,8 @@ function renderTable(){
       <td>${esc(c.policyNumber||'')}</td>
       <td>${esc((c.risks||[]).join(', '))}</td>
       <td>${esc(c.paymentFrequency||'')}</td>
+      <td>${esc(c.endDate||'—')}</td>
+      <td>${esc(c.reminderDate||'—')}</td>
       <td style="text-align:right;">${fmtEUR(c.annualPremium)}</td>
       <td>
         <button class="btn sm" data-edit="${c.id}">Bearbeiten</button>
