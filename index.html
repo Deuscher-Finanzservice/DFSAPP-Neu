@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <script>window.DFS_VERSION = window.DFS_VERSION || "20250829.1200";</script>
   <title>DFS Versicherungsanalyse</title>
   <link rel="icon" href="./favicon.ico">
   <link rel="stylesheet" href="./styles/base.css">
@@ -50,7 +54,7 @@
         </div>
       </div>
 
-      <iframe id="content" src="./modules/dashboard/index.html"></iframe>
+      <iframe id="content" src="./modules/dashboard/index.html?v=20250829.1200"></iframe>
     </main>
   </div>
 
@@ -60,6 +64,29 @@
   <!-- Firebase + Bridge -->
   <script type="module" src="./scripts/firebaseClient.js"></script>
   <script type="module" src="./scripts/firebase.js"></script>
+  
+  <!-- Cache-Busting Helper -->
+  <script>
+    function withVersion(url){
+      try{
+        const u = new URL(url, location.origin);
+        u.searchParams.set('v', window.DFS_VERSION);
+        return u.pathname + (u.search ? u.search : '') + (u.hash || '');
+      }catch(e){
+        const hasQuery = (url||'').includes('?');
+        return (url||'') + (hasQuery ? '&' : '?') + 'v=' + encodeURIComponent(window.DFS_VERSION);
+      }
+    }
+    (function(){
+      const f = document.getElementById('content');
+      if(f && f.getAttribute){
+        const srcAttr = f.getAttribute('src') || './modules/dashboard/index.html';
+        if(!srcAttr.includes('v=')){
+          f.setAttribute('src', withVersion(srcAttr));
+        }
+      }
+    })();
+  </script>
 
   <!-- Shell-Logik -->
   <script type="module">
@@ -73,7 +100,7 @@
       e.preventDefault();
       links.forEach(n => n.classList.remove('active'));
       a.classList.add('active');
-      iframe.src = a.dataset.target;
+      iframe.src = withVersion(a.dataset.target);
       // Gruppen-Highlight aktualisieren
       updateGroupActive();
     }));
