@@ -1,67 +1,51 @@
+# DFS Versicherungsanalyse – Clean Rename auf Firebase (Firestore)
+**Stand:** 2025-08-29 07:16
 
-# DFS Versicherungsanalyse-Tool (Netlify Drop)
+Dieses Projekt ist ein rein statisches Web‑Tool (HTML/CSS/JS) mit Browser‑Storage (localStorage) und optionaler Cloud‑Synchronisation über **Firebase Firestore**. Build‑Schritte sind nicht nötig; alle Pfade sind **relativ**.
 
-**Struktur**
-
+## Struktur
 ```
-dfs-versicherungsmodul/
-├── index.html                # Shell mit Sidebar + <iframe>
-├── assets/
-│   └── logo.png
-├── styles/
-│   └── base.css              # DFS-CI + Print (A4)
-├── scripts/
-│   └── shell.js
-└── modules/
-    ├── dashboard/
-    ├── customers/
-    ├── contracts/
-    ├── gaps/                 # NEU: Deckungslücken
-    ├── savings/              # NEU: Ersparnisse
-    ├── analysis/
-    ├── print/
-    └── help/
+/
+├─ index.html                   # Shell (Sidebar + iframe)
+├─ favicon.ico
+├─ assets/logo.png
+├─ styles/base.css
+├─ scripts/firebaseClient.js    # Firebase Init (ersetzen: supabaseClient.js)
+├─ scripts/firebase.js          # Firestore‑Wrapper (ersetzen: supabase.js)
+└─ modules/
+   ├─ dashboard/
+   ├─ customer/
+   ├─ contracts/
+   ├─ analysis/
+   └─ print/
 ```
 
-**Nutzung**
+## Wichtige Änderungen (Migration)
+- **Dateinamen:** `supabaseClient.js` → `firebaseClient.js`, `supabase.js` → `firebase.js`
+- **Imports in Modulen:** auf `../../scripts/firebase.js` umgestellt.
+- **Cloud‑Buttons:** Shell speichert/lädt `dfs.customer`, `dfs.contracts`, `dfs.analysis`.
+- **Verträge:** `saveContractToCloud()` ist aktiv; Collection **contracts**.
 
-1. Öffne `index.html` lokal oder lade die ZIP per Netlify **Drop** hoch.
-2. In der Sidebar Module wählen:
-   - **Kunden** erfassen → `dfs.customer`
-   - **Verträge** erfassen → `dfs.contracts` (CRUD, Import/Export JSON)
-   - **Deckungslücken** prüfen → erzeugt Warnungen/Empfehlungen
-   - **Ersparnisse** → Alt vs. Empfehlung, Summen
-   - **Analyse** → KPIs (Zielersparnis, Risiko-Score)
-   - **Dashboard** → Management-Summary
-   - **PDF-Export** → druckoptimiert (A4), `window.print()`
+## Firebase Konfiguration
+In `scripts/firebaseClient.js`:
+```js
+const firebaseConfig = { apiKey: "…", authDomain: "deutscher-finanzservice.firebaseapp.com",
+  projectId: "deutscher-finanzservice", storageBucket: "deutscher-finanzservice.appspot.com",
+  messagingSenderId: "…", appId: "…" };
+```
+> `apiKey`, `messagingSenderId`, `appId` müssen zu deinem Projekt passen (öffentlich, nicht geheim).
 
-**localStorage Keys (konform)**
+## LocalStorage Keys
+- `dfs.customer` (Objekt), `dfs.contracts` (Array), `dfs.analysis` (Objekt)
+- `dfs.targetSavingsPct` (Number), `dfs.cloud.clientId` (automatisch)
 
-- `dfs.customer` (Objekt)
-- `dfs.contracts` (Array)
-- `dfs.analysis` (Objekt; enthält warnings, recommendations, sumAnnual, savingsTotal, targetPct, monthlySaving, riskScore, ts)
-- `dfs.targetSavingsPct` (Number, Standard 15)
-- Tools/Checklisten: `dfs.tool.*`, `dfs.docs.checklists` (noch leer)
-- `dfs.version` (z. B. 20250820.2232)
+## Deploy
+- **Firebase Hosting:** Ordner deployen, keine Rewrites nötig (statisch).
+- **Netlify:** Drag‑&‑drop möglich (keine Build‑Steps).
 
-**Zahlen- & Datumsformat**
-
-- Anzeige: `de-DE`, Euro mit 2 Nachkommastellen.
-- Speicherung von Daten: `YYYY-MM-DD` in den Feldern, ISO‑Strings in Timestamps.
-
-**Druck (A4)**
-
-- @page A4, Ränder ~14 mm.
-- Im Druck: helle Darstellung, 1px graue Grenzen.
-- „Interner Vermerk“ wird nicht gedruckt.
-
-**Sicherheit**
-
-- Nur Browser‑Speicher (localStorage).
-- Keine externen Requests, keine Cookies.
-- Bei Quota‑Fehler: Export nutzen.
-
-**Hinweise**
-
-- Alle Pfade sind **relativ** (./…).
-- Jede Unterseite (Modul) ist standalone nutzbar.
+## Commit
+```bash
+git add .
+git commit -m "Refactor: supabase → firebase (clean rename) + Firestore bridge"
+git push
+```

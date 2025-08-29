@@ -1,92 +1,82 @@
-
-<!doctype html><html lang="de"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="../../styles/main.css"><title>Verträge</title></head><body>
-<div class="card">
-  <h2>Verträge & Sparten</h2>
-  <div class="row">
-    <div class="col"><label>Versicherer</label>
-      <input list="versicherer" id="v">
-      <datalist id="versicherer"><option value="Allianz"><option value="AXA"><option value="Signal Iduna"><option value="HUK-Coburg"><option value="ERGO"><option value="Zurich"><option value="HDI"></datalist>
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verträge</title>
+  <link rel="stylesheet" href="../../styles/base.css">
+</head>
+<body>
+  <div class="card">
+    <h2>Verträge</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div><label class="label">Versicherer</label><input class="input" id="versicherer"></div>
+      <div><label class="label">Police-Nr.</label><input class="input" id="police"></div>
+      <div><label class="label">Sparte(n) (Komma)</label><input class="input" id="sparten" placeholder="BHV, Inhalt"></div>
+      <div><label class="label">Beginn</label><input class="input" id="beginn" type="date"></div>
+      <div><label class="label">Jahresbeitrag (Brutto)</label><input class="input" id="beitrag" type="number" step="0.01"></div>
+      <div><label class="label">Zahlweise</label>
+        <select id="zahlweise" class="input">
+          <option>jährlich</option><option>halbjährlich</option><option>vierteljährlich</option><option>monatlich</option>
+        </select>
+      </div>
     </div>
-    <div class="col"><label>Police</label><input id="p"></div>
-    <div class="col"><label>Beginn</label><input type="date" id="b"></div>
-    <div class="col"><label>Beitrag/Jahr</label><input id="j"></div>
-  </div>
-  <div class="row">
-    <div class="col"><label>Sparten</label>
-      <select id="s" multiple size="6"><option>Betriebshaftpflicht (BHV)</option><option>Inhalt</option><option>Gebäude</option><option>Ertragsausfall/BU</option><option>Cyber</option><option>Rechtsschutz</option></select>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button class="btn" id="add">Hinzufügen</button>
+      <button class="btn outline" id="export">Export</button>
+      <input type="file" id="import" style="display:none" accept=".json">
+      <button class="btn outline" id="importBtn">Import</button>
     </div>
-    <div class="col"><label>Gefahren</label><select id="g" multiple size="8"></select></div>
-    <div class="col"><label>Empfehlungen</label><div id="e" class="chips"></div></div>
+    <div class="card" style="margin-top:12px">
+      <table id="tbl"><thead><tr><th>Versicherer</th><th>Police</th><th>Sparte</th><th>Beitrag</th><th>Aktion</th></tr></thead><tbody></tbody></table>
+    </div>
   </div>
-  <div class="row" style="margin-top:10px">
-    <button class="btn" id="add">+ Vertrag hinzufügen</button>
-    <button class="btn-outline" id="clear">Felder leeren</button>
-    <button class="btn" id="saveCloud">Alle Verträge in Cloud speichern</button>
-    <button class="btn-outline" id="loadCloud">Cloud → Lokal laden</button>
-  </div>
-</div>
-
-<div class="card"><strong>Bestand</strong>
-  <table class="table" id="tbl"><thead><tr><th>Versicherer</th><th>Police</th><th>Sparten</th><th>Beitrag</th><th></th></tr></thead><tbody></tbody></table>
-  <div style="margin-top:8px;color:#C0C0C0">Summe: <span id="sum"></span></div>
-</div>
-
-<script src='../../scripts/storage.js'></script>
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-  const url = localStorage.getItem('dfs.supabase.url'); const key = localStorage.getItem('dfs.supabase.key');
-  let sb = null; if(url && key){ sb = createClient(url, key); }
-
-  const selS = document.getElementById('s'), selG=document.getElementById('g'), recDiv=document.getElementById('e');
-
-  function refreshGefahren(){
-    const selected = Array.from(selS.selectedOptions).map(o=>o.value);
-    const set = new Set(); if(selected.length===0){ DFS.STD.defaultGefahren.forEach(x=>set.add(x)); }
-    selected.forEach(s=> (DFS.STD.gefahrenBySparte[s]||DFS.STD.defaultGefahren).forEach(g=>set.add(g)));
-    selG.innerHTML=''; Array.from(set).forEach(g=>{const o=document.createElement('option');o.textContent=g; selG.appendChild(o);});
-  }
-  function renderRecs(){
-    const sp = Array.from(selS.selectedOptions).map(o=>o.value);
-    const items = DFS.getRecs(sp); recDiv.innerHTML='';
-    items.forEach(t=>{const c=document.createElement('div'); c.className='chip'; c.textContent=t; recDiv.appendChild(c);});
-  }
-  selS.addEventListener('change', ()=>{refreshGefahren(); renderRecs();}); refreshGefahren(); renderRecs();
-
-  function add(){
-    const cts = DFS.get(DFS.KEYS.contracts,[]);
-    cts.push({id:crypto.randomUUID(), sparten:Array.from(selS.selectedOptions).map(o=>o.value), versicherer:document.getElementById('v').value, policeNr:document.getElementById('p').value, beginn:document.getElementById('b').value, jahresbeitrag:DFS.parseNum(document.getElementById('j').value), gefahren:Array.from(selG.selectedOptions).map(o=>o.value)});
-    DFS.set(DFS.KEYS.contracts, cts); table();
-  }
-  function del(id){ const cts=DFS.get(DFS.KEYS.contracts,[]).filter(x=>x.id!==id); DFS.set(DFS.KEYS.contracts,cts); table(); }
-  function table(){
-    const tbody=document.querySelector('#tbl tbody'); tbody.innerHTML=''; const cts=DFS.get(DFS.KEYS.contracts,[]);
-    cts.forEach(c=>{const tr=document.createElement('tr'); tr.innerHTML='<td>'+c.versicherer+'</td><td>'+c.policeNr+'</td><td>'+c.sparten.join(', ')+'</td><td>'+DFS.currencyDE(c.jahresbeitrag||0)+'</td><td><button class="btn-danger" data-id="'+c.id+'">Löschen</button></td>'; tbody.appendChild(tr);});
-    tbody.querySelectorAll('button').forEach(b=>b.onclick=()=>del(b.dataset.id));
-    const sum=DFS.get(DFS.KEYS.contracts,[]).reduce((a,c)=>a+(c.jahresbeitrag||0),0); document.getElementById('sum').textContent=DFS.currencyDE(sum);
-  }
-  table();
-  document.getElementById('add').onclick=add;
-  document.getElementById('clear').onclick=()=>{['v','p','b','j'].forEach(id=>document.getElementById(id).value=''); selS.selectedIndex=-1; refreshGefahren(); renderRecs();};
-
-  async function saveCloud(){
-    if(!sb){ alert('Supabase Keys fehlen.'); return;}
-    const custId = localStorage.getItem('dfs.customer.id');
-    const cts = DFS.get(DFS.KEYS.contracts,[]);
-    // simple approach: delete all then insert
-    await sb.from('contracts').delete().neq('id','');
-    if(cts.length){ const payload = cts.map(c=>({id:c.id, customer_id:custId, sparten:c.sparten, versicherer:c.versicherer, police_nr:c.policeNr, beginn:c.beginn, jahresbeitrag:c.jahresbeitrag, gefahren:c.gefahren})); const {error}=await sb.from('contracts').insert(payload); if(error){console.error(error); alert('Speichern fehlgeschlagen'); return;}}
-    alert('Verträge in Cloud gespeichert.');
-  }
-  async function loadCloud(){
-    if(!sb){ alert('Supabase Keys fehlen.'); return;}
-    const {data,error}=await sb.from('contracts').select('*');
-    if(error){console.error(error); alert('Laden fehlgeschlagen'); return;}
-    const mapped = (data||[]).map(r=>({id:r.id, sparten:r.sparten||[], versicherer:r.versicherer, policeNr:r.police_nr, beginn:r.beginn, jahresbeitrag:r.jahresbeitrag, gefahren:r.gefahren||[]}));
-    DFS.set(DFS.KEYS.contracts, mapped); table(); alert('Cloud → Lokal übernommen.');
-  }
-  document.getElementById('saveCloud').onclick=saveCloud;
-  document.getElementById('loadCloud').onclick=loadCloud;
-</script>
-</body></html>
+  <script type="module">
+    import { saveContractToCloud, loadContractsFromCloud, deleteContractFromCloud } from '../../scripts/firebase.js';
+    const KEY='dfs.contracts';
+    const $=id=>document.getElementById(id);
+    const fmt = (n)=> (Number(n)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+    const row=(c)=>`<tr><td>${c.versicherer||''}</td><td>${c.policeNr||''}</td><td>${(c.sparten||[]).join(', ')}</td><td>${fmt(c.jahresbeitragBrutto||0)}</td><td><button data-id="${c.id}" class="btn outline del">Löschen</button></td></tr>`;
+    const render=()=>{
+      const list=JSON.parse(localStorage.getItem(KEY)||'[]');
+      document.querySelector('#tbl tbody').innerHTML = list.map(row).join('');
+      document.querySelectorAll('.del').forEach(b=>b.onclick=async()=>{
+        const id=b.getAttribute('data-id');
+        const next=list.filter(x=>x.id!==id);
+        localStorage.setItem(KEY, JSON.stringify(next));
+        try{ await deleteContractFromCloud(id);}catch{}
+        render();
+      });
+    };
+    render();
+    $('add').onclick=async()=>{
+      const c = {
+        id: crypto.randomUUID? crypto.randomUUID(): `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        versicherer: $('versicherer').value,
+        policeNr: $('police').value,
+        sparten: $('sparten').value ? $('sparten').value.split(',').map(s=>s.trim()) : [],
+        beginn: $('beginn').value||undefined,
+        zahlweise: $('zahlweise').value,
+        jahresbeitragBrutto: Number($('beitrag').value)||0,
+        gefahren: [], empfehlungen: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+      };
+      const list=JSON.parse(localStorage.getItem(KEY)||'[]'); list.push(c); localStorage.setItem(KEY, JSON.stringify(list));
+      try{ await saveContractToCloud(c);}catch(e){ console.warn('Cloud save failed', e); }
+      render();
+    };
+    $('export').onclick=()=>{
+      const data=localStorage.getItem(KEY)||'[]';
+      const blob=new Blob([data],{type:'application/json'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='dfs_contracts.json'; a.click();
+    };
+    $('importBtn').onclick=()=>$('import').click();
+    $('import').onchange=(e)=>{
+      const f=e.target.files[0]; if(!f) return;
+      const r=new FileReader(); r.onload=()=>{
+        try{ const arr=JSON.parse(r.result||'[]'); if(Array.isArray(arr)){ localStorage.setItem(KEY, JSON.stringify(arr)); render(); alert('Import erfolgreich'); } }
+        catch{ alert('Import fehlgeschlagen'); }
+      }; r.readAsText(f);
+    };
+  </script>
+</body>
+</html>

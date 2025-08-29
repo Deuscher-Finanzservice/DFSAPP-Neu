@@ -1,30 +1,26 @@
+UPDATE_INSTRUCTIONS – Clean Rename (supabase → firebase)
+Stand: 2025-08-29 07:16
 
-# Update-Anleitung
+1) **Alte Dateien entfernen**
+   - `scripts/supabaseClient.js`
+   - `scripts/supabase.js`
 
-1. Kopiere die Datei **404.html** ins Hauptverzeichnis deines Repos (neben index.html).  
-   → Damit zeigt Netlify bei falschen URLs eine eigene Fehlerseite.
+2) **Neue Dateien verwenden**
+   - `scripts/firebaseClient.js`
+   - `scripts/firebase.js`
 
-2. Öffne deine `index.html` und füge direkt VOR `</body>` folgenden Block ein:
+3) **Imports**
+   - Alle Module importieren ab sofort `../../scripts/firebase.js`.
 
+4) **Firebase Config**
+   - In `scripts/firebaseClient.js` die Felder `apiKey`, `messagingSenderId`, `appId` setzen.
 
-<!-- FOOTER START -->
+5) **Commit & Push**
+   ```bash
+   git add .
+   git commit -m "Clean rename to Firebase; Firestore bridge enabled"
+   git push
+   ```
 
-<footer style="padding:8px;text-align:center;color:var(--muted);font-size:12px;border-top:1px solid var(--border)">
-  DFS Analyse-Tool – Version <span id="ver"></span>
-</footer>
-<script>
-  document.getElementById('ver').textContent = localStorage.getItem('dfs.version') || '—';
-</script>
-
-<!-- FOOTER END -->
-
-
-3. Committe die Änderungen mit GitHub Desktop und Message:
-
-    Add 404 page and footer with version info
-
-4. Push → Netlify aktualisiert automatisch.
-
----
-
-Version: 20250820.2130
+6) **Test**
+   - Verträge anlegen → Cloud‑Save → Seite reload → Cloud‑Load prüfen.

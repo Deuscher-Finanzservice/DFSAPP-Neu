@@ -1,24 +1,73 @@
 <!doctype html>
 <html lang="de">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Analyse-Wizard</title>
-  <link rel="stylesheet" href="../../styles/base.css"/>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Analyse</title>
+  <link rel="stylesheet" href="../../styles/base.css">
 </head>
 <body>
-  <div class="page" style="padding:16px;">
-    <div class="row">
-      <div class="col-12"><div class="card"><h2 style="margin:4px 0 10px;">Analyse-Wizard</h2>
-<div class="row">
-  <div class="col-12"><div class="card"><p>Starte die Analyse. Das Tool wendet Heuristiken an, um <b>Warnungen</b> und <b>Empfehlungen</b> zu erzeugen und KPIs zu berechnen.</p>
-  <button class="btn btn-primary" id="run">Analyse starten</button>
-  <div id="out" style="margin-top:12px;"></div>
-  </div></div>
-</div>
-</div></div>
+  <div class="card">
+    <h2>Analyse</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <span class="badge">Heuristiken aktiv</span>
+      <span class="badge">Risiko-Score</span>
     </div>
+    <div style="margin-top:12px">
+      <button class="btn" id="run">Analyse starten</button>
+    </div>
+    <div id="out" style="margin-top:12px"></div>
   </div>
-  <script>parent.postMessage({type:'set-title', value: 'Analyse-Wizard'}, '*');</script>
-  <script src="./module.js"></script>
-</body></html>
+  <script type="module">
+    const K='dfs.analysis';
+    const KC='dfs.contracts';
+    const out=document.getElementById('out');
+    const euro=(n)=> (Number(n)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+    const heuristics=(contracts)=>{
+      const warnings=[], recommendations=[];
+      const sparten = new Set(contracts.flatMap(c=>c.sparten||[]).map(s=>s.toLowerCase()));
+      const findC = (name)=> contracts.filter(c=> (c.sparten||[]).map(s=>s.toLowerCase()).includes(name.toLowerCase()));
+
+      // Warnungen
+      findC('BHV').forEach(c=>{
+        if((c.deckungssumme||0) < 5_000_000) warnings.push('BHV Deckungssumme < 5 Mio.');
+      });
+      findC('Inhalt').forEach(c=>{ if((c.gefahren||[]).length < 3) warnings.push('Inhalt: weniger als 3 Gefahren'); });
+      findC('Gebäude').forEach(c=>{ if((c.gefahren||[]).length < 3) warnings.push('Gebäude: weniger als 3 Gefahren'); });
+      const cyber = findC('Cyber');
+      if(cyber.length && !cyber.some(c=> (c.gefahren||[]).length>0 )) warnings.push('Cyber vorhanden, aber keine Bausteine');
+
+      // Empfehlungen fehlende Sparten
+      if(!sparten.has('cyber')) recommendations.push('Cyber ergänzen …');
+      if(!sparten.has('ertragsausfall') && !sparten.has('bu')) recommendations.push('Betriebsunterbrechung absichern');
+      if(!sparten.has('rechtsschutz')) recommendations.push('Rechtsschutz prüfen …');
+
+      // KPIs
+      const sumAnnual = contracts.reduce((a,c)=>a+(Number(c.jahresbeitragBrutto)||0),0);
+      const targetPct = Number(localStorage.getItem('dfs.targetSavingsPct')||'15'); // default 15%
+      const monthlySaving = (sumAnnual - (sumAnnual*(1 - targetPct/100))) / 12;
+      const riskScore = Math.max(5, 95 - 10*warnings.length);
+
+      return { warnings, recommendations, sumAnnual, targetPct, monthlySaving, riskScore, ts: new Date().toISOString() };
+    };
+
+    document.getElementById('run').onclick=()=>{
+      const contracts = JSON.parse(localStorage.getItem(KC)||'[]');
+      const a = heuristics(contracts);
+      localStorage.setItem(K, JSON.stringify(a));
+      out.innerHTML = `
+        <div class="card">
+          <h3>KPI</h3>
+          <p><strong>Jahressumme:</strong> ${euro(a.sumAnnual)} &nbsp; • &nbsp; <strong>Ziel:</strong> ${a.targetPct}% &nbsp; • &nbsp; <strong>Monatliche Ersparnis:</strong> ${euro(a.monthlySaving)}</p>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <h3>Warnungen</h3>
+          <div>${a.warnings.map(w=>`<span class="badge" style="background:#3a1f05;border-color:#6b3a0f">${w}</span>`).join('')||'—'}</div>
+          <h3 style="margin-top:12px">Empfehlungen</h3>
+          <div>${a.recommendations.map(r=>`<span class="badge">${r}</span>`).join('')||'—'}</div>
+        </div>
+      `;
+    };
+  </script>
+</body>
+</html>

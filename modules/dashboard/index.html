@@ -1,27 +1,28 @@
 <!doctype html>
 <html lang="de">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Ergebnis-Dashboard</title>
-  <link rel="stylesheet" href="../../styles/base.css"/>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="../../styles/base.css">
 </head>
 <body>
-  <div class="page" style="padding:16px;">
-    <div class="row">
-      <div class="col-12"><div class="card"><h2 style="margin:4px 0 10px;">Ergebnis-Dashboard</h2>
-<div class="row">
-  <div class="col-3"><div class="card" id="kpi-aktuell"></div></div>
-  <div class="col-3"><div class="card" id="kpi-empfohlen"></div></div>
-  <div class="col-3"><div class="card" id="kpi-ersparnis"></div></div>
-  <div class="col-3"><div class="card" id="kpi-warnungen"></div></div>
-  <div class="col-6"><div class="card"><h3>Top Warnungen</h3><div id="warnungen"></div></div></div>
-  <div class="col-6"><div class="card"><h3>Top Empfehlungen</h3><div id="empfehlungen"></div></div></div>
-  <div class="col-12"><div class="card"><h3>Story</h3><ol id="story"></ol></div></div>
-</div>
-</div></div>
-    </div>
+  <div class="card">
+    <h2>Ergebnis-Dashboard</h2>
+    <div id="summary"></div>
   </div>
-  <script>parent.postMessage({type:'set-title', value: 'Ergebnis-Dashboard'}, '*');</script>
-  <script src="./module.js"></script>
-</body></html>
+  <script type="module">
+    const euro=(n)=> (Number(n)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+    const a = JSON.parse(localStorage.getItem('dfs.analysis')||'{}');
+    const contracts = JSON.parse(localStorage.getItem('dfs.contracts')||'[]');
+    const sumAnnual = contracts.reduce((a,c)=>a+(Number(c.jahresbeitragBrutto)||0),0);
+    const targetPct = Number(localStorage.getItem('dfs.targetSavingsPct')||'15');
+    const monthlySaving = (sumAnnual - (sumAnnual*(1 - targetPct/100))) / 12;
+    const riskScore = a.riskScore ?? Math.max(5, 95 - 10*((a.warnings||[]).length||0));
+    document.getElementById('summary').innerHTML = `
+      <p><strong>Jahressumme:</strong> ${euro(sumAnnual)} &nbsp; • &nbsp; <strong>Ziel:</strong> ${targetPct}% &nbsp; • &nbsp; <strong>Monatliche Ersparnis:</strong> ${euro(monthlySaving)}</p>
+      <p><strong>Risiko-Score:</strong> ${riskScore}</p>
+    `;
+  </script>
+</body>
+</html>

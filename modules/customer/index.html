@@ -1,133 +1,48 @@
-
-<!doctype html><html lang="de"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="../../styles/main.css"><title>Kunden</title></head><body>
-<div class="card">
-  <h2>Kundenstammdaten</h2>
-  <div class="row">
-    <div class="col"><label>Firma</label><input id="firma"></div>
-    <div class="col"><label>Ansprechpartner</label><input id="ansprech"></div>
-    <div class="col"><label>E-Mail</label><input id="email"></div>
-    <div class="col"><label>Telefon</label><input id="telefon"></div>
-    <div class="col"><label>Branche</label><input id="branche"></div>
-    <div class="col"><label>Mitarbeiter</label><input id="mitarbeiter" type="number"></div>
-    <div class="col"><label>Umsatz</label><input id="umsatz"></div>
-    <div class="col"><label>Gründung (YYYY)</label><input id="gruendung" type="number"></div>
-    <div class="col"><label>Standort</label><input id="standort"></div>
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kundenstammdaten</title>
+  <link rel="stylesheet" href="../../styles/base.css">
+</head>
+<body>
+  <div class="card">
+    <h2>Kundenstammdaten</h2>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+      <div><label class="label">Firma</label><input class="input" id="firma" placeholder="Firmenname"></div>
+      <div><label class="label">Ansprechperson</label><input class="input" id="ansprech" placeholder="Name"></div>
+      <div><label class="label">E-Mail (optional)</label><input class="input" id="email" placeholder="name@firma.de"></div>
+      <div><label class="label">Telefon</label><input class="input" id="telefon" placeholder="+49 …"></div>
+      <div><label class="label">Branche (optional)</label><input class="input" id="branche"></div>
+      <div><label class="label">Mitarbeiter (optional)</label><input class="input" id="mitarbeiter" type="number"></div>
+      <div><label class="label">Umsatz (optional)</label><input class="input" id="umsatz" type="number" step="0.01"></div>
+      <div><label class="label">Gründung (Jahr, optional)</label><input class="input" id="gruendung" type="number"></div>
+      <div><label class="label">Standort (optional)</label><input class="input" id="standort"></div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button class="btn" id="save">Speichern</button>
+      <button class="btn outline" id="clear">Leeren</button>
+    </div>
   </div>
-  <div class="row" style="margin-top:10px">
-    <button class="btn" id="saveLocal">Lokal speichern</button>
-    <button class="btn-outline" id="loadLocal">Lokal laden</button>
-    <button class="btn" id="saveCloud">In Cloud speichern</button>
-    <button class="btn-outline" id="loadCloud">Aus Cloud laden</button>
-  </div>
-</div>
-<script src='../../scripts/storage.js'></script>
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-  const url = localStorage.getItem('dfs.supabase.url'); const key = localStorage.getItem('dfs.supabase.key');
-  let sb = null; if(url && key){ sb = createClient(url, key); }
-
-  function readUI(){ return {firma:firma.value,ansprech:ansprech.value,email:email.value,telefon:telefon.value,branche:branche.value,mitarbeiter:Number(mitarbeiter.value)||null,umsatz:DFS.parseNum(umsatz.value)||null,gruendung:Number(gruendung.value)||null,standort:standort.value}; }
-  function writeUI(c){ if(!c) return; firma.value=c.firma||'';ansprech.value=c.ansprech||'';email.value=c.email||'';telefon.value=c.telefon||'';branche.value=c.branche||'';mitarbeiter.value=c.mitarbeiter||'';umsatz.value=c.umsatz||'';gruendung.value=c.gruendung||'';standort.value=c.standort||''; }
-  function saveLocal(){ DFS.set(DFS.KEYS.customer, readUI()); DFS.toast('Lokal gespeichert.'); }
-  function loadLocal(){ writeUI(DFS.get(DFS.KEYS.customer,{})); }
-
-  async function saveCloud(){
-    if(!sb){ alert('Supabase Keys fehlen. Bitte in der Shell verbinden.'); return; }
-    const c = readUI();
-    // einfache Strategie: es gibt genau 1 Kunden-Datensatz
-    // upsert auf basis fester id
-    const fixedId = localStorage.getItem('dfs.customer.id') || crypto.randomUUID();
-    localStorage.setItem('dfs.customer.id', fixedId);
-    const {error} = await sb.from('customers').upsert({id:fixedId, firma:c.firma,ansprech:c.ansprech,email:c.email,telefon:c.telefon,branche:c.branche,mitarbeiter:c.mitarbeiter,umsatz:c.umsatz,gruendung:c.gruendung,standort:c.standort});
-    if(error){ console.error(error); alert('Cloud-Speichern fehlgeschlagen'); } else { alert('In Cloud gespeichert'); }
-  }
-
-  async function loadCloud(){
-    if(!sb){ alert('Supabase Keys fehlen.'); return; }
-    const { data, error } = await sb.from('customers').select('*').limit(1);
-    if(error){ console.error(error); alert('Cloud-Laden fehlgeschlagen'); return; }
-    if(data && data[0]){ writeUI(data[0]); DFS.set(DFS.KEYS.customer, data[0]); }
-  }
-
-  document.getElementById('saveLocal').onclick = saveLocal;
-  document.getElementById('loadLocal').onclick = loadLocal;
-  document.getElementById('saveCloud').onclick = saveCloud;
-  document.getElementById('loadCloud').onclick = loadCloud;
-  loadLocal();
-</script>
-<script type="module">
-  import { saveCustomerToCloud, loadCustomers, loadCustomerContractDetails } from '/scripts/supabase.js';
-
-  // Feld-Helper
-  const $ = (id) => document.getElementById(id);
-
-  // IDs deiner Inputs – bitte so benennen wie in der Seite vorhanden:
-  const fields = {
-    firma: $('cust-firma') || document.querySelector('[name="firma"]'),
-    branche: $('cust-branche') || document.querySelector('[name="branche"]'),
-    email: $('cust-email') || document.querySelector('[name="email"]'),
-    telefon: $('cust-telefon') || document.querySelector('[name="telefon"]'),
-    mitarbeiter: $('cust-mitarbeiter') || document.querySelector('[name="mitarbeiter"]'),
-    umsatz: $('cust-umsatz') || document.querySelector('[name="umsatz"]'),
-    gruendung: $('cust-gruendung') || document.querySelector('[name="gruendung"]'),
-    standort: $('cust-standort') || document.querySelector('[name="standort"]'),
-  };
-
-  // Buttons (robuster: IDs vergeben; hier zur Not per Textsuche)
-  const btnSaveCloud = document.getElementById('btn-save-cloud') 
-    || Array.from(document.querySelectorAll('button, a')).find(el => /in cloud speichern/i.test(el.textContent));
-  const btnLoadCloud = document.getElementById('btn-load-cloud') 
-    || Array.from(document.querySelectorAll('button, a')).find(el => /aus cloud laden/i.test(el.textContent));
-
-  function readForm() {
-    const v = (el) => (el && 'value' in el ? el.value : '');
-    return {
-      firma: v(fields.firma),
-      branche: v(fields.branche),
-      email: v(fields.email),
-      telefon: v(fields.telefon),
-      mitarbeiter: Number(v(fields.mitarbeiter) || 0),
-      umsatz: Number(v(fields.umsatz) || 0),
-      gruendung: Number(v(fields.gruendung) || 0),
-      standort: v(fields.standort),
+  <script type="module">
+    const KEY='dfs.customer';
+    const $=id=>document.getElementById(id);
+    const load=()=>{
+      try{ const d=JSON.parse(localStorage.getItem(KEY)||'{}');
+        ['firma','ansprech','email','telefon','branche','mitarbeiter','umsatz','gruendung','standort'].forEach(k=>{$(k).value = d[k]??''});
+      }catch{}
     };
-  }
-
-  function toast(msg, isErr=false) {
-    console[isErr ? 'error' : 'log'](msg);
-    alert(msg);
-  }
-
-  if (btnSaveCloud) {
-    btnSaveCloud.addEventListener('click', async (e) => {
-      e.preventDefault();
-      try {
-        const payload = readForm();
-        if (!payload.firma) return toast('Firma ist Pflicht.', true);
-        const saved = await saveCustomerToCloud(payload);
-        toast(`Gespeichert: ${saved.firma}`);
-      } catch (err) {
-        toast(`Cloud-Speichern fehlgeschlagen: ${err.message}`, true);
-      }
-    });
-  }
-
-  if (btnLoadCloud) {
-    btnLoadCloud.addEventListener('click', async (e) => {
-      e.preventDefault();
-      try {
-        // wähle hier, ob du nur Kunden oder gleich die View laden willst:
-        // const rows = await loadCustomers();
-        const rows = await loadCustomerContractDetails();
-        if (!rows?.length) return toast('Keine Daten in der Cloud gefunden.');
-        console.table(rows);
-        toast(`Geladen: ${rows.length} Datensätze (Details in der Konsole)`);
-      } catch (err) {
-        toast(`Cloud-Laden fehlgeschlagen: ${err.message}`, true);
-      }
-    });
-  }
-</script>
-</body></html>
+    load();
+    document.getElementById('save').onclick=()=>{
+      const data={firma:$('#firma').value, ansprech:$('#ansprech').value, email:$('#email').value, telefon:$('#telefon').value,
+        branche:$('#branche').value||undefined, mitarbeiter:Number($('#mitarbeiter').value)||undefined, umsatz:Number($('#umsatz').value)||undefined,
+        gruendung:Number($('#gruendung').value)||undefined, standort:$('#standort').value||undefined
+      };
+      localStorage.setItem(KEY, JSON.stringify(data));
+      alert('Gespeichert');
+    };
+    document.getElementById('clear').onclick=()=>{ localStorage.removeItem(KEY); load(); };
+  </script>
+</body>
+</html>
