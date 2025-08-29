@@ -66,3 +66,14 @@ STATUS-CHECK (Cloud)
 - **Nichts aktualisiert sich?** → `DFS_VERSION` hochziehen und hart neu laden.
 - **Firebase 404/favicon** → ignorierbar; prüfe Hosting-Deploys.
 - **Git fragt nach Passwort** → auf **SSH** umstellen; Key unter GitHub „SSH and GPG keys“ hinterlegen.
+
+## Arbeitsmodus mit Codex
+
+- **Blöcke**: Alle Änderungen werden als komplette, zusammenhängende Blöcke geliefert („Codex-ready“), sodass sie direkt in Codex eingefügt werden können.  
+- **Keine Snippets**: Keine losen Code-Schnipsel, sondern immer vollständige Blöcke.  
+- **Commit/Push**: Standardmäßig ohne Commit. Status-Check + Commit-Push-Anweisungen kommen nur auf Wunsch und werden als **Anhang 3** markiert.  
+- **Ablauf**:  
+  1. Block wird in Codex eingefügt.  
+  2. Codex führt Änderungen durch.  
+  3. Wenn geprüft → optionaler Commit mit Anhang 3.  
+- **Vorteil**: Klare Trennung zwischen Umsetzung und Versionskontrolle. Flexibler Workflow mit höchster Geschwindigkeit.
