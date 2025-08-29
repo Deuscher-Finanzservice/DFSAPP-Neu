@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="de"><head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kundenliste</title>
+  <link rel="stylesheet" href="../../styles/base.css">
+</head>
+<body>
+  <div class="card">
+    <h2>Kunden</h2>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <input class="input" id="search" placeholder="Suche Firma, Ansprechpartner, E‑Mail">
+      <button class="btn" id="new">Neu</button>
+      <button class="btn outline" id="sync-cloud">Cloud laden</button>
+    </div>
+    <div class="card">
+      <table id="tbl">
+        <thead><tr><th>Firma</th><th>Ansprechpartner</th><th>E‑Mail</th><th>Telefon</th><th>Aktion</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <script type="module">
+    import { loadCustomersFromCloud, deleteCustomerFromCloud, saveCustomerToCloud } from '../../scripts/firebase.js';
+    const KEY='dfs.customers';
+    const $=s=>document.querySelector(s);
+    const tbody = $('#tbl tbody');
+    const q = $('#search');
+
+    function getLocal(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch{ return []; } }
+    function setLocal(arr){ localStorage.setItem(KEY, JSON.stringify(arr)); }
+    function render(list){
+      const term = q.value.trim().toLowerCase();
+      const filtered = !term? list : list.filter(c=>{
+        const hay=(c.firma||'')+' '+(c.ansprech||c.contactName||'')+' '+(c.email||'');
+        return hay.toLowerCase().includes(term);
+      });
+      const euro = (n)=> (Number(n)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+      tbody.innerHTML = filtered.map(c=>`
+        <tr>
+          <td>${c.firma||c.companyName||''}</td>
+          <td>${c.ansprech||c.contactName||''}</td>
+          <td>${c.email||''}</td>
+          <td>${c.telefon||c.phone||''}</td>
+          <td>
+            <a class="btn outline" href="../customer/index.html?id=${c.id}">Öffnen</a>
+            <button class="btn outline del" data-id="${c.id}">Löschen</button>
+          </td>
+        </tr>
+      `).join('');
+      tbody.querySelectorAll('.del').forEach(b=> b.onclick = async ()=>{
+        const id=b.getAttribute('data-id');
+        const next = getLocal().filter(x=>x.id!==id);
+        setLocal(next);
+        try{ await deleteCustomerFromCloud(id);}catch(e){ console.warn('Cloud delete failed', e); }
+        render(next);
+      });
+    }
+
+    // initial
+    render(getLocal());
+    q.addEventListener('input', ()=>render(getLocal()));
+    $('#new').onclick = ()=>{ window.location.href = '../customer/index.html'; };
+    $('#sync-cloud').onclick = async ()=>{
+      const cloud = await loadCustomersFromCloud();
+      // Merge by id, prefer cloud updated
+      const local = getLocal();
+      const map = new Map(local.map(x=>[x.id,x]));
+      cloud.forEach(c=> map.set(c.id, {...map.get(c.id), ...c}));
+      setLocal(Array.from(map.values()));
+      render(getLocal());
+      alert('Clouddaten geladen');
+    };
+  </script>
+</body>
+</html>
