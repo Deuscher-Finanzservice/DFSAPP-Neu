@@ -1,51 +1,18 @@
-# DFS Versicherungsanalyse – Clean Rename auf Firebase (Firestore)
-**Stand:** 2025-08-29 07:16
+# DFS Versicherungsanalyse – Version 1.3.0
+Stand: 2025-08-29 07:44
+Autor: Björn Weber
 
-Dieses Projekt ist ein rein statisches Web‑Tool (HTML/CSS/JS) mit Browser‑Storage (localStorage) und optionaler Cloud‑Synchronisation über **Firebase Firestore**. Build‑Schritte sind nicht nötig; alle Pfade sind **relativ**.
+Komplette, statische App im DFS-CI mit Firebase Firestore Cloud-Sync.
 
-## Struktur
-```
-/
-├─ index.html                   # Shell (Sidebar + iframe)
-├─ favicon.ico
-├─ assets/logo.png
-├─ styles/base.css
-├─ scripts/firebaseClient.js    # Firebase Init (ersetzen: supabaseClient.js)
-├─ scripts/firebase.js          # Firestore‑Wrapper (ersetzen: supabase.js)
-└─ modules/
-   ├─ dashboard/
-   ├─ customer/
-   ├─ contracts/
-   ├─ analysis/
-   └─ print/
-```
+## Features bis Version 1.3.0
+- Clean Rename Supabase → Firebase
+- Kunden-Modul
+- Verträge CRUD + Cloud-Sync
+- Analyse-Wizard mit Heuristiken
+- Dashboard mit KPI
+- PDF-/Druckseite (A4)
 
-## Wichtige Änderungen (Migration)
-- **Dateinamen:** `supabaseClient.js` → `firebaseClient.js`, `supabase.js` → `firebase.js`
-- **Imports in Modulen:** auf `../../scripts/firebase.js` umgestellt.
-- **Cloud‑Buttons:** Shell speichert/lädt `dfs.customer`, `dfs.contracts`, `dfs.analysis`.
-- **Verträge:** `saveContractToCloud()` ist aktiv; Collection **contracts**.
-
-## Firebase Konfiguration
-In `scripts/firebaseClient.js`:
-```js
-const firebaseConfig = { apiKey: "…", authDomain: "deutscher-finanzservice.firebaseapp.com",
-  projectId: "deutscher-finanzservice", storageBucket: "deutscher-finanzservice.appspot.com",
-  messagingSenderId: "…", appId: "…" };
-```
-> `apiKey`, `messagingSenderId`, `appId` müssen zu deinem Projekt passen (öffentlich, nicht geheim).
-
-## LocalStorage Keys
-- `dfs.customer` (Objekt), `dfs.contracts` (Array), `dfs.analysis` (Objekt)
-- `dfs.targetSavingsPct` (Number), `dfs.cloud.clientId` (automatisch)
-
-## Deploy
-- **Firebase Hosting:** Ordner deployen, keine Rewrites nötig (statisch).
-- **Netlify:** Drag‑&‑drop möglich (keine Build‑Steps).
-
-## Commit
-```bash
-git add .
-git commit -m "Refactor: supabase → firebase (clean rename) + Firestore bridge"
-git push
-```
+## Nutzung
+- Shell lädt Module via iframe
+- Cloud-Buttons speichern/laden `dfs.customer`, `dfs.contracts`, `dfs.analysis`
+- Version wird im Footer von index.html angezeigt

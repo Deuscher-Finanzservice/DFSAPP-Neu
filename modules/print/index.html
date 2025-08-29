@@ -1,45 +1,13 @@
-<!doctype html>
-<html lang="de">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PDF / Druck</title>
-  <link rel="stylesheet" href="../../styles/base.css">
-  <style>
-    @page{ size:A4; margin:14mm }
-    body{ background:#fff; color:#000 }
-    .card{ background:#fff; border:1px solid #ddd }
-    th,td{ border:1px solid #ddd }
-  </style>
-</head>
-<body>
-  <h2>Bericht – DFS Analyse</h2>
-  <h3>KPI</h3>
-  <div id="kpi"></div>
-  <h3>Warnungen</h3>
-  <div id="warn"></div>
-  <h3>Empfehlungen</h3>
-  <div id="rec"></div>
-  <h3>Bestand</h3>
-  <table id="tbl"><thead><tr><th>Versicherer</th><th>Police</th><th>Sparte</th><th>Beitrag</th></tr></thead><tbody></tbody></table>
-
-  <script type="module">
-    const euro=(n)=> (Number(n)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
-    const a = JSON.parse(localStorage.getItem('dfs.analysis')||'{}');
-    const contracts = JSON.parse(localStorage.getItem('dfs.contracts')||'[]');
-
-    document.getElementById('kpi').innerHTML = `
-      <p><strong>Jahressumme:</strong> ${euro(a.sumAnnual ?? (contracts.reduce((x,c)=>x+(Number(c.jahresbeitragBrutto)||0),0)))} &nbsp; • &nbsp; <strong>Ziel:</strong> ${a.targetPct ?? 15}% &nbsp; • &nbsp; <strong>Monatliche Ersparnis:</strong> ${euro(a.monthlySaving ?? 0)}</p>
-      <p><strong>Risiko-Score:</strong> ${a.riskScore ?? 0}</p>
-    `;
-    const warn = (a.warnings||[]).map(w=>`<span class="badge">${w}</span>`).join('') || '—';
-    const rec  = (a.recommendations||[]).map(w=>`<span class="badge">${w}</span>`).join('') || '—';
-    document.getElementById('warn').innerHTML = warn;
-    document.getElementById('rec').innerHTML = rec;
-
-    const tbody=document.querySelector('#tbl tbody');
-    tbody.innerHTML = contracts.map(c=>`<tr><td>${c.versicherer||''}</td><td>${c.policeNr||''}</td><td>${(c.sparten||[]).join(', ')}</td><td>${euro(c.jahresbeitragBrutto||0)}</td></tr>`).join('');
-    window.addEventListener('load', ()=> window.print(), { once:true });
-  </script>
-</body>
-</html>
+<!doctype html><html lang="de"><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles/base.css">
+<title>PDF / Druck</title><style>@page{size:A4;margin:14mm}body{background:#fff;color:#000}.card{background:#fff;border:1px solid #ddd}th,td{border:1px solid #ddd}</style></head>
+<body><h2>Bericht – DFS Analyse</h2><h3>KPI</h3><div id="kpi"></div><h3>Warnungen</h3><div id="warn"></div><h3>Empfehlungen</h3><div id="rec"></div>
+<h3>Bestand</h3><table id="tbl"><thead><tr><th>Versicherer</th><th>Police</th><th>Sparte</th><th>Beitrag</th></tr></thead><tbody></tbody></table>
+<script type="module">
+const euro=n=>(Number(n)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+const a=JSON.parse(localStorage.getItem('dfs.analysis')||'{}'); const list=JSON.parse(localStorage.getItem('dfs.contracts')||'[]');
+document.getElementById('kpi').innerHTML=`<p><strong>Jahressumme:</strong> ${euro(a.sumAnnual ?? list.reduce((s,c)=>s+(Number(c.jahresbeitragBrutto)||0),0))} • <strong>Ziel:</strong> ${a.targetPct ?? 15}% • <strong>Monatliche Ersparnis:</strong> ${euro(a.monthlySaving ?? 0)}</p><p><strong>Risiko-Score:</strong> ${a.riskScore ?? 0}</p>`;
+document.getElementById('warn').innerHTML=(a.warnings||[]).map(w=>`<span class="badge">${w}</span>`).join('')||'—';
+document.getElementById('rec').innerHTML=(a.recommendations||[]).map(w=>`<span class="badge">${w}</span>`).join('')||'—';
+document.querySelector('#tbl tbody').innerHTML = list.map(c=>`<tr><td>${c.versicherer||''}</td><td>${c.policeNr||''}</td><td>${(c.sparten||[]).join(', ')}</td><td>${euro(c.jahresbeitragBrutto||0)}</td></tr>`).join('');
+window.addEventListener('load',()=>window.print(),{once:true});
+</script></body></html>

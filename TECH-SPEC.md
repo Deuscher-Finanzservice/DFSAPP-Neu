@@ -1,27 +1,22 @@
 # TECH-SPEC – DFS Versicherungsanalyse
-**Stand:** 2025-08-29 07:16
+Version: 1.3.0
+Stand: 2025-08-29 07:44
+Autor: Björn Weber
 
-## Laufzeitumgebung
-- reine **ESM**‑Module, **keine Build‑Steps**.
-- Firebase SDK via CDN:
-  - `https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js`
-  - `https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js`
+## Runtime
+- Statisch, Netlify/Firebase Hosting
+- Firebase SDK via CDN
+- Modules in /modules/*
 
 ## Firestore Schema
-- **kv** (docId = `${clientId}__${key}`): `{ key, clientId, data, updatedAt }`
-- **contracts**: vollständige Vertragsdokumente inkl. `clientId`, `createdAt` (ISO), `updatedAt` (serverTimestamp).
+- kv (Key/Value pro Client)
+- contracts (Dokumente mit clientId, createdAt, updatedAt)
 
-## Öffentliche API (scripts/firebase.js)
-- `saveToCloud(key, data)` / `loadFromCloud(key)`
-- `saveContractToCloud(contract)` / `loadContractsFromCloud({limitTo})` / `deleteContractFromCloud(id)`
-- `saveAllDFSBlobs({customer,contracts,analysis})` / `loadAllDFSBlobs()`
+## API (scripts/firebase.js)
+- saveToCloud / loadFromCloud
+- saveContractToCloud / loadContractsFromCloud / deleteContractFromCloud
+- saveAllDFSBlobs / loadAllDFSBlobs
 
-## Fehlerbehandlung
-- Cloud‑Calls try/catch im UI, Toast‑Feedback.
-- localStorage unter Quota → Hinweis + Export anbieten.
-
-## Barrierefreiheit
-- AA‑Kontrast, sichtbarer Fokus, Tastatur‑Nutzung.
-
-## Druck
-- `@page A4; margin:14mm` – helle Darstellung für Print.
+## Version
+- current: 1.3.0
+- localStorage: dfs.version = "1.3.0"

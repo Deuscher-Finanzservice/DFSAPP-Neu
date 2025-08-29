@@ -1,28 +1,12 @@
-<!doctype html>
-<html lang="de">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="../../styles/base.css">
-</head>
-<body>
-  <div class="card">
-    <h2>Ergebnis-Dashboard</h2>
-    <div id="summary"></div>
-  </div>
-  <script type="module">
-    const euro=(n)=> (Number(n)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
-    const a = JSON.parse(localStorage.getItem('dfs.analysis')||'{}');
-    const contracts = JSON.parse(localStorage.getItem('dfs.contracts')||'[]');
-    const sumAnnual = contracts.reduce((a,c)=>a+(Number(c.jahresbeitragBrutto)||0),0);
-    const targetPct = Number(localStorage.getItem('dfs.targetSavingsPct')||'15');
-    const monthlySaving = (sumAnnual - (sumAnnual*(1 - targetPct/100))) / 12;
-    const riskScore = a.riskScore ?? Math.max(5, 95 - 10*((a.warnings||[]).length||0));
-    document.getElementById('summary').innerHTML = `
-      <p><strong>Jahressumme:</strong> ${euro(sumAnnual)} &nbsp; • &nbsp; <strong>Ziel:</strong> ${targetPct}% &nbsp; • &nbsp; <strong>Monatliche Ersparnis:</strong> ${euro(monthlySaving)}</p>
-      <p><strong>Risiko-Score:</strong> ${riskScore}</p>
-    `;
-  </script>
-</body>
-</html>
+<!doctype html><html lang="de"><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles/base.css"><title>Dashboard</title></head>
+<body><div class="card"><h2>Ergebnis-Dashboard</h2><div id="summary"></div></div>
+<script type="module">
+const euro=(n)=> (Number(n)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+const a=JSON.parse(localStorage.getItem('dfs.analysis')||'{}');
+const list=JSON.parse(localStorage.getItem('dfs.contracts')||'[]');
+const sum=list.reduce((s,c)=>s+(Number(c.jahresbeitragBrutto)||0),0);
+const targetPct=Number(localStorage.getItem('dfs.targetSavingsPct')||'15');
+const monthly=(sum - (sum*(1 - targetPct/100))) / 12;
+const risk = a.riskScore ?? Math.max(5, 95 - 10*((a.warnings||[]).length||0));
+document.getElementById('summary').innerHTML = `<p><strong>Jahressumme:</strong> ${euro(sum)} • <strong>Ziel:</strong> ${targetPct}% • <strong>Monatsersparnis:</strong> ${euro(monthly)}</p><p><strong>Risiko-Score:</strong> ${risk}</p>`;
+</script></body></html>
