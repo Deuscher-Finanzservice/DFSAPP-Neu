@@ -1,39 +1,68 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Repo-Root ermitteln (läuft egal von wo du das Skript startest)
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$REPO_ROOT"
+# ---------------------------------------------
+# DFSAPP-Neu · Push & Deploy Helper
+# - läuft von überall (springt ins Repo-Root)
+# - sync:  git fetch + pull --rebase origin/main
+# - commit: nur wenn Änderungen; sonst Empty-Commit (CI trigger)
+# - push:   origin/main
+# ---------------------------------------------
 
-echo "→ Remote prüfen:"
-git remote -v || true
+# 1) Ins Verzeichnis der Datei, dann ins Repo-Root wechseln
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
-# Auf main arbeiten (falls nicht bereits aktiv)
-CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-if [[ "$CURRENT_BRANCH" != "main" ]]; then
-  echo "→ Wechsle auf 'main' (war: $CURRENT_BRANCH)"
-  git checkout main
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "❌ Dieses Verzeichnis ist kein Git-Repo: $PWD"
+  exit 1
 fi
 
-echo "→ Hole Änderungen von origin/main (rebase):"
-git pull --rebase origin main || true
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
 
-echo "→ Stage alle Änderungen:"
+# 2) Checks/Info
+if ! git remote get-url origin >/dev/null 2>&1; then
+  echo "❌ Kein 'origin' Remote konfiguriert. Bitte einmal 'git remote -v' prüfen."
+  exit 1
+fi
+
+DEFAULT_BRANCH="main"
+CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+echo "➡️  Repo: $REPO_ROOT"
+echo "➡️  Aktueller Branch: $CURRENT_BRANCH"
+
+# 3) Auf main arbeiten (falls nicht bereits)
+if [[ "$CURRENT_BRANCH" != "$DEFAULT_BRANCH" ]]; then
+  echo "ℹ️  Wechsle zu '$DEFAULT_BRANCH' (war: '$CURRENT_BRANCH')"
+  git checkout "$DEFAULT_BRANCH"
+fi
+
+# 4) Upstream holen (rebase-Workflow)
+echo "➡️  Hole Änderungen von origin/$DEFAULT_BRANCH (rebase):"
+git fetch origin
+git pull --rebase origin "$DEFAULT_BRANCH"
+
+# 5) Änderungen stage'n
+echo "➡️  Stage alle Änderungen:"
 git add -A
 
-# Commit nur, wenn es wirklich Änderungen gibt
+# 6) Commit: nur wenn staged Änderungen, sonst empty commit zum CI-Triggern
 if git diff --cached --quiet; then
-  echo "✓ Keine Änderungen zu committen."
+  echo "ℹ️  Keine Änderungen gefunden – erzeuge Empty-Commit (CI-Trigger)."
+  git commit --allow-empty -m "ci: trigger deploy"
 else
-  TS="$(date '+%Y-%m-%d %H:%M:%S')"
+  TS="$(date +"%Y-%m-%d %H:%M:%S")"
   MSG="chore(deploy): push via script @ ${TS}"
-  echo "→ Commit: ${MSG}"
+  echo "➡️  Commit: ${MSG}"
   git commit -m "${MSG}"
 fi
 
-echo "→ Push nach origin/main (SSH empfohlen):"
-git push -u origin main
+# 7) Push
+echo "➡️  Push nach origin/$DEFAULT_BRANCH:"
+git push -u origin "$DEFAULT_BRANCH"
 
-echo
-echo "✓ Fertig. GitHub Actions startet jetzt das Deploy nach Firebase Hosting."
-echo "  Tip: Öffne GitHub → Actions → der neueste Workflow sollte 'in progress' sein."
+# 8) Hinweis auf GitHub Actions
+REPO_URL="$(git config --get remote.origin.url | sed -E 's/\.git$//' | sed -E 's#^git@github.com:#https://github.com/#')"
+echo "✅ Fertig. GitHub Actions startet jetzt das Deploy nach Firebase Hosting."
+echo "🔗 Actions-Übersicht: ${REPO_URL}/actions"
