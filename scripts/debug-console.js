@@ -1,18 +1,19 @@
-(function(){
-  const el = { 
-    root: document.getElementById('dfs-debug'),
-    body: document.getElementById('dfs-debug-body'),
-    meta: document.getElementById('dfs-debug-meta'),
-    copy: document.getElementById('dfsdbg-copy'),
-    save: document.getElementById('dfsdbg-save'),
-    pause: document.getElementById('dfsdbg-pause'),
-    clear: document.getElementById('dfsdbg-clear'),
-    close: document.getElementById('dfsdbg-close'),
-    fInfo: document.getElementById('dfsdbg-f-info'),
-    fWarn: document.getElementById('dfsdbg-f-warn'),
-    fErr:  document.getElementById('dfsdbg-f-error'),
-  };
-  if(!el.root){ return; }
+(function initDbg(){
+  function boot(){
+    const el = { 
+      root: document.getElementById('dfs-debug'),
+      body: document.getElementById('dfs-debug-body'),
+      meta: document.getElementById('dfs-debug-meta'),
+      copy: document.getElementById('dfsdbg-copy'),
+      save: document.getElementById('dfsdbg-save'),
+      pause: document.getElementById('dfsdbg-pause'),
+      clear: document.getElementById('dfsdbg-clear'),
+      close: document.getElementById('dfsdbg-close'),
+      fInfo: document.getElementById('dfsdbg-f-info'),
+      fWarn: document.getElementById('dfsdbg-f-warn'),
+      fErr:  document.getElementById('dfsdbg-f-error'),
+    };
+    if(!el.root){ return; }
   const state = { paused:false, buffer:[], filters:{info:true,warn:true,error:true} };
   function fmt(ts){ try{ return new Date(ts).toLocaleTimeString('de-DE',{hour12:false}); }catch{ return String(ts); } }
   function renderLine(ts, level, text){
@@ -53,4 +54,8 @@
     const cloud = (window.DFS_CLOUD_ONLY===true)? ' • Cloud-only: true' : '';
     window.dfsDebug.meta(`${location.hostname}${ver?(' • '+ver):''}${cloud}`);
   }catch{}
+  }
+  if(document.readyState==='loading'){
+    window.addEventListener('DOMContentLoaded', boot, {once:true});
+  } else { boot(); }
 })();

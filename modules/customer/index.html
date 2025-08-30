@@ -314,13 +314,6 @@
         if(hid && hid.value) return hid.value;
         var p=new URLSearchParams(location.search);
         if(p.get('id')) return p.get('id');
-        try{
-          var name = (document.querySelector('input[id="firma"]')||{}).value||'';
-          var email = (document.querySelector('input[id="email"]')||{}).value||'';
-          var arr = JSON.parse(localStorage.getItem('dfs.customers')||'[]');
-          var hit = arr.find(c=> (c.firma||'')===name && (c.email||'')===email );
-          return hit ? hit.id : null;
-        }catch(e){}
         return null;
       }
       async function renderContractsSummary(){
@@ -381,18 +374,7 @@
       const ids=['firma','ansprech','email','telefon','cust-branche','mitarbeiter','umsatz','gruendung','cust-addr-adresse','cust-addr-plz','cust-addr-ort'];
       ids.forEach(k=>{ const el=document.getElementById(k); if(!el) return; const evt = (el.tagName==='SELECT')?'change':'input'; el.addEventListener(evt, ()=>{ try{ const s=document.getElementById('save-status-customer'); if(s) s.textContent='Ungespeichert'; }catch{} hideRetry && hideRetry(); debouncedAutoSave(); }); });
     }
-    // Migration: wenn standort Freitext war → in standortLegacy sichern und struktur anlegen
-    document.addEventListener('DOMContentLoaded', ()=>{
-      try{
-        const arr = dfsStore.get('dfs.customers', []);
-        const idx = arr.findIndex(x=>x.id===id);
-        if(idx>=0 && typeof arr[idx].standort === 'string' && arr[idx].standort){
-          arr[idx].standortLegacy = arr[idx].standort;
-          arr[idx].standort = { adresse:'', plz:'', ort:'' };
-          dfsStore.set('dfs.customers', arr);
-        }
-      }catch{}
-    });
+    // keine lokale Migration im Cloud-only Modus
     document.addEventListener('DOMContentLoaded', autoBindCustomerForm);
     // Initialer Cloud→Local Sync
     // no local sync in cloud-only mode

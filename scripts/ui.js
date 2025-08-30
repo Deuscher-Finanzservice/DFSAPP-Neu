@@ -41,18 +41,25 @@ window.dfsUI = (function(){
   return { show, hide };
 })();
 
-// Online/Offline banner (global)
-(function(){
-  let el = document.getElementById('net-status');
-  if(!el){
-    el = document.createElement('div');
-    el.id = 'net-status';
-    el.style.cssText = 'position:fixed;bottom:12px;right:12px;padding:6px 10px;border-radius:8px;background:#D97706;color:#041018;font-size:12px;z-index:9999;display:none';
-    el.textContent = 'Offline – Daten werden später synchronisiert';
-    document.body.appendChild(el);
+// Online/Offline banner (global) – ensure DOM is ready before touching body
+(function initNetBanner(){
+  function mount(){
+    try{
+      let el = document.getElementById('net-status');
+      if(!el){
+        el = document.createElement('div');
+        el.id = 'net-status';
+        el.style.cssText = 'position:fixed;bottom:12px;right:12px;padding:6px 10px;border-radius:8px;background:#D97706;color:#041018;font-size:12px;z-index:9999;display:none';
+        el.textContent = 'Offline – Daten werden später synchronisiert';
+        document.body.appendChild(el);
+      }
+      function render(){ el.style.display = navigator.onLine ? 'none' : 'block'; }
+      window.addEventListener('online', render);
+      window.addEventListener('offline', render);
+      render();
+    }catch(e){ /* no-op */ }
   }
-  function render(){ el.style.display = navigator.onLine ? 'none' : 'block'; }
-  window.addEventListener('online', render);
-  window.addEventListener('offline', render);
-  render();
+  if(document.readyState === 'loading'){
+    window.addEventListener('DOMContentLoaded', mount, {once:true});
+  }else{ mount(); }
 })();
