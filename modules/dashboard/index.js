@@ -25,32 +25,29 @@ function getContracts(){
   try{ return JSON.parse(localStorage.getItem('dfs.contracts')||'[]'); }catch{ return []; }
 }
 
-function renderUpcoming(){
+async function renderUpcoming(){
   const listEl = document.getElementById('upcoming-list');
   if(!listEl) return;
-
-  const contracts = (getContracts() || [])
-    .filter(c => c && withinDays(c.reminderDate, 90))
-    .sort((a,b)=> new Date(a.reminderDate) - new Date(b.reminderDate));
-
-  if(contracts.length === 0){
-    listEl.innerHTML = `<p class="text-secondary">Keine Reminder in den nächsten 90 Tagen.</p>`;
+  listEl.innerHTML = '<p class="text-secondary">Lade…</p>';
+  let contracts = [];
+  try { contracts = await (window.dfsData && dfsData.getAllContracts ? dfsData.getAllContracts() : Promise.resolve(getContracts())); }
+  catch { contracts = getContracts(); }
+  if(!Array.isArray(contracts) || contracts.length===0){
+    listEl.innerHTML = '<p class="text-secondary">Keine Reminder in den nächsten 90 Tagen.</p>';
     return;
   }
-
-  listEl.innerHTML = contracts.map(c => `
-    <div class="row" style="display:flex;gap:12px;align-items:center;justify-content:space-between;border:1px solid rgba(255,255,255,0.08);padding:10px;border-radius:12px;background:rgba(255,255,255,0.04);">
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <span class="chip" style="padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);">${c.versicherer || '—'}</span>
-        <span>${(c.produkt || '')}</span>
-        <span class="text-secondary">#${c.policeNr || '—'}</span>
-      </div>
-      <strong style="min-width:110px;text-align:right;color:#C0C0C0;">${fmtDate(c.reminderDate)}</strong>
-    </div>
-  `).join('');
+  const items = contracts.filter(c=> withinDays(c.reminderDate, 90)).sort((a,b)=> new Date(a.reminderDate) - new Date(b.reminderDate));
+  if(items.length===0){ listEl.innerHTML = '<p class="text-secondary">Keine Reminder in den nächsten 90 Tagen.</p>'; return; }
+  listEl.innerHTML = `
+    <ul class="stack">
+      ${items.map(c=>`
+        <li class="chip">${c.versicherer||'—'} · ${c.policeNr||'—'} · ${window.dfsFmt?.fmtDateDE(c.reminderDate)||'—'}</li>
+      `).join('')}
+    </ul>
+  `;
 }
 
-document.addEventListener('DOMContentLoaded', renderUpcoming);
+document.addEventListener('DOMContentLoaded', async ()=>{ await renderUpcoming(); });
 window.addEventListener('dfs.contracts-changed', renderUpcoming);
 window.addEventListener('storage', (e)=>{ if(e && e.key==='dfs.contracts') renderUpcoming(); });
 
@@ -74,12 +71,15 @@ window.addEventListener('dfs.contracts-changed', renderKpis);
 window.addEventListener('storage', (e)=>{ if(e && e.key && ['dfs.contracts','dfs.targetSavingsPct'].includes(e.key)) renderKpis(); });
 
 // === Analyse-Ergebnisse (KPI, Warnungen, Empfehlungen) ===
-function renderAnalysisOnDashboard(){
+async function renderAnalysisOnDashboard(){
   try{
-    const res = (window.dfsStore && dfsStore.get) ? dfsStore.get('dfs.analysis', null) : JSON.parse(localStorage.getItem('dfs.analysis')||'null');
     const kpiBox = document.getElementById('analysis-kpis-dash');
     const warnBox = document.getElementById('analysis-warnings-dash');
     const recoBox = document.getElementById('analysis-recos-dash');
+    if(kpiBox) kpiBox.innerHTML = '<p class="text-secondary">Lade…</p>';
+    let res = null;
+    try{ const snap = await (window.dfsCloud && dfsCloud.loadOne ? dfsCloud.loadOne('dfs.analysis','latest') : Promise.resolve(null)); if(snap){ res=snap; if(window.dfsStore&&dfsStore.set) dfsStore.set('dfs.analysis', snap); } }catch{}
+    if(!res){ res = (window.dfsStore && dfsStore.get) ? dfsStore.get('dfs.analysis', null) : JSON.parse(localStorage.getItem('dfs.analysis')||'null'); }
     if(!kpiBox || !warnBox || !recoBox) return;
     if(!res){ kpiBox.innerHTML = '<p class="text-secondary">Noch keine Analyse durchgeführt.</p>'; warnBox.innerHTML=''; recoBox.innerHTML=''; return; }
     kpiBox.innerHTML = `
