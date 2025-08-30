@@ -43,3 +43,10 @@ th.sortable { cursor: pointer; user-select: none; position: relative; }
 th.sortable:after { content: '⇅'; font-size: .8em; opacity: .4; margin-left: 4px; }
 th.sortable.asc:after { content: '↑'; opacity: .8; }
 th.sortable.desc:after { content: '↓'; opacity: .8; }
+
+/* Sidebar Navigation */
+.sidebar-nav{list-style:none;padding:0;margin:0}
+.sidebar-nav li{margin:4px 0}
+.sidebar-nav a.nav-link{display:block;padding:8px 12px;border-radius:8px;color:#fff;text-decoration:none;transition:background .2s}
+.sidebar-nav a.nav-link:hover{background:rgba(255,255,255,.08)}
+.sidebar-nav a.nav-link.active{background:var(--gold);color:#fff;font-weight:600}
