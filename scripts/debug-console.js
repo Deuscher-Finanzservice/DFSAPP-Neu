@@ -48,6 +48,9 @@
     if(state.paused) state.buffer.push(entry); else renderLine(...entry);
   };
   // Initial meta
-  try{ const ver=(window.DFS_VERSION||''); window.dfsDebug.meta(`${location.hostname}${ver?(' • '+ver):''}`); }catch{}
+  try{
+    const ver=(window.DFS_VERSION||'');
+    const cloud = (window.DFS_CLOUD_ONLY===true)? ' • Cloud-only: true' : '';
+    window.dfsDebug.meta(`${location.hostname}${ver?(' • '+ver):''}${cloud}`);
+  }catch{}
 })();
-

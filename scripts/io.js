@@ -8,10 +8,10 @@
     setTimeout(()=>URL.revokeObjectURL(url), 1000);
   }
 
-  function exportJson(key, filename){
+  async function exportJson(key, filename){
     try {
-      const data = (window.dfsStore && window.dfsStore.get) ? window.dfsStore.get(key, []) : JSON.parse(localStorage.getItem(key)||'[]');
-      download(filename, JSON.stringify(data, null, 2));
+      const data = await (window.dfsCloud && dfsCloud.loadAll ? dfsCloud.loadAll(key) : Promise.resolve([]));
+      download(filename, JSON.stringify(Array.isArray(data)?data:[], null, 2));
       try{ if(window.dfsToast) dfsToast(`Export erfolgreich: ${filename}`, 'success'); }catch{}
     } catch(e){
       console.error(e);
@@ -29,13 +29,11 @@
           try{ if(window.dfsToast) dfsToast('Import abgebrochen: JSON ist kein Array.', 'error'); }catch{}
           return;
         }
-        const ok = (window.dfsStore && window.dfsStore.set) ? window.dfsStore.set(key, parsed) : (localStorage.setItem(key, JSON.stringify(parsed)), true);
-        if(ok){
-          try{ if(window.dfsToast) dfsToast(`Import erfolgreich (${parsed.length} Einträge).`, 'success'); }catch{}
-          // Trigger UI updates where listeners exist
-          if(key==='dfs.contracts'){
-            try{ window.dispatchEvent(new Event('dfs.contracts-changed')); }catch{}
-          }
+        if(Array.isArray(parsed)){
+          (async ()=>{
+            for(const obj of parsed){ try{ await (window.dfsCloud && dfsCloud.save ? dfsCloud.save(key,obj) : Promise.resolve()); }catch(e){ console.error('Import save error', e); } }
+            try{ if(window.dfsToast) dfsToast(`Import erfolgreich (${parsed.length} Einträge).`, 'success'); }catch{}
+          })();
         }
       } catch(err){
         console.error(err);
@@ -47,4 +45,3 @@
 
   window.dfsIO = { exportJson, importJson };
 })();
-
