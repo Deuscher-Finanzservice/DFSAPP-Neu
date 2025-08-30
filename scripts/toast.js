@@ -1,6 +1,7 @@
 // scripts/toast.js
 (function(){
   const rootId = 'dfs-toast-root';
+  const toastCooldown = new Map(); // key -> timestamp
   function ensureRoot(){
     let r = document.getElementById(rootId);
     if(!r){
@@ -20,5 +21,13 @@
     setTimeout(()=>{ el.classList.add('out'); }, ttl);
     setTimeout(()=>{ el.remove(); }, ttl+400);
   };
+  window.dfsToastKeyed = function(key, message, type='info', cooldownMs=3000, ttl=2000){
+    try{
+      const now = Date.now();
+      const last = toastCooldown.get(key) || 0;
+      if(last + cooldownMs > now) return;
+      toastCooldown.set(key, now);
+      window.dfsToast(message, type, ttl);
+    }catch{ window.dfsToast(message, type, ttl); }
+  };
 })();
-
