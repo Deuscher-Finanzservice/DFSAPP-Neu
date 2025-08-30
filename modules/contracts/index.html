@@ -103,6 +103,17 @@
       <div id="c-internVermerk-view"></div>
     </div>
 
+    <section class="card" style="margin-top:16px;">
+      <h3>Dokumente / Policen</h3>
+      <div class="docs-list" id="contract-docs"></div>
+      <div style="margin-top:8px;">
+        <label class="btn btn-secondary">Datei hochladen
+          <input id="contract-file-input" type="file" accept=".pdf,.png,.jpg,.jpeg" style="display:none">
+        </label>
+      </div>
+      <small class="text-secondary">PDF/JPG/PNG. Dateien werden in die Cloud (Firebase Storage) hochgeladen.</small>
+    </section>
+
     <div class="toolbar">
       <button class="btn" id="btnAdd">Vertrag hinzufügen</button>
       <button class="btn outline" id="btnExport">Export (JSON)</button>
@@ -134,6 +145,54 @@
   </div>
 
   <script src="./index.js"></script>
+  <script>
+  (function(){
+    function getCurrentContractId(){
+      const hid = document.getElementById('c-contractId'); if(hid && hid.value) return hid.value;
+      const p = new URLSearchParams(location.search).get('id'); if(p) return p;
+      const newId = `c_${Date.now()}`; if(hid) hid.value=newId; return newId;
+    }
+    function upsertContractFile(id, meta){
+      const map = (window.dfsStore&&dfsStore.get)? dfsStore.get('dfs.contractFiles', {}) : {};
+      const list = map[id] || []; list.push(meta); map[id]=list; if(window.dfsStore&&dfsStore.set) dfsStore.set('dfs.contractFiles', map); else localStorage.setItem('dfs.contractFiles', JSON.stringify(map));
+      try{ dfsCloud && dfsCloud.save && dfsCloud.save('dfs.contractFiles', { id: `${id}:${meta.id}`, contractId: id, ...meta }); }catch{}
+    }
+    function renderDocs(){
+      const id = getCurrentContractId();
+      const map = (window.dfsStore&&dfsStore.get)? dfsStore.get('dfs.contractFiles', {}) : {};
+      const list = map[id] || [];
+      const box = document.getElementById('contract-docs'); if(!box) return;
+      box.innerHTML = list.length ? list.map(m=>`
+        <div class=\"doc-row\">
+          <span class=\"pill\">${m.type||'datei'}</span>
+          <a href=\"${m.url}\" target=\"_blank\">${m.name}</a>
+          <span class=\"text-secondary\">${(m.size/1024).toFixed(0)} KB</span>
+          <div class=\"doc-actions\">
+            <button class=\"btn-ghost\" data-open=\"${m.url}\">Öffnen</button>
+            <button class=\"btn-ghost\" data-del=\"${m.id}\">Löschen</button>
+          </div>
+        </div>
+      `).join('') : '<p class="text-secondary">Keine Dokumente.</p>';
+      box.querySelectorAll('[data-open]').forEach(b=> b.addEventListener('click', ()=> window.open(b.dataset.open,'_blank')));
+      box.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', async ()=>{
+        const path = b.dataset.del; if(!confirm('Datei wirklich löschen?')) return;
+        await dfsFiles.removeByPath(path);
+        const map = (window.dfsStore&&dfsStore.get)? dfsStore.get('dfs.contractFiles', {}) : {};
+        map[id] = (map[id]||[]).filter(m=>m.id!==path);
+        if(window.dfsStore&&dfsStore.set) dfsStore.set('dfs.contractFiles', map); else localStorage.setItem('dfs.contractFiles', JSON.stringify(map));
+        try{ dfsToast('Dokument gelöscht','success'); }catch{}
+        renderDocs();
+      }));
+    }
+    document.getElementById('contract-file-input')?.addEventListener('change', async (e)=>{
+      const f = e.target.files?.[0]; if(!f) return; const id = getCurrentContractId(); if(!id){ try{ dfsToast('Vertrag erst speichern/anlegen','error'); }catch{} return; }
+      try{ const meta = await dfsFiles.uploadContractFile(id, f); upsertContractFile(id, meta); try{ dfsToast('Dokument hochgeladen','success'); }catch{} renderDocs(); }
+      catch(err){ console.error(err); try{ dfsToast('Upload fehlgeschlagen','error'); }catch{} }
+      finally{ e.target.value=''; }
+    });
+    document.addEventListener('DOMContentLoaded', renderDocs);
+  })();
+  </script>
   <script>
     document.addEventListener('DOMContentLoaded', ()=>{
       try{

@@ -1,7 +1,9 @@
 // scripts/firebase.js (upgrade with customers CRUD)
 import { getDB, getClientId, initFirebase, ts } from './firebaseClient.js';
 import { doc,setDoc,getDoc,collection,getDocs,deleteDoc,query,where,orderBy,limit } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
-initFirebase(); const CLIENT_ID = getClientId();
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js';
+const { app: __app } = initFirebase(); const CLIENT_ID = getClientId();
+const storage = (()=>{ try{ return getStorage(__app); }catch(e){ try{ const { app } = initFirebase(); return getStorage(app); }catch{} return null; }})();
 
 // --- KV generic ---
 export async function saveToCloud(key,data){const db=getDB();const id=`${CLIENT_ID}__${key}`;await setDoc(doc(db,'kv',id),{key,clientId:CLIENT_ID,data,updatedAt:ts()},{merge:true});return{id,ok:true};}
@@ -29,6 +31,26 @@ if(typeof window !== 'undefined'){
     async loadAll(key){ try{ const db=getDB(); const snap=await getDocs(collection(db,key)); const arr=[]; snap.forEach(d=>arr.push(d.data())); return arr; }catch(e){ console.error('Cloud load error', e); try{ if(window.dfsToast) dfsToast('Cloud-Lesen fehlgeschlagen','error'); }catch{} return []; }
     },
     async loadOne(key,id){ try{ const db=getDB(); const ref=doc(db,key,id); const s=await getDoc(ref); return s.exists()? s.data() : null; }catch(e){ console.error('Cloud get error', e); return null; } }
+  };
+  // --- Storage File helpers ---
+  window.dfsFiles = window.dfsFiles || {
+    async uploadCustomerFile(customerId, file){
+      if(!storage) throw new Error('storage not available');
+      const path = `customers/${customerId}/docs/${Date.now()}_${file.name}`;
+      const ref = storageRef(storage, path);
+      await uploadBytes(ref, file);
+      const url = await getDownloadURL(ref);
+      return { id: path, name: file.name, type: file.type, size: file.size, url, uploadedAt: new Date().toISOString() };
+    },
+    async uploadContractFile(contractId, file){
+      if(!storage) throw new Error('storage not available');
+      const path = `contracts/${contractId}/docs/${Date.now()}_${file.name}`;
+      const ref = storageRef(storage, path);
+      await uploadBytes(ref, file);
+      const url = await getDownloadURL(ref);
+      return { id: path, name: file.name, type: file.type, size: file.size, url, uploadedAt: new Date().toISOString() };
+    },
+    async removeByPath(path){ try{ if(!storage) return false; await deleteObject(storageRef(storage, path)); return true; }catch(e){ console.warn('delete failed', e); return false; } }
   };
   try{
     window.addEventListener('online', ()=>{ try{ window.dfsSync && window.dfsSync.processQueue(); }catch{} });

@@ -41,6 +41,49 @@
       <div><label class="label">Gründungsjahr (optional)</label><input class="input" id="gruendung" type="number" step="1" min="0"></div>
       <div style="grid-column:1/-1"><label class="label">Standort (optional)</label><input class="input" id="standort"></div>
     </div>
+    <section class="card" style="margin-top:16px;">
+      <h3>Erweiterte Daten</h3>
+      <div class="accordion" id="cust-accordion">
+        <div class="acc-item" id="acc-bank">
+          <div class="acc-head"><strong>Bankverbindung</strong><span>▸</span></div>
+          <div class="acc-body">
+            <div class="grid">
+              <div><label class="label">IBAN</label><input id="cust-bank-iban" class="input" type="text" placeholder="DE.."></div>
+              <div><label class="label">BIC</label><input id="cust-bank-bic" class="input" type="text" placeholder="GENODE.."></div>
+              <div><label class="label">Bankname</label><input id="cust-bank-name" class="input" type="text" placeholder="Bank"></div>
+            </div>
+          </div>
+        </div>
+        <div class="acc-item" id="acc-tax">
+          <div class="acc-head"><strong>Steuerinformationen</strong><span>▸</span></div>
+          <div class="acc-body">
+            <div class="grid">
+              <div><label class="label">Steuernummer</label><input id="cust-tax-steuernr" class="input" type="text"></div>
+              <div><label class="label">USt-ID</label><input id="cust-tax-ustid" class="input" type="text"></div>
+            </div>
+          </div>
+        </div>
+        <div class="acc-item" id="acc-risk">
+          <div class="acc-head"><strong>Weitere Standorte / Risiko-Adressen</strong><span>▸</span></div>
+          <div class="acc-body">
+            <div id="risk-list"></div>
+            <button class="btn" id="risk-add" style="margin-top:8px">+ Standort hinzufügen</button>
+          </div>
+        </div>
+        <div class="acc-item" id="acc-docs">
+          <div class="acc-head"><strong>Dokumente</strong><span>▸</span></div>
+          <div class="acc-body">
+            <div class="docs-list" id="cust-docs"></div>
+            <div style="margin-top:8px;">
+              <label class="btn btn-secondary">Datei hochladen
+                <input id="cust-file-input" type="file" accept=".pdf,.png,.jpg,.jpeg" style="display:none">
+              </label>
+            </div>
+            <small class="text-secondary">PDF/JPG/PNG. Dateien werden in die Cloud (Firebase Storage) hochgeladen.</small>
+          </div>
+        </div>
+      </div>
+    </section>
     <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
       <button class="btn" id="save">Speichern</button>
       <button class="btn outline" id="delete" style="display:none">Löschen</button>
@@ -241,5 +284,6 @@
       }catch{}
     });
   </script>
+  <script src="./detail-extended.js"></script>
 </body>
 </html>
