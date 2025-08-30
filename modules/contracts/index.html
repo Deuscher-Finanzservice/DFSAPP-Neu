@@ -95,14 +95,17 @@
       <button class="btn outline" id="btnCloudLoad">Cloud laden</button>
     </div>
 
+    <div class="table-search" style="margin-top:12px">
+      <input id="contracts-search" type="text" placeholder="Suche Versicherer/Produkt…">
+    </div>
     <div class="card" style="margin-top:12px">
-      <table>
+      <table id="contracts-table" class="table">
         <thead>
           <tr>
-            <th>Versicherer</th>
-            <th>Police</th>
+            <th class="sortable" data-key="versicherer">Versicherer</th>
+            <th class="sortable" data-key="policeNr">Police</th>
             <th>Sparten</th>
-            <th class="num">Beitrag (€/J)</th>
+            <th class="sortable num" data-key="jahresbeitragBrutto">Beitrag (€/J)</th>
             <th>Aktion</th>
           </tr>
         </thead>

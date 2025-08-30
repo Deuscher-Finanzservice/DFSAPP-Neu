@@ -30,3 +30,14 @@ iframe#content{border:0;width:100%;height:calc(100% - 58px)}
 .dfs-toast.out { transform: translateY(10px); opacity: 0; }
 .dfs-toast--success { border-color: rgba(137,108,32,0.6); }
 .dfs-toast--error { border-color: var(--warn); }
+
+/* Suchfeld */
+.table-search { margin-bottom: 12px; display: flex; gap: 8px; }
+.table-search input { flex: 1; padding: 6px 8px; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; background: rgba(255,255,255,0.05); color: #fff; }
+.table-search input:focus { border-color: var(--gold); }
+
+/* Sort-Indikatoren */
+th.sortable { cursor: pointer; user-select: none; position: relative; }
+th.sortable:after { content: '⇅'; font-size: .8em; opacity: .4; margin-left: 4px; }
+th.sortable.asc:after { content: '↑'; opacity: .8; }
+th.sortable.desc:after { content: '↓'; opacity: .8; }

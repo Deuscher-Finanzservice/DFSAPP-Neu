@@ -1,5 +1,6 @@
 const LS_KEY = "dfs.contracts";
 let contracts = [];
+let sortKey = null; let sortDir = 'asc';
 const urlParams = new URLSearchParams(location.search);
 const currentCustomerId = urlParams.get('cid') || urlParams.get('customerId') || null;
 
@@ -78,9 +79,28 @@ function calcDates(){
   document.getElementById('reminderDate').value = remISO;
   return { laufzeit, endDate: endISO, reminderDate: remISO };
 }
+function getFilteredSortedContracts(){
+  const q = (document.getElementById('contracts-search')?.value||'').toLowerCase();
+  let rows = (contracts||[]).filter(Boolean).filter(c=>{
+    const hay = ((c.versicherer||'')+' '+(c.produkt||'')).toLowerCase();
+    return !q || hay.includes(q);
+  });
+  if(sortKey){
+    rows.sort((a,b)=>{
+      if(sortKey==='jahresbeitragBrutto'){
+        const na = Number(a.jahresbeitragBrutto||0); const nb = Number(b.jahresbeitragBrutto||0);
+        return sortDir==='asc'? (na-nb) : (nb-na);
+      }
+      const av = (a[sortKey]??'').toString().toLowerCase();
+      const bv = (b[sortKey]??'').toString().toLowerCase();
+      if(av<bv) return sortDir==='asc'?-1:1; if(av>bv) return sortDir==='asc'?1:-1; return 0;
+    });
+  }
+  return rows;
+}
 function renderTable(){
   const tbody = document.getElementById('tblBody');
-  const rows = (contracts||[]).filter(Boolean);
+  const rows = getFilteredSortedContracts();
   tbody.innerHTML = rows.map((c,i)=>`<tr>
     <td>${c.versicherer||''}</td>
     <td>${c.policeNr||''}</td>
@@ -183,5 +203,15 @@ function setup(){
   // Prefill hidden customerId if present
   const hid = document.getElementById('c-customerId');
   if(hid && currentCustomerId){ hid.value = currentCustomerId; }
+  // Search & sort bindings
+  const search = document.getElementById('contracts-search'); if(search) search.addEventListener('input', renderTable);
+  document.querySelectorAll('th.sortable').forEach(th=>{
+    th.addEventListener('click', ()=>{
+      const key = th.dataset.key;
+      const current = th.classList.contains('asc')?'asc': th.classList.contains('desc')?'desc':'';
+      document.querySelectorAll('th.sortable').forEach(x=>x.classList.remove('asc','desc'));
+      sortKey = key; sortDir = current==='asc'?'desc':'asc'; th.classList.add(sortDir); renderTable();
+    });
+  });
 }
 document.addEventListener('DOMContentLoaded', setup);
