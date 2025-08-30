@@ -22,3 +22,12 @@ export async function deleteCustomerFromCloud(id){await deleteDoc(doc(getDB(),'d
 // --- DFS blobs convenience ---
 export async function saveAllDFSBlobs({customers,contracts,analysis}={}){const r={}; if(customers!==undefined) r.customers=await saveToCloud('dfs.customers',customers); if(contracts!==undefined) r.contracts=await saveToCloud('dfs.contracts',contracts); if(analysis!==undefined) r.analysis=await saveToCloud('dfs.analysis',analysis); return r;}
 export async function loadAllDFSBlobs(){const [customers,contracts,analysis]=await Promise.all([loadFromCloud('dfs.customers'),loadFromCloud('dfs.contracts'),loadFromCloud('dfs.analysis')]);return{customers,contracts,analysis};}
+// Lightweight cloud facade for generic usage (auto-save)
+if(typeof window !== 'undefined'){
+  window.dfsCloud = window.dfsCloud || {
+    async save(key,obj){ try{ const db=getDB(); const col=collection(db, key); let id=obj?.id||(crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random().toString(36).slice(2)}`); const sanitized={...obj,id,clientId:CLIENT_ID,updatedAt:ts()}; if(!obj?.createdAt) sanitized.createdAt=new Date().toISOString(); await setDoc(doc(col,id),sanitized,{merge:true}); return true; }catch(e){ console.error('Cloud save error', e); try{ if(window.dfsToast) dfsToast('Cloud-Sync fehlgeschlagen','error'); }catch{} return false; } },
+    async loadAll(key){ try{ const db=getDB(); const snap=await getDocs(collection(db,key)); const arr=[]; snap.forEach(d=>arr.push(d.data())); return arr; }catch(e){ console.error('Cloud load error', e); try{ if(window.dfsToast) dfsToast('Cloud-Lesen fehlgeschlagen','error'); }catch{} return []; }
+    },
+    async loadOne(key,id){ try{ const db=getDB(); const ref=doc(db,key,id); const s=await getDoc(ref); return s.exists()? s.data() : null; }catch(e){ console.error('Cloud get error', e); return null; } }
+  };
+}

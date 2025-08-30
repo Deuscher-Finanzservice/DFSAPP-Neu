@@ -67,7 +67,8 @@
         allCustomers.sort((a,b)=>{ const va=(a[key]||'').toString().toLowerCase(); const vb=(b[key]||'').toString().toLowerCase(); if(va<vb) return dir==='asc'?-1:1; if(va>vb) return dir==='asc'?1:-1; return 0; });
         applySearch();
       }
-      document.addEventListener('DOMContentLoaded', ()=>{
+      document.addEventListener('DOMContentLoaded', async ()=>{
+        try{ if(window.dfsStore&&dfsStore.syncFromCloud){ await dfsStore.syncFromCloud('dfs.customers'); } }catch{}
         load();
         document.getElementById('customer-search')?.addEventListener('input', applySearch);
         document.querySelectorAll('th.sortable').forEach(th=>{

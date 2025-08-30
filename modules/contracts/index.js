@@ -183,6 +183,41 @@ function importJSON(){
     }
   }catch{}
 }
+function collectContractFromForm(){
+  const idEl = document.getElementById('c-contractId');
+  let id = (idEl && idEl.value) ? idEl.value : (crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  if(idEl && !idEl.value) idEl.value = id;
+  const insurer = document.getElementById('insurer').value.trim();
+  const policyNo = document.getElementById('policyNo').value.trim();
+  const product = document.getElementById('product').value.trim();
+  const lines = linesToArray(document.getElementById('lines').value);
+  const beginISO = document.getElementById('begin').value || "";
+  const { laufzeit, endDate, reminderDate } = calcDates();
+  const payCycle = document.getElementById('payCycle').value;
+  let premiumYear = (window.dfsFmt? window.dfsFmt.parseDE(document.getElementById('premiumYear').value) : normalizeNumber(document.getElementById('premiumYear').value));
+  if(isNaN(premiumYear) || premiumYear < 0) premiumYear = 0;
+  const cov = (window.dfsFmt? window.dfsFmt.parseDE(document.getElementById('coverage').value) : normalizeNumber(document.getElementById('coverage').value));
+  const coverage = isNaN(cov) ? null : cov;
+  const ded = (window.dfsFmt? window.dfsFmt.parseDE(document.getElementById('deductible').value) : normalizeNumber(document.getElementById('deductible').value));
+  const deductible = isNaN(ded) ? null : ded;
+  const now = new Date().toISOString();
+  const hiddenCustomerId = (document.getElementById('c-customerId')?.value || '').trim();
+  const obj = normalizeToGerman({ id, insurer, policyNo, product, lines, beginISO, payCycle, premiumYear, coverage, deductible, laufzeit, endDate, reminderDate, createdAt: now, updatedAt: now, customerId: (currentCustomerId || hiddenCustomerId || undefined) });
+  return obj;
+}
+function autoBindContractForm(){
+  const ids=['insurer','policyNo','product','lines','begin','laufzeit','payCycle','premiumYear','coverage','deductible'];
+  ids.forEach(k=>{ const el=document.getElementById(k); if(!el) return; el.addEventListener('input', ()=>{
+    const c = collectContractFromForm();
+    let arr = (window.dfsStore&&dfsStore.get)? dfsStore.get(LS_KEY,[]) : readContracts();
+    const idx = arr.findIndex(x=>x.id===c.id);
+    if(idx>=0) arr[idx] = {...arr[idx], ...c, updatedAt:new Date().toISOString()}; else arr.push({...c, createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()});
+    writeContracts(arr);
+    contracts = arr;
+    renderTable();
+    try{ window.dfsToast('Auto-Save Vertrag','success'); }catch{}
+  }); });
+}
 function setup(){
   // migrate to German schema if needed
   contracts = readContracts().map(normalizeToGerman).filter(Boolean);
@@ -213,5 +248,9 @@ function setup(){
       sortKey = key; sortDir = current==='asc'?'desc':'asc'; th.classList.add(sortDir); renderTable();
     });
   });
+  // Auto-Save bind
+  autoBindContractForm();
+  // Initial cloud→local sync
+  (async ()=>{ try{ if(window.dfsStore&&dfsStore.syncFromCloud){ await dfsStore.syncFromCloud('dfs.contracts'); contracts = readContracts().map(normalizeToGerman).filter(Boolean); renderTable(); } }catch{} })();
 }
 document.addEventListener('DOMContentLoaded', setup);
