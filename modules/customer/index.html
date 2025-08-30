@@ -138,7 +138,7 @@
         var cid = getCurrentCustomerId();
         var btnCreate = document.getElementById('btn-create-contract');
         if(btnCreate){
-          if(cid){ btnCreate.dataset.cid = cid; btnCreate.href = '../contracts/index.html?cid='+encodeURIComponent(cid); }
+          if(cid){ btnCreate.dataset.cid = cid; btnCreate.href = '../contracts/index.html?customerId='+encodeURIComponent(cid); }
           else { btnCreate.dataset.cid=''; btnCreate.href='../contracts/index.html'; }
         }
         var tbody = document.querySelector('#contracts-by-customer tbody');
@@ -164,7 +164,7 @@
             `<td>${risks}</td>`,
             `<td>${pay}</td>`,
             `<td style="text-align:right">${fmtMoney(premium)}</td>`,
-            `<td><a class="btn btn-small" href="../contracts/index.html?cid=${encodeURIComponent(cid||'')}">Öffnen</a></td>`
+            `<td><a class="btn btn-small" href="../contracts/index.html?customerId=${encodeURIComponent(cid||'')}">Öffnen</a></td>`
           ].join('');
           tbody.appendChild(tr);
         });

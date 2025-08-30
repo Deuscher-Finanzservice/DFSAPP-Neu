@@ -1,7 +1,7 @@
 const LS_KEY = "dfs.contracts";
 let contracts = [];
 const urlParams = new URLSearchParams(location.search);
-const currentCustomerId = urlParams.get('cid') || null;
+const currentCustomerId = urlParams.get('cid') || urlParams.get('customerId') || null;
 
 function readContracts(){
   try{
@@ -105,6 +105,7 @@ function onAdd(){
   const ded = normalizeNumber(document.getElementById('deductible').value);
   const deductible = isNaN(ded) ? null : ded;
   const now = new Date().toISOString();
+  const hiddenCustomerId = (document.getElementById('c-customerId')?.value || '').trim();
   const german = normalizeToGerman({
     id: undefined,
     insurer,
@@ -121,7 +122,7 @@ function onAdd(){
     reminderDate,
     createdAt: now,
     updatedAt: now,
-    customerId: currentCustomerId || undefined
+    customerId: (currentCustomerId || hiddenCustomerId || undefined)
   });
   contracts.push(german);
   writeContracts(contracts);
@@ -169,5 +170,8 @@ function setup(){
   document.getElementById('laufzeit').addEventListener('change', calcDates);
   // Initialize calculated fields if begin preset
   calcDates();
+  // Prefill hidden customerId if present
+  const hid = document.getElementById('c-customerId');
+  if(hid && currentCustomerId){ hid.value = currentCustomerId; }
 }
 document.addEventListener('DOMContentLoaded', setup);
