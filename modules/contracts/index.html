@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="../../styles/print.css" media="print">
   <script src="../../scripts/format.js"></script>
   <script src="../../scripts/toast.js"></script>
+  <script src="../../scripts/save-status.js"></script>
   <script src="../../scripts/nav.js"></script>
   <script src="../../scripts/date.js"></script>
   <script src="../../scripts/storage.js"></script>
@@ -25,6 +26,10 @@
     <h2>Verträge</h2>
     <div class="actions-top no-print">
       <button class="btn-ghost" onclick="dfsNav.backOr('./index.html')">← Zur Vertragsliste</button>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <button id="btn-save-contract" class="btn">Speichern</button>
+        <span id="save-status-contract" class="pill text-secondary">Ungespeichert</span>
+      </div>
     </div>
     <header class="print-header no-screen" id="print-header"></header>
     <div class="actions no-print" style="display:flex; gap:8px; justify-content:flex-end;">
@@ -144,6 +149,23 @@
   </div>
 
   <script src="./index.js"></script>
+  <script>
+    (function(){
+      let cfg={autoSaveMode:'immediate',autoSaveInterval:10}; let dirty=false; let deb=null; let timer=null;
+      const status = (window.dfsSaveStatus? dfsSaveStatus.bind('save-status-contract') : {set:()=>{}});
+      async function loadCfg(){ try{ const c=await dfsCloud.loadOne('dfs.config','default'); if(c){ cfg.autoSaveMode=c.autoSaveMode||'immediate'; cfg.autoSaveInterval=Math.min(120,Math.max(2,Number(c.autoSaveInterval||10))); } }catch{} }
+      async function saveNow(){ try{ status.set('saving'); const c= (window.collectContractFromForm? collectContractFromForm():null); if(!c){ status.set('error'); return; } await dfsData.saveContract(c); dirty=false; status.set('saved'); dfsToast&&dfsToast('Vertrag gespeichert (Cloud)','success'); }catch(e){ console.error(e); status.set('error'); dfsToast&&dfsToast('Cloud-Speichern fehlgeschlagen','error'); } }
+      function markDirty(){ dirty=true; status.set('dirty'); if(cfg.autoSaveMode==='immediate'){ if(deb) clearTimeout(deb); deb=setTimeout(saveNow,600); } }
+      function setupInterval(){ if(timer) clearInterval(timer); if(cfg.autoSaveMode==='interval'){ timer=setInterval(()=>{ if(dirty) saveNow(); }, Math.max(2,cfg.autoSaveInterval)*1000); } }
+      document.addEventListener('DOMContentLoaded', async ()=>{
+        await loadCfg(); setupInterval();
+        ['insurer','policyNo','product','lines','begin','laufzeit','payCycle','premiumYear','coverage','deductible'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; const evt=(el.tagName==='SELECT'||el.type==='date')?'change':'input'; el.addEventListener(evt, markDirty); });
+        document.getElementById('btn-save-contract')?.addEventListener('click',(e)=>{ e.preventDefault(); saveNow(); });
+        window.addEventListener('keydown',(e)=>{ if((e.ctrlKey||e.metaKey) && e.key==='s'){ e.preventDefault(); saveNow(); }});
+        window.addEventListener('beforeunload',()=>{ if(dirty) saveNow(); });
+      });
+    })();
+  </script>
   <script>
   (function(){
     function getCurrentContractId(){

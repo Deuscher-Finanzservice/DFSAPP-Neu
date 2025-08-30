@@ -87,6 +87,12 @@ window.dfsData = window.dfsData || {
   async getAllContracts(){
     const cloud = await safeLoadAll('dfs.contracts');
     return cloud;
+  },
+  async saveCustomer(c){
+    try{ const obj={...c}; if(!obj.id){ obj.id = (crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random().toString(36).slice(2)}`);} await window.dfsCloud.save('dfs.customers', obj); return obj; }catch(e){ console.error('saveCustomer failed', e); throw e; }
+  },
+  async saveContract(c){
+    try{ const obj={...c}; if(!obj.id){ obj.id = (crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random().toString(36).slice(2)}`);} await window.dfsCloud.save('dfs.contracts', obj); return obj; }catch(e){ console.error('saveContract failed', e); throw e; }
   }
 };
 

@@ -1,5 +1,6 @@
 (function(){
-  function load(){
+  const status = (window.dfsSaveStatus? dfsSaveStatus.bind('save-status-config') : {set:()=>{}});
+  async function load(){
     const cfg = (window.dfsStore && dfsStore.get) ? dfsStore.get('dfs.config.print', {
       logos: ["./assets/logo.png"],
       headerText: "DFS Versicherungsanalyse",
@@ -9,9 +10,9 @@
     document.getElementById('cfg-header').value = cfg.headerText||'';
     document.getElementById('cfg-footer').value = cfg.footerText||'';
 
-    const saveCfg = (window.dfsStore && dfsStore.get) ? dfsStore.get('dfs.config.save', {
-      autoSaveMode: 'immediate', autoSaveInterval: 10, cloudSync: true
-    }) : { autoSaveMode: 'immediate', autoSaveInterval: 10, cloudSync: true };
+    let saveCfg = null;
+    try{ saveCfg = await dfsCloud.loadOne('dfs.config','default'); }catch{}
+    if(!saveCfg) saveCfg = { autoSaveMode:'immediate', autoSaveInterval:10, cloudSync:true };
     const modeEl = document.getElementById('cfg-autosave');
     const intEl = document.getElementById('cfg-interval');
     const csEl  = document.getElementById('cfg-cloudsync');
@@ -21,6 +22,7 @@
   }
 
   function save(){
+    status.set('saving');
     const logos = document.getElementById('cfg-logos').value.split(',').map(s=>s.trim()).filter(Boolean);
     const headerText = document.getElementById('cfg-header').value.trim();
     const footerText = document.getElementById('cfg-footer').value.trim();
@@ -28,13 +30,13 @@
     if(window.dfsStore && dfsStore.set){ dfsStore.set('dfs.config.print', cfg); }
     else { localStorage.setItem('dfs.config.print', JSON.stringify(cfg)); }
 
-    const saveCfg = {
+    let saveCfg = {
       autoSaveMode: (document.getElementById('cfg-autosave')?.value)||'immediate',
       autoSaveInterval: Number(document.getElementById('cfg-interval')?.value||10),
       cloudSync: !!(document.getElementById('cfg-cloudsync')?.checked)
     };
-    if(window.dfsStore && dfsStore.set){ dfsStore.set('dfs.config.save', saveCfg); }
-    else { localStorage.setItem('dfs.config.save', JSON.stringify(saveCfg)); }
+    saveCfg.autoSaveInterval = Math.min(120, Math.max(2, Number(saveCfg.autoSaveInterval||10)));
+    (async ()=>{ try{ await dfsCloud.save('dfs.config', { id:'default', ...saveCfg }); status.set('saved'); dfsToast&&dfsToast('Konfiguration gespeichert','success'); }catch(e){ console.error(e); status.set('error'); dfsToast&&dfsToast('Cloud-Speichern fehlgeschlagen','error'); } })();
 
     try{ dfsToast('Konfiguration gespeichert.','success'); }catch{}
   }
