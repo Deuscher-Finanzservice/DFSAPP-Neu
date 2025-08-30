@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <script>window.DFS_VERSION = window.DFS_VERSION || "20250829.1200";</script>
+<script>window.DFS_VERSION = window.DFS_VERSION || "20250829.1201";</script>
   <title>DFS Versicherungsanalyse</title>
   <link rel="icon" href="./favicon.ico">
   <link rel="stylesheet" href="./styles/base.css">
@@ -54,7 +54,7 @@
         </div>
       </div>
 
-      <iframe id="content" src="./modules/dashboard/index.html?v=20250829.1200"></iframe>
+      <iframe id="content" src="./modules/dashboard/index.html?v=20250829.1201"></iframe>
     </main>
   </div>
 
@@ -95,16 +95,6 @@
     const iframe = document.getElementById('content');
     const links  = document.querySelectorAll('.nav a');
 
-    // Navigation: lädt Zielseite ins iframe + Active-State
-    links.forEach(a => a.addEventListener('click', (e) => {
-      e.preventDefault();
-      links.forEach(n => n.classList.remove('active'));
-      a.classList.add('active');
-      iframe.src = withVersion(a.dataset.target);
-      // Gruppen-Highlight aktualisieren
-      updateGroupActive();
-    }));
-
     function updateGroupActive(){
       document.querySelectorAll('.nav-group').forEach(g => {
         const sub = g.nextElementSibling;
@@ -112,6 +102,22 @@
         g.classList.toggle('active', isActive);
       });
     }
+
+    function navigateTo(target){
+      links.forEach(n => n.classList.remove('active'));
+      const link = Array.from(links).find(n => n.dataset.target === target);
+      if (link) link.classList.add('active');
+      iframe.src = withVersion(target);
+      updateGroupActive();
+    }
+    window.navigateTo = navigateTo;
+
+    // Navigation: lädt Zielseite ins iframe + Active-State
+    links.forEach(a => a.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigateTo(a.dataset.target);
+    }));
+
     // initialer Zustand
     updateGroupActive();
 

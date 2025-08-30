@@ -10,7 +10,8 @@
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
       <input class="input" id="search" placeholder="Suche Firma, Ansprechpartner, E‑Mail">
       <a class="btn" href="../customer/index.html">Neu</a>
-      <button class="btn outline" id="sync">Cloud laden</button>
+      <button class="btn outline" id="btn-save-cloud">In Cloud speichern</button>
+      <button class="btn outline" id="btn-load-cloud">Aus Cloud laden</button>
     </div>
     <div class="card">
       <table id="tbl">
@@ -20,7 +21,7 @@
     </div>
   </div>
   <script type="module">
-    import { loadCustomersFromCloud, deleteCustomerFromCloud } from '../../scripts/firebase.js';
+    import { loadCustomersFromCloud, saveCustomersToCloud, deleteCustomerFromCloud } from '../../scripts/firebase.js';
     const KEY='dfs.customers'; const $=s=>document.querySelector(s);
     function getLocal(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch{ return []; } }
     function setLocal(a){ localStorage.setItem(KEY, JSON.stringify(a)); }
@@ -48,10 +49,13 @@
       });
     }
     document.getElementById('search').addEventListener('input', render);
-    document.getElementById('sync').onclick = async ()=>{
-      const cloud = await loadCustomersFromCloud();
-      const map = new Map(getLocal().map(x=>[x.id,x])); cloud.forEach(c=> map.set(c.id, {...map.get(c.id), ...c}));
-      setLocal(Array.from(map.values())); render(); alert('Clouddaten geladen');
+    document.getElementById('btn-save-cloud').onclick = async ()=>{
+      try{ await saveCustomersToCloud(); alert('In Cloud gespeichert'); }
+      catch(e){ console.error(e); alert('Cloud-Fehler beim Speichern'); }
+    };
+    document.getElementById('btn-load-cloud').onclick = async ()=>{
+      try{ const cloud = await loadCustomersFromCloud(); setLocal(cloud||[]); render(); alert('Aus Cloud geladen'); }
+      catch(e){ console.error(e); alert('Cloud-Fehler beim Laden'); }
     };
     render();
   </script>

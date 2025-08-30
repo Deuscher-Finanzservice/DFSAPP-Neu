@@ -29,7 +29,10 @@
     const getA=()=>{ try{ return JSON.parse(localStorage.getItem('dfs.analysis')||'{}'); }catch{ return {}; } };
     const setA=(a)=> localStorage.setItem('dfs.analysis', JSON.stringify(a));
     function render(){
+      const contracts = JSON.parse(localStorage.getItem('dfs.contracts')||'[]');
       const a=getA();
+      const sum = Array.isArray(contracts)?contracts.reduce((acc,c)=>acc+(Number(c.jahresbeitragBrutto||c.premiumYear||c.annualPremium||c.annual||c.premium)||0),0):0;
+      a.sumAnnual = sum;
       const pct = Number(localStorage.getItem('dfs.targetSavingsPct')||'15');
       document.getElementById('sumAnnual').textContent = fmt(a.sumAnnual||0);
       document.getElementById('pct').value = pct;
@@ -39,10 +42,12 @@
       const warn = Array.isArray(a.warnings)?a.warnings:[]; const recs = Array.isArray(a.recommendations)?a.recommendations:[];
       document.getElementById('warn').innerHTML = warn.length? warn.map(w=>`<div class="badge">${w}</div>`).join('') : '<span style="color:var(--muted)">Keine</span>';
       document.getElementById('recs').innerHTML = recs.length? recs.map(w=>`<div class="badge">${w}</div>`).join('') : '<span style="color:var(--muted)">Keine</span>';
-      // persist derived saving back into analysis
       a.targetPct = pct; a.monthlySaving = saving; a.ts = new Date().toISOString(); setA(a);
     }
     document.addEventListener('input', (e)=>{ if(e.target && e.target.id==='pct'){ localStorage.setItem('dfs.targetSavingsPct', String(Math.max(0,Math.min(100, Number(e.target.value)||0)))); render(); }});
+    window.addEventListener('dfs.contracts-changed', render);
+    window.addEventListener('dfs.analysis-changed', render);
+    window.addEventListener('storage', (e)=>{ if(['dfs.contracts','dfs.analysis','dfs.targetSavingsPct'].includes(e.key)) render(); });
     render();
   </script>
 </body>
