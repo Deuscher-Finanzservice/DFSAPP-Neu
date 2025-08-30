@@ -53,3 +53,8 @@ th.sortable.desc:after { content: '↓'; opacity: .8; }
 
 /* Screen-hidden elements (only for print) */
 .no-screen{display:none}
+
+/* Action-Leiste oben rechts */
+.actions-top{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-bottom:12px}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:12px;padding:6px 12px;cursor:pointer}
+.btn-ghost:hover{background:rgba(255,255,255,0.08)}

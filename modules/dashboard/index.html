@@ -14,6 +14,11 @@
 <body>
   <div class="card">
     <h2>Übersicht</h2>
+    <div class="actions-top no-print">
+      <button class="btn" onclick="location.href='../customers/index.html'">Neuer Kunde / Kunden öffnen</button>
+      <button class="btn" onclick="location.href='../contracts/index.html'">Neuer Vertrag / Verträge öffnen</button>
+      <button class="btn-ghost" onclick="location.href='../analysis/index.html'">Analyse öffnen</button>
+    </div>
     <header class="print-header no-screen" id="print-header"></header>
     <div class="actions no-print" style="display:flex; gap:8px; justify-content:flex-end;">
       <button class="btn btn-primary" onclick="window.print()">Als PDF speichern</button>

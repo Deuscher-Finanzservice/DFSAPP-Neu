@@ -10,6 +10,7 @@
   <title>DFS Versicherungsanalyse</title>
   <link rel="icon" href="./favicon.ico">
   <link rel="stylesheet" href="./styles/base.css">
+  <script src="./scripts/nav.js"></script>
   <script src="./scripts/format.js"></script>
   <script src="./scripts/toast.js"></script>
   <script src="./scripts/date.js"></script>
@@ -167,6 +168,31 @@
       a.addEventListener('click', ()=>{ const href=a.getAttribute('href'); setActive(href); });
     });
     setActive('./modules/dashboard/index.html');
+  })();
+  </script>
+  <!-- Keyboard shortcuts: Alt+1..4, Alt+Left -->
+  <script>
+  (function(){
+    const map = {
+      '1': './modules/customers/index.html',
+      '2': './modules/contracts/index.html',
+      '3': './modules/dashboard/index.html',
+      '4': './modules/analysis/index.html'
+    };
+    function key(e){
+      if(!e.altKey) return;
+      if(e.key === 'ArrowLeft'){ e.preventDefault(); try{ history.back(); }catch(_){ } return; }
+      const href = map[e.key];
+      if(href){
+        e.preventDefault();
+        const iframe = document.getElementById('content');
+        if(iframe) iframe.src = href; else location.href = href;
+        document.querySelectorAll('.sidebar-nav .nav-link').forEach(a=>{
+          a.classList.toggle('active', a.getAttribute('href')===href);
+        });
+      }
+    }
+    window.addEventListener('keydown', key);
   })();
   </script>
   <!-- deploy: codex-auto $(date) -->

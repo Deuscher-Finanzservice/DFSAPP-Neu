@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="../../styles/print.css" media="print">
   <script src="../../scripts/format.js"></script>
   <script src="../../scripts/toast.js"></script>
+  <script src="../../scripts/nav.js"></script>
   <script src="../../scripts/date.js"></script>
   <script src="../../scripts/storage.js"></script>
   <style>
@@ -21,6 +22,9 @@
 <body>
   <div class="card">
     <h2>Kundenstammdaten</h2>
+    <div class="actions-top no-print">
+      <button class="btn-ghost" onclick="dfsNav.backOr('../customers/index.html')">← Zur Kundenliste</button>
+    </div>
     <header class="print-header no-screen" id="print-header"></header>
     <div class="actions no-print" style="display:flex; gap:8px; justify-content:flex-end; margin-bottom:8px;">
       <button class="btn btn-primary" onclick="window.print()">Als PDF speichern</button>
