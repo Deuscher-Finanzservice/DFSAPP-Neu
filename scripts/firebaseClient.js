@@ -1,6 +1,6 @@
 // scripts/firebaseClient.js
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js';
-import { getFirestore, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
+import { initializeFirestore, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
 const firebaseConfig = {
   apiKey: "AIzaSyA77RDdEQEwNpgVtoeaK1E2qTfOz2EkKWY",
   authDomain: "deutscher-finanzservice.firebaseapp.com",
@@ -10,7 +10,16 @@ const firebaseConfig = {
   appId: "1:501791748406:web:2e632167a55973b21b8397"
 };
 let app, db;
-export function initFirebase(){ if(!getApps().length){ app = initializeApp(firebaseConfig); } else { app = getApp(); } db = getFirestore(app); return {app,db}; }
+export function initFirebase(){
+  if(!getApps().length){ app = initializeApp(firebaseConfig); } else { app = getApp(); }
+  // Stabilize Firestore in Safari/Enterprise networks: force long-polling + ignore undefined
+  db = initializeFirestore(app, {
+    experimentalForceLongPolling: true,
+    useFetchStreams: false,
+    ignoreUndefinedProperties: true
+  });
+  return {app,db};
+}
 export function getDB(){ if(!db) initFirebase(); return db; }
 export function getClientId(){ const KEY='dfs.cloud.clientId'; let id=localStorage.getItem(KEY); if(!id){ id=(crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random().toString(36).slice(2)}`); localStorage.setItem(KEY,id);} return id; }
 export function ts(){ return serverTimestamp(); }

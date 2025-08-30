@@ -40,7 +40,7 @@
     }catch(e){
       try{ window.dfs?.captureFsError?.(e, { fn:'saveOne', collection, id }); }catch{}
       const code = e?.code || (e?.message?.includes('permission') ? 'permission-denied' : 'unknown');
-      const message = e?.message || String(e||'error');
+      const message = e?.message || (()=>{ try{ return JSON.stringify(e); }catch{ return String(e||'error'); } })();
       console.error('[DFS] saveOne error', { collection, id, code, message });
       return { ok:false, code, message, id };
     }
