@@ -1,13 +1,20 @@
 // scripts/storage.js
-// Global DFS debug flag (DEV only)
+// Global DFS flags
 window.dfs = window.dfs || {};
-window.dfs.debug = true; // set to false for production
+window.dfs.debug = (window.dfs.debug!==undefined)? window.dfs.debug : true; // set to false for production
+// Enforce cloud-only to avoid local<->cloud ping-pong for customers/contracts
+window.dfs.cloudOnly = true;
 window.dfsStore = (function(){
   function get(key, fallback){
     try{ const raw = localStorage.getItem(key); if(raw==null) return fallback; return JSON.parse(raw); }
     catch(e){ console.warn('dfsStore.get error', e); return fallback; }
   }
   function set(key, val){
+    try{
+      if(window.dfs && window.dfs.cloudOnly && (key==='dfs.customers' || key==='dfs.contracts')){
+        return true;
+      }
+    }catch{}
     try{
       localStorage.setItem(key, JSON.stringify(val));
       if(Array.isArray(val)){
@@ -25,6 +32,7 @@ window.dfsStore = (function(){
     catch(e){ console.warn('dfsStore.remove error', e); return false; }
   }
   async function syncFromCloud(key){
+    try{ if(window.dfs && window.dfs.cloudOnly) return []; }catch{}
     try{
       if(!(window.dfsCloud && typeof window.dfsCloud.loadAll==='function')) return [];
       const list = await window.dfsCloud.loadAll(key);
@@ -37,6 +45,7 @@ window.dfsStore = (function(){
 
 // --- Offline Sync Queue ---
   async function syncWithCloud(key,obj){
+    try{ if(window.dfs && window.dfs.cloudOnly && (key==='dfs.customers' || key==='dfs.contracts')) return; }catch{}
     try{
       if(!(window.dfsCloud && typeof window.dfsCloud.save==='function')) throw new Error('dfsCloud unavailable');
       const ok = await window.dfsCloud.save(key,obj);

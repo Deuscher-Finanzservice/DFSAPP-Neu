@@ -167,7 +167,7 @@
           status.set('saving',{withSpinnerOn:'#btn-save-contract'});
           const c= (window.collectContractFromForm? collectContractFromForm():null);
           if(!c){ status.set('error',{withSpinnerOn:'#btn-save-contract'}); return; }
-          const res = await dfsCloud.saveOne('dfs.contracts', c.id, c);
+          const res = await dfsCloud.saveOne((window.DFS_COLLECTIONS&&DFS_COLLECTIONS.contracts)||'dfs.contracts', c.id, c);
           if(window.dfs && window.dfs.debug) console.info('[DFS] save contract', { id:c.id, ok:res?.ok, code:res?.code });
           if(res && res.ok){ dirty=false; status.set('saved',{withSpinnerOn:'#btn-save-contract'}); const rb=document.getElementById('save-retry'); if(rb) rb.style.display='none'; window.dfsToastKeyed && dfsToastKeyed('save-ok','Vertrag gespeichert','success',1500); }
           else { status.set('error',{withSpinnerOn:'#btn-save-contract'}); const s=document.getElementById('save-status-contract'); if(s) s.textContent='Ungespeichert (Fehler)'; const rb=document.getElementById('save-retry'); if(rb) rb.style.display='inline-flex'; window.dfsToastKeyed && dfsToastKeyed('save-error',`Cloud-Sync fehlgeschlagen (${res?.code||'error'})`,'error',4000); }
@@ -185,7 +185,7 @@
           const rb=document.getElementById('save-retry'); if(rb) rb.disabled=true;
           status.set('saving',{withSpinnerOn:'#btn-save-contract'});
           const c= (window.collectContractFromForm? collectContractFromForm():null);
-          const res = await dfsCloud.saveOne('dfs.contracts', c.id, c);
+          const res = await dfsCloud.saveOne((window.DFS_COLLECTIONS&&DFS_COLLECTIONS.contracts)||'dfs.contracts', c.id, c);
           if(res && res.ok){ dirty=false; status.set('saved',{withSpinnerOn:'#btn-save-contract'}); if(rb){ rb.disabled=false; rb.style.display='none'; } window.dfsToastKeyed && dfsToastKeyed('save-ok','Gespeichert','success',1500); }
           else { status.set('error',{withSpinnerOn:'#btn-save-contract'}); const s=document.getElementById('save-status-contract'); if(s) s.textContent='Ungespeichert (Fehler)'; if(rb){ rb.disabled=false; rb.style.display='inline-flex'; } window.dfsToastKeyed && dfsToastKeyed('save-error',`Cloud-Sync fehlgeschlagen (${res?.code||'unknown'})`,'error',4000); }
           if(window.dfs && window.dfs.debug) console.info('[DFS] save-retry', res);
