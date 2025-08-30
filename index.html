@@ -21,6 +21,7 @@
     .nav-group{margin:8px 0 4px;color:var(--muted);font-weight:700;padding:6px 12px;border-radius:12px}
     .nav-group.active{color:#fff;background:rgba(255,255,255,.06)}
     .nav-sub a{padding-left:22px}
+    .divider{border:0;border-top:1px solid rgba(255,255,255,.12);margin:8px 0}
   </style>
 </head>
 <body>
@@ -50,8 +51,24 @@
     <main class="main">
       <div class="topbar">
         <div></div>
-        <div>
+        <div style="position:relative;display:flex;gap:8px;align-items:center">
           <button class="btn outline" onclick="window.print()">Als PDF speichern</button>
+          <button id="dev-gear" class="btn-ghost no-print" title="DEV" aria-label="DEV Menü">⚙️</button>
+          <div id="dev-menu" class="card" style="display:none; position:absolute; right:12px; top:48px; width:280px; z-index:9999;">
+            <div class="p-2">
+              <label style="display:flex;align-items:center;gap:.5rem;">
+                <input type="checkbox" id="dev-toggle-debug">
+                <span>Debug-Mode (Console logs)</span>
+              </label>
+              <hr class="divider">
+              <button class="btn-ghost" id="dev-hard-reload">Hard Reload (cache-bust)</button>
+              <button class="btn-ghost" id="dev-open-console">Konsole öffnen (Hinweis)</button>
+              <hr class="divider">
+              <div class="text-secondary" id="dev-env-info"></div>
+              <div class="text-secondary" id="dev-version-info"></div>
+              <a class="btn-ghost" id="dev-open-firestore" target="_blank" rel="noopener">Firestore-Console</a>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -73,6 +90,7 @@
   <!-- Firebase + Bridge -->
   <script type="module" src="./scripts/firebaseClient.js"></script>
   <script type="module" src="./scripts/firebase.js"></script>
+  <script src="./scripts/devmenu.js"></script>
   
   <!-- Cache-Busting Helper -->
   <script>
