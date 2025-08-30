@@ -5,6 +5,8 @@
 a{color:var(--muted);text-decoration:none}a:hover{color:#fff}
 .btn{background:var(--gold);color:#fff;border:0;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}
 .btn.outline{background:transparent;border:1px solid var(--gold);color:var(--gold)}
+.btn-secondary{border:1px solid var(--gold);background:transparent;color:var(--gold);border-radius:12px;padding:6px 12px;cursor:pointer}
+.btn-secondary:hover{background:rgba(137,108,32,0.15)}
 .card{background:var(--card-bg);border:1px solid var(--card-bd);border-radius:var(--r);padding:16px}
 .input,select{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--card-bd);border-radius:12px;color:#fff;padding:10px 12px}
 .label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}

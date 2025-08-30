@@ -8,10 +8,18 @@
   <script src="../../scripts/toast.js"></script>
   <script src="../../scripts/date.js"></script>
   <script src="../../scripts/storage.js"></script>
+  <script src="../../scripts/io.js"></script>
 </head>
 <body>
   <div class="card">
     <h2>Kunden</h2>
+    <div class="actions no-print" style="display:flex; gap:8px; margin-bottom:12px;">
+      <button class="btn" onclick="dfsIO.exportJson('dfs.customers','dfs_customers.json')">Export Kunden</button>
+      <label class="btn-secondary">
+        Import Kunden
+        <input type="file" accept="application/json" style="display:none" onchange="dfsIO.importJson('dfs.customers', this.files[0])">
+      </label>
+    </div>
     <div class="table-search">
       <input id="customer-search" type="text" placeholder="Suche Kunde/Firma…">
       <a class="btn" href="../customer/index.html">Neu</a>

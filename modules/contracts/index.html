@@ -10,6 +10,7 @@
   <script src="../../scripts/toast.js"></script>
   <script src="../../scripts/date.js"></script>
   <script src="../../scripts/storage.js"></script>
+  <script src="../../scripts/io.js"></script>
   <style>
     .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
     @media(max-width:900px){.grid{grid-template-columns:1fr}}
@@ -22,6 +23,13 @@
     <h2>Verträge</h2>
     <div class="actions no-print" style="display:flex; gap:8px; justify-content:flex-end;">
       <button class="btn btn-primary" onclick="window.print()">Als PDF speichern</button>
+    </div>
+    <div class="actions no-print" style="display:flex; gap:8px; margin-bottom:12px;">
+      <button class="btn" onclick="dfsIO.exportJson('dfs.contracts','dfs_contracts.json')">Export Verträge</button>
+      <label class="btn-secondary">
+        Import Verträge
+        <input type="file" accept="application/json" style="display:none" onchange="dfsIO.importJson('dfs.contracts', this.files[0])">
+      </label>
     </div>
     <div class="grid">
       <div>
