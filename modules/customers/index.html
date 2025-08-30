@@ -6,6 +6,8 @@
   <link rel="stylesheet" href="../../styles/print.css" media="print">
   <script src="../../scripts/format.js"></script>
   <script src="../../scripts/toast.js"></script>
+  <script src="../../scripts/date.js"></script>
+  <script src="../../scripts/storage.js"></script>
 </head>
 <body>
   <div class="card">
@@ -27,10 +29,10 @@
     import { loadCustomersFromCloud, saveCustomersToCloud, deleteCustomerFromCloud } from '../../scripts/firebase.js';
     const KEY='dfs.customers'; const $=s=>document.querySelector(s);
     function getLocal(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch{ return []; } }
-    function setLocal(a){ localStorage.setItem(KEY, JSON.stringify(a)); }
+    function setLocal(a){ try{ localStorage.setItem(KEY, JSON.stringify(a)); }catch(e){ try{ dfsToast('Speicherlimit erreicht! Bitte Daten exportieren.','error',4000); }catch{} } }
     function render(){
       const q=$('#search').value.trim().toLowerCase();
-      const list=getLocal().filter(c=>{
+      const list=(getLocal().filter(Boolean)).filter(c=>{
         const hay=((c.firma||'')+' '+(c.ansprech||'')+' '+(c.email||'')).toLowerCase();
         return !q || hay.includes(q);
       });

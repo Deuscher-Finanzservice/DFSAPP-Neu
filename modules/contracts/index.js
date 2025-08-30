@@ -12,7 +12,10 @@ function readContracts(){
   }
 }
 function writeContracts(arr){
-  localStorage.setItem(LS_KEY, JSON.stringify(arr));
+  try{
+    if(window.dfsStore && typeof window.dfsStore.set==='function') window.dfsStore.set(LS_KEY, arr);
+    else localStorage.setItem(LS_KEY, JSON.stringify(arr));
+  }catch(e){ try{ if(window.dfsToast) dfsToast('Speicherlimit erreicht! Bitte Daten exportieren.','error',4000); }catch{} }
   try{ window.dispatchEvent(new Event('dfs.contracts-changed')); }catch{}
 }
 function normalizeNumber(str){
@@ -28,16 +31,13 @@ function fmtCurrency(n){
 function linesToArray(s){
   return (s||'').split(',').map(t=>t.trim()).filter(Boolean);
 }
-function pad(n){ return String(n).padStart(2,'0'); }
-function toISODateOnly(d){ if(!(d instanceof Date)) return ''; const y=d.getFullYear(); const m=pad(d.getMonth()+1); const da=pad(d.getDate()); return `${y}-${m}-${da}`; }
-function addYears(d, y){ const dd = new Date(d.getTime()); dd.setFullYear(dd.getFullYear()+y); return dd; }
-function addMonths(d, m){ const dd = new Date(d.getTime()); dd.setMonth(dd.getMonth()+m); return dd; }
 function computeEndAndReminder(beginnISO, laufzeitNum){
   if(!beginnISO) return {endDate:'', reminderDate:''};
   const b = new Date(beginnISO+'T00:00:00');
-  const end = addYears(b, Number(laufzeitNum)||3);
-  const reminder = addMonths(addYears(b, 3), -3);
-  return { endDate: toISODateOnly(end), reminderDate: toISODateOnly(reminder) };
+  const end = (window.dfsDate? window.dfsDate.addYears(b, Number(laufzeitNum)||3) : (d=>{const n=new Date(d);n.setFullYear(n.getFullYear()+Number(laufzeitNum)||3);return n;})(b));
+  const reminder = (window.dfsDate? window.dfsDate.minusMonths(window.dfsDate.addYears(b,3), 3) : (d=>{const n=new Date(d); n.setFullYear(n.getFullYear()+3); n.setMonth(n.getMonth()-3); return n;})(b));
+  const toISO = (window.dfsDate? window.dfsDate.toISO : (d=>{const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;}));
+  return { endDate: toISO(end), reminderDate: toISO(reminder) };
 }
 function normalizeToGerman(c){
   if(!c || typeof c !== 'object') return null;
@@ -69,17 +69,19 @@ function calcDates(){
   const laufzeit = Number(document.getElementById('laufzeit').value||'3');
   if(!beginStr){ document.getElementById('endDate').value=''; document.getElementById('reminderDate').value=''; return {laufzeit,endDate:'',reminderDate:''}; }
   const b = new Date(beginStr+'T00:00:00');
-  const end = addYears(b, laufzeit);
-  const reminder = addMonths(addYears(b, 3), -3); // +3 Jahre -3 Monate
-  const endISO = toISODateOnly(end);
-  const remISO = toISODateOnly(reminder);
+  const end = window.dfsDate? window.dfsDate.addYears(b, laufzeit) : b;
+  const reminder = window.dfsDate? window.dfsDate.minusMonths(window.dfsDate.addYears(b,3), 3) : b;
+  const toISO = window.dfsDate? window.dfsDate.toISO : (d=>{const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;});
+  const endISO = toISO(end);
+  const remISO = toISO(reminder);
   document.getElementById('endDate').value = endISO;
   document.getElementById('reminderDate').value = remISO;
   return { laufzeit, endDate: endISO, reminderDate: remISO };
 }
 function renderTable(){
   const tbody = document.getElementById('tblBody');
-  tbody.innerHTML = contracts.map((c,i)=>`<tr>
+  const rows = (contracts||[]).filter(Boolean);
+  tbody.innerHTML = rows.map((c,i)=>`<tr>
     <td>${c.versicherer||''}</td>
     <td>${c.policeNr||''}</td>
     <td>${Array.isArray(c.sparten)?c.sparten.join(', '):''}</td>
@@ -87,7 +89,7 @@ function renderTable(){
     <td><button data-row="${i}" class="btnDel">Löschen</button></td>
   </tr>`).join('');
   tbody.querySelectorAll('.btnDel').forEach(btn=>btn.addEventListener('click',e=>onDelete(parseInt(btn.dataset.row))));
-  const sum = contracts.reduce((a,c)=>a+(Number(c.jahresbeitragBrutto)||0),0);
+  const sum = rows.reduce((a,c)=>a+(Number(c.jahresbeitragBrutto)||0),0);
   document.getElementById('sumPremium').textContent = fmtCurrency(sum);
 }
 function onAdd(){
@@ -169,7 +171,7 @@ function setup(){
   document.getElementById('btnAdd').addEventListener('click', onAdd);
   document.getElementById('btnExport').addEventListener('click', exportJSON);
   document.getElementById('btnImport').addEventListener('click', importJSON);
-  document.getElementById('btnCloudLoad').addEventListener('click', ()=>console.info('Cloud load placeholder'));
+  // removed placeholder log
   // Recalculate dates on change
   document.getElementById('begin').addEventListener('change', calcDates);
   document.getElementById('laufzeit').addEventListener('change', calcDates);

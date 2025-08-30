@@ -41,10 +41,10 @@
     ` : '<span style="color:var(--muted)">Kein Kunde erfasst</span>';
     // Verträge
     const tbody=document.querySelector('#tbl tbody');
-    tbody.innerHTML = (Array.isArray(contracts)?contracts:[]).map(c=>`
+    tbody.innerHTML = (Array.isArray(contracts)?contracts:[]).filter(Boolean).map(c=>`
       <tr><td>${c.versicherer||''}</td><td>${c.policeNr||''}</td><td>${(c.sparten||[]).join(', ')}</td><td>${fmt(c.jahresbeitragBrutto||0)}</td></tr>
     `).join('');
-    document.getElementById('sum').textContent = fmt((contracts||[]).reduce((a,c)=>a+(Number(c.jahresbeitragBrutto)||0),0));
+    document.getElementById('sum').textContent = fmt(((contracts||[]).filter(Boolean)).reduce((a,c)=>a+(Number(c.jahresbeitragBrutto)||0),0));
     // Analyse
     document.getElementById('sumAnnual').textContent = fmt(a.sumAnnual||0);
     document.getElementById('pct').textContent = `${a.targetPct??(localStorage.getItem('dfs.targetSavingsPct')||15)} %`;
