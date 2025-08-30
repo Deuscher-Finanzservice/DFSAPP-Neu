@@ -13,6 +13,7 @@
       if(!ok) return { ok:false, code:'unknown', message:'save returned false', id: obj.id };
       return { ok:true, id: obj.id };
     }catch(e){
+      try{ window.dfs?.captureFsError?.(e, { fn:'saveOne', collection, id }); }catch{}
       const code = (e && e.code) ? e.code : (e && e.name) ? e.name : 'error';
       return { ok:false, code, message: (e && e.message) ? e.message : String(e||'error'), id };
     }
@@ -28,4 +29,3 @@
   window.dfsCloud.saveOne = window.dfsCloud.saveOne || saveOne;
   window.dfsCloud.loadAll = window.dfsCloud.loadAll || loadAll;
 })();
-
