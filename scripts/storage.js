@@ -36,17 +36,17 @@ window.dfsStore = (function(){
 })();
 
 // --- Offline Sync Queue ---
-async function syncWithCloud(key,obj){
-  try{
-    if(!(window.dfsCloud && typeof window.dfsCloud.save==='function')) throw new Error('dfsCloud unavailable');
-    const ok = await window.dfsCloud.save(key,obj);
-    if(!ok) throw new Error('cloud save failed');
-  }catch(e){
-    console.warn('Sync fehlgeschlagen → Queue', e);
-    queueSync(key,obj);
-    try{ if(window.dfsToast) dfsToast('Offline gespeichert – Sync folgt später','error',4000); }catch{}
+  async function syncWithCloud(key,obj){
+    try{
+      if(!(window.dfsCloud && typeof window.dfsCloud.save==='function')) throw new Error('dfsCloud unavailable');
+      const ok = await window.dfsCloud.save(key,obj);
+      if(!ok) throw new Error('cloud save failed');
+    }catch(e){
+      console.warn('Sync fehlgeschlagen → Queue', e);
+      queueSync(key,obj);
+      // Cloud-only Modus: keine lauten Offline-Toast-Spams mehr
+    }
   }
-}
 function queueSync(key,obj){
   try{
     const q = JSON.parse(localStorage.getItem('dfs.syncQueue')||'[]');

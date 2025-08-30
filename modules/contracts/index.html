@@ -157,10 +157,12 @@
   <script src="./index.js"></script>
   <script>
     (function(){
-      let cfg={autoSaveMode:'immediate',autoSaveInterval:10}; let dirty=false; let deb=null; let timer=null;
+      let cfg={autoSaveMode:'immediate',autoSaveInterval:10}; let dirty=false; let deb=null; let timer=null; let isSaving=false;
       const status = (window.dfsSaveStatus? dfsSaveStatus.bind('save-status-contract','save-meta-contract') : {set:()=>{}});
       async function loadCfg(){ try{ const c=await dfsCloud.loadOne('dfs.config','default'); if(c){ cfg.autoSaveMode=c.autoSaveMode||'immediate'; cfg.autoSaveInterval=Math.min(120,Math.max(2,Number(c.autoSaveInterval||10))); } }catch{} }
       async function saveNow(){
+        if(isSaving) return;
+        isSaving = true;
         try{
           status.set('saving',{withSpinnerOn:'#btn-save-contract'});
           const c= (window.collectContractFromForm? collectContractFromForm():null);
@@ -170,6 +172,7 @@
           if(res && res.ok){ dirty=false; status.set('saved',{withSpinnerOn:'#btn-save-contract'}); const rb=document.getElementById('save-retry'); if(rb) rb.style.display='none'; window.dfsToastKeyed && dfsToastKeyed('save-ok','Vertrag gespeichert','success',1500); }
           else { status.set('error',{withSpinnerOn:'#btn-save-contract'}); const s=document.getElementById('save-status-contract'); if(s) s.textContent='Ungespeichert (Fehler)'; const rb=document.getElementById('save-retry'); if(rb) rb.style.display='inline-flex'; window.dfsToastKeyed && dfsToastKeyed('save-error',`Cloud-Sync fehlgeschlagen (${res?.code||'error'})`,'error',4000); }
         }catch(e){ console.error(e); status.set('error',{withSpinnerOn:'#btn-save-contract'}); const s=document.getElementById('save-status-contract'); if(s) s.textContent='Ungespeichert (Fehler)'; const rb=document.getElementById('save-retry'); if(rb) rb.style.display='inline-flex'; window.dfsToastKeyed && dfsToastKeyed('save-error','Cloud-Speichern fehlgeschlagen','error',4000); }
+        finally{ isSaving=false; }
       }
       function markDirty(){ dirty=true; status.set('dirty'); const rb=document.getElementById('save-retry'); if(rb) rb.style.display='none'; if(cfg.autoSaveMode==='immediate'){ if(deb) clearTimeout(deb); deb=setTimeout(saveNow,800); } }
       function setupInterval(){ if(timer) clearInterval(timer); if(cfg.autoSaveMode==='interval'){ timer=setInterval(()=>{ if(dirty) saveNow(); }, Math.max(2,cfg.autoSaveInterval)*1000); } }
@@ -178,6 +181,7 @@
         ['insurer','policyNo','product','lines','begin','laufzeit','payCycle','premiumYear','coverage','deductible'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; const evt=(el.tagName==='SELECT'||el.type==='date')?'change':'input'; el.addEventListener(evt, markDirty); });
         document.getElementById('btn-save-contract')?.addEventListener('click',(e)=>{ e.preventDefault(); saveNow(); });
         document.getElementById('save-retry')?.addEventListener('click', async ()=>{
+          if(isSaving) return; isSaving=true;
           const rb=document.getElementById('save-retry'); if(rb) rb.disabled=true;
           status.set('saving',{withSpinnerOn:'#btn-save-contract'});
           const c= (window.collectContractFromForm? collectContractFromForm():null);
@@ -185,9 +189,10 @@
           if(res && res.ok){ dirty=false; status.set('saved',{withSpinnerOn:'#btn-save-contract'}); if(rb){ rb.disabled=false; rb.style.display='none'; } window.dfsToastKeyed && dfsToastKeyed('save-ok','Gespeichert','success',1500); }
           else { status.set('error',{withSpinnerOn:'#btn-save-contract'}); const s=document.getElementById('save-status-contract'); if(s) s.textContent='Ungespeichert (Fehler)'; if(rb){ rb.disabled=false; rb.style.display='inline-flex'; } window.dfsToastKeyed && dfsToastKeyed('save-error',`Cloud-Sync fehlgeschlagen (${res?.code||'unknown'})`,'error',4000); }
           if(window.dfs && window.dfs.debug) console.info('[DFS] save-retry', res);
+          isSaving=false;
         });
         window.addEventListener('keydown',(e)=>{ if((e.ctrlKey||e.metaKey) && e.key==='s'){ e.preventDefault(); saveNow(); }});
-        window.addEventListener('beforeunload',()=>{ if(dirty) saveNow(); });
+        // Entfernt: ungeawaiteter Save auf beforeunload kann UI hängen lassen; Lock-aware Save würde sowieso abbrechen
       });
     })();
   </script>

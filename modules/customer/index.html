@@ -230,33 +230,39 @@
       if(!ok){ try{ dfsToast('E-Mail-Format prüfen (optional, aber wenn gefüllt, dann gültig).','error'); }catch{} }
       return ok;
     }
-    // Enhanced save flow with retry
+    // Enhanced save flow with retry + lock + debounce autosave (cloud-only)
     const statusCustomer = (window.dfsSaveStatus? dfsSaveStatus.bind('save-status-customer','save-meta-customer') : { set:()=>{} });
-    function setErrorDirty(){ try{ statusCustomer.set('error'); const el=document.getElementById('save-status-customer'); if(el) el.textContent='Ungespeichert (Fehler)'; }catch{} }
+    let isSavingCustomer = false;
+    function setErrorDirty(spinnerSel){ try{ statusCustomer.set('error',{withSpinnerOn: spinnerSel||'#btn-save-customer'}); const el=document.getElementById('save-status-customer'); if(el) el.textContent='Ungespeichert (Fehler)'; }catch{} }
     function hideRetry(){ const b=document.getElementById('save-retry'); if(b){ b.style.display='none'; b.disabled=false; } }
     function showRetry(){ const b=document.getElementById('save-retry'); if(b){ b.style.display='inline-flex'; b.disabled=false; } }
-    async function saveCustomerNow(spinnerSel){
+    async function saveCustomerNow({spinnerSel, silent}={}){
+      if(isSavingCustomer) return;
       if(!validateCustomerEmailOptional()) return;
+      isSavingCustomer = true;
       try{
-        statusCustomer.set('saving',{withSpinnerOn: spinnerSel||'#save'});
+        statusCustomer.set('saving',{withSpinnerOn: spinnerSel||'#btn-save-customer'});
         const c = collect();
-        const res = await saveCustomerToCloud(c);
+        const res = await window.dfsCloud.saveOne('dfs.customers', c.id, c);
         if(window.dfs && window.dfs.debug) console.info('[DFS] save customer', { id:c.id, ok:res?.ok, code:res?.code });
-        if(res && res.ok){ statusCustomer.set('saved',{withSpinnerOn: spinnerSel||'#save'}); hideRetry(); window.dfsToastKeyed && dfsToastKeyed('save-ok','Kunde gespeichert','success',1500); if(!window._qs.get('id')){ history.replaceState({},'',`?id=${encodeURIComponent(id)}`); $('delete').style.display='inline-block'; } }
-        else { setErrorDirty(); showRetry(); window.dfsToastKeyed && dfsToastKeyed('save-error',`Cloud-Sync fehlgeschlagen (${res?.code||'error'})`,'error',4000); }
-      }catch(e){ console.error(e); setErrorDirty(); showRetry(); window.dfsToastKeyed && dfsToastKeyed('save-error','Cloud-Speichern fehlgeschlagen','error',4000); }
+        if(res && res.ok){ statusCustomer.set('saved',{withSpinnerOn: spinnerSel||'#btn-save-customer'}); hideRetry(); if(!silent){ window.dfsToastKeyed && dfsToastKeyed('save-ok','Kunde gespeichert','success',1500); } if(!window._qs.get('id')){ history.replaceState({},'',`?id=${encodeURIComponent(id)}`); $('delete').style.display='inline-block'; } }
+        else { setErrorDirty('#btn-save-customer'); showRetry(); window.dfsToastKeyed && dfsToastKeyed('save-error',`Cloud-Sync fehlgeschlagen (${res?.code||'error'})`,'error',4000); }
+      }catch(e){ console.error(e); setErrorDirty('#btn-save-customer'); showRetry(); window.dfsToastKeyed && dfsToastKeyed('save-error','Cloud-Speichern fehlgeschlagen','error',4000); }
+      finally{ isSavingCustomer = false; }
     }
-    document.getElementById('save').onclick = async ()=>{ await saveCustomerNow('#save'); };
-    document.getElementById('btn-save-customer').onclick = async ()=>{ await saveCustomerNow('#btn-save-customer'); };
+    document.getElementById('save').onclick = async ()=>{ await saveCustomerNow({spinnerSel:'#save'}); };
+    document.getElementById('btn-save-customer').onclick = async ()=>{ await saveCustomerNow({spinnerSel:'#btn-save-customer'}); };
     document.getElementById('save-retry')?.addEventListener('click', async ()=>{
+      if(isSavingCustomer) return; isSavingCustomer = true;
       const b=document.getElementById('save-retry'); if(b) b.disabled=true; statusCustomer.set('saving',{withSpinnerOn:'#btn-save-customer'});
       const c = collect();
       try{
-        const res = await saveCustomerToCloud(c);
+        const res = await window.dfsCloud.saveOne('dfs.customers', c.id, c);
         if(res && res.ok){ statusCustomer.set('saved',{withSpinnerOn:'#btn-save-customer'}); hideRetry(); window.dfsToastKeyed && dfsToastKeyed('save-ok','Gespeichert','success',1500); }
-        else { setErrorDirty(); if(b) b.disabled=false; showRetry(); window.dfsToastKeyed && dfsToastKeyed('save-error',`Cloud-Sync fehlgeschlagen (${res?.code||'unknown'})`,'error',4000); }
+        else { setErrorDirty('#btn-save-customer'); if(b) b.disabled=false; showRetry(); window.dfsToastKeyed && dfsToastKeyed('save-error',`Cloud-Sync fehlgeschlagen (${res?.code||'unknown'})`,'error',4000); }
         if(window.dfs && window.dfs.debug) console.info('[DFS] save-retry', res);
-      }catch(e){ console.error(e); setErrorDirty(); if(b) b.disabled=false; showRetry(); window.dfsToastKeyed && dfsToastKeyed('save-error','Cloud-Speichern fehlgeschlagen','error',4000); }
+      }catch(e){ console.error(e); setErrorDirty('#btn-save-customer'); if(b) b.disabled=false; showRetry(); window.dfsToastKeyed && dfsToastKeyed('save-error','Cloud-Speichern fehlgeschlagen','error',4000); }
+      finally{ isSavingCustomer = false; }
     });
     document.getElementById('delete').onclick = async ()=>{
       if(!id) return;
@@ -359,29 +365,12 @@
     })();
     // Link zum Kunden-Dashboard
     document.addEventListener('DOMContentLoaded', ()=>{ const a=document.getElementById('btn-dashboard'); if(a){ a.href = `../customers/dashboard.html?id=${encodeURIComponent(id)}`; } });
-    // Auto-Save (Kunde)
-    let __autoSaveTimerCustomer = null;
-    function doSaveCustomer(){
-      const c = collect();
-      let arr = (window.dfsStore&&dfsStore.get)? dfsStore.get(KEY,[]) : getLocal();
-      const idx = arr.findIndex(x=>x.id===c.id);
-      if(idx>=0) arr[idx] = {...arr[idx], ...c, updatedAt:new Date().toISOString()}; else arr.push({...c, createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()});
-      if(window.dfsStore&&dfsStore.set) dfsStore.set(KEY, arr); else setLocal(arr);
-      try{ dfsToast('Kunde gespeichert','success'); }catch{}
-    }
-    function handleAutoSaveCustomer(){
-      const cfg = (window.dfsStore&&dfsStore.get)? dfsStore.get('dfs.config.save',{autoSaveMode:'immediate',autoSaveInterval:10,cloudSync:true}) : {autoSaveMode:'immediate',autoSaveInterval:10,cloudSync:true};
-      if(cfg.autoSaveMode==='manual') return;
-      if(cfg.autoSaveMode==='immediate'){
-        doSaveCustomer();
-      }else if(cfg.autoSaveMode==='interval'){
-        if(__autoSaveTimerCustomer) clearTimeout(__autoSaveTimerCustomer);
-        __autoSaveTimerCustomer = setTimeout(doSaveCustomer, Math.max(5, Number(cfg.autoSaveInterval||10))*1000);
-      }
-    }
+    // Debounced cloud-only autosave (leise)
+    let __autoSaveDebTimer = null;
+    function debouncedAutoSave(){ if(__autoSaveDebTimer) clearTimeout(__autoSaveDebTimer); __autoSaveDebTimer = setTimeout(()=>{ saveCustomerNow({spinnerSel:'#btn-save-customer', silent:true}); }, 800); }
     function autoBindCustomerForm(){
       const ids=['firma','ansprech','email','telefon','cust-branche','mitarbeiter','umsatz','gruendung','cust-addr-adresse','cust-addr-plz','cust-addr-ort'];
-      ids.forEach(k=>{ const el=document.getElementById(k); if(!el) return; const evt = (el.tagName==='SELECT')?'change':'input'; el.addEventListener(evt, (e)=>{ try{ const s=document.getElementById('save-status-customer'); if(s) s.textContent='Ungespeichert'; }catch{} hideRetry && hideRetry(); handleAutoSaveCustomer(e); }); });
+      ids.forEach(k=>{ const el=document.getElementById(k); if(!el) return; const evt = (el.tagName==='SELECT')?'change':'input'; el.addEventListener(evt, ()=>{ try{ const s=document.getElementById('save-status-customer'); if(s) s.textContent='Ungespeichert'; }catch{} hideRetry && hideRetry(); debouncedAutoSave(); }); });
     }
     // Migration: wenn standort Freitext war → in standortLegacy sichern und struktur anlegen
     document.addEventListener('DOMContentLoaded', ()=>{
