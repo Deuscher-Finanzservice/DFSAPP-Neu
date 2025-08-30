@@ -12,6 +12,7 @@
   <script src="../../scripts/date.js"></script>
   <script src="../../scripts/storage.js"></script>
   <script type="module" src="../../scripts/firebase.js"></script>
+  <script type="module" src="../../scripts/data-contracts.js"></script>
   <script src="../../scripts/save-status.js"></script>
   <style>
     .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
@@ -288,11 +289,7 @@
         }catch(e){}
         return null;
       }
-      function readContracts(){
-        try{ return JSON.parse(localStorage.getItem('dfs.contracts')||'[]'); }
-        catch(e){ return []; }
-      }
-      function renderContractsSummary(){
+      async function renderContractsSummary(){
         var cid = getCurrentCustomerId();
         var btnCreate = document.getElementById('btn-create-contract');
         if(btnCreate){
@@ -304,8 +301,17 @@
         if(!tbody||!sumEl) return;
 
         tbody.innerHTML = '';
-        var list = readContracts();
-        var rows = cid ? list.filter(x=> String(x.customerId||'')===String(cid)) : [];
+        var rows = [];
+        if(cid){
+          try{
+            if(window.dfsDataContracts && dfsDataContracts.loadContractsByCustomer){
+              rows = await dfsDataContracts.loadContractsByCustomer(cid);
+            }else if(window.dfsData && dfsData.getAllContracts){
+              const all = await dfsData.getAllContracts();
+              rows = (all||[]).filter(x=> String(x.customerId||'')===String(cid));
+            }
+          }catch(e){ rows = []; }
+        }
 
         var total = 0;
         rows.forEach(function(r){
@@ -317,10 +323,10 @@
           total += premium;
 
           tr.innerHTML = [
-            `<td>${r.versicherer||r.insurer||''}</td>`,
-            `<td>${r.policeNr||r.policyNumber||r.policyNo||r.policy||''}</td>`,
+            `<td>${r.versicherer||r.insurer||'—'}</td>`,
+            `<td>${r.policeNr||r.policyNumber||r.policyNo||r.policy||'—'}</td>`,
             `<td>${risks}</td>`,
-            `<td>${pay}</td>`,
+            `<td>${pay||'—'}</td>`,
             `<td style="text-align:right">${fmtMoney(premium)}</td>`,
             `<td><a class="btn btn-small" href="../contracts/index.html?customerId=${encodeURIComponent(cid||'')}">Öffnen</a></td>`
           ].join('');

@@ -16,36 +16,7 @@ function fmtDate(iso){
   return `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}`;
 }
 
-function getContracts(){
-  try{
-    if(window.dfsStore && typeof window.dfsStore.get === 'function'){
-      return window.dfsStore.get('dfs.contracts', []) || [];
-    }
-  }catch{}
-  try{ return JSON.parse(localStorage.getItem('dfs.contracts')||'[]'); }catch{ return []; }
-}
-
-async function renderUpcoming(){
-  const listEl = document.getElementById('upcoming-list');
-  if(!listEl) return;
-  listEl.innerHTML = '<p class="text-secondary">Lade…</p>';
-  let contracts = [];
-  try { contracts = await (window.dfsData && dfsData.getAllContracts ? dfsData.getAllContracts() : Promise.resolve(getContracts())); }
-  catch { contracts = getContracts(); }
-  if(!Array.isArray(contracts) || contracts.length===0){
-    listEl.innerHTML = '<p class="text-secondary">Keine Reminder in den nächsten 90 Tagen.</p>';
-    return;
-  }
-  const items = contracts.filter(c=> withinDays(c.reminderDate, 90)).sort((a,b)=> new Date(a.reminderDate) - new Date(b.reminderDate));
-  if(items.length===0){ listEl.innerHTML = '<p class="text-secondary">Keine Reminder in den nächsten 90 Tagen.</p>'; return; }
-  listEl.innerHTML = `
-    <ul class="stack">
-      ${items.map(c=>`
-        <li class="chip">${c.versicherer||'—'} · ${c.policeNr||'—'} · ${window.dfsFmt?.fmtDateDE(c.reminderDate)||'—'}</li>
-      `).join('')}
-    </ul>
-  `;
-}
+// remove localStorage-based contracts helpers; use cloud-only loaders
 
 // Tabs 90/60/30 cloud-only widget
 async function renderUpcomingWindow(days){
@@ -57,8 +28,12 @@ async function renderUpcomingWindow(days){
   if(focusEl) focusEl.innerHTML = '';
   try{
     const [contracts, customers] = await Promise.all([
-      (window.dfsCloud&&dfsCloud.loadAll? dfsCloud.loadAll('dfs.contracts') : Promise.resolve([])),
-      (window.dfsCloud&&dfsCloud.loadAll? dfsCloud.loadAll('dfs.customers') : Promise.resolve([]))
+      (window.dfsDataContracts?.loadAllContracts
+        ? window.dfsDataContracts.loadAllContracts()
+        : (window.dfsData?.getAllContracts ? window.dfsData.getAllContracts() : Promise.resolve([]))),
+      (window.dfsDataCustomers?.loadAllCustomers
+        ? window.dfsDataCustomers.loadAllCustomers()
+        : (window.dfsData?.getAllCustomers ? window.dfsData.getAllCustomers() : Promise.resolve([])))
     ]);
     const now = new Date();
     const withinDays = (iso, d)=>{ if(!iso) return false; const dt=new Date(iso); if(isNaN(dt)) return false; const diff=(dt-now)/(1000*60*60*24); return diff>=0 && diff<=d; };
@@ -93,27 +68,11 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   const first = document.querySelector('#upcoming-tabs [data-window="90"]'); if(first){ first.classList.add('active'); }
   await renderUpcomingWindow(90);
 });
-window.addEventListener('dfs.contracts-changed', renderUpcoming);
-window.addEventListener('storage', (e)=>{ if(e && e.key==='dfs.contracts') renderUpcoming(); });
+// contracts changes: refresh cloud-only widgets
+window.addEventListener('dfs.contracts-changed', ()=>renderUpcomingWindow(90));
+window.addEventListener('storage', (e)=>{ if(e && e.key==='dfs.contracts') renderUpcomingWindow(90); });
 
-// === KPI Summe (EUR) ===
-function calcAnnualSum(){
-  const list = (window.dfsStore?.get('dfs.contracts', []) || JSON.parse(localStorage.getItem('dfs.contracts')||'[]') || []).filter(Boolean);
-  const sum = list.reduce((acc, c) => acc + (window.dfsFmt?.parseDE(c.jahresbeitragBrutto) || Number(c.jahresbeitragBrutto)||0), 0);
-  return sum;
-}
-function renderKpis(){
-  try{
-    const sum = calcAnnualSum();
-    const el = document.getElementById('kpi-sum-annual'); if(el) el.textContent = window.dfsFmt? window.dfsFmt.fmtEUR(sum) : String(sum);
-    const pct = Number(window.localStorage.getItem('dfs.targetSavingsPct') || 0);
-    const monthlySaving = (sum - (sum * (1 - pct/100))) / 12;
-    const msEl = document.getElementById('kpi-monthly-saving'); if(msEl) msEl.textContent = window.dfsFmt? window.dfsFmt.fmtEUR(monthlySaving) : String(monthlySaving);
-  }catch(e){}
-}
-document.addEventListener('DOMContentLoaded', renderKpis);
-window.addEventListener('dfs.contracts-changed', renderKpis);
-window.addEventListener('storage', (e)=>{ if(e && e.key && ['dfs.contracts','dfs.targetSavingsPct'].includes(e.key)) renderKpis(); });
+// === KPI Summe (EUR) — cloud-only handled below (renderKpisCloudFirst)
 
 // === Analyse-Ergebnisse (KPI, Warnungen, Empfehlungen) ===
 async function renderAnalysisOnDashboard(){
@@ -165,19 +124,25 @@ async function renderCounts(){
         : (window.dfsData?.getAllCustomers ? window.dfsData.getAllCustomers() : Promise.resolve([]))
     );
     const contracts = await (
-      window.dfsData?.getAllContracts ? window.dfsData.getAllContracts() : Promise.resolve([])
+      window.dfsDataContracts?.loadAllContracts
+        ? window.dfsDataContracts.loadAllContracts()
+        : (window.dfsData?.getAllContracts ? window.dfsData.getAllContracts() : Promise.resolve([]))
     );
     const cEl = document.getElementById('kpi-customers')
             || document.getElementById('nCustomers')
             || document.getElementById('kpi-customers-count');
-    const vEl = document.getElementById('nContracts') || document.getElementById('kpi-contracts-count');
+    const vEl = document.getElementById('kpi-contracts') || document.getElementById('nContracts') || document.getElementById('kpi-contracts-count');
     if(cEl) cEl.textContent = customers.length;
     if(vEl) vEl.textContent = contracts.length;
   }catch(e){ console.error(e); }
 }
 async function renderKpisCloudFirst(){
   try{
-    const contracts = await (window.dfsData&&dfsData.getAllContracts ? dfsData.getAllContracts() : Promise.resolve([]));
+    const contracts = await (
+      window.dfsDataContracts?.loadAllContracts
+        ? window.dfsDataContracts.loadAllContracts()
+        : (window.dfsData&&dfsData.getAllContracts ? dfsData.getAllContracts() : Promise.resolve([]))
+    );
     const sum = contracts.reduce((a,c)=> a + (window.dfsFmt?.parseDE(c.jahresbeitragBrutto)||0), 0);
     const el = document.getElementById('kpi-sum-annual'); if(el) el.textContent = window.dfsFmt? window.dfsFmt.fmtEUR(sum) : String(sum);
     const pct = Number(localStorage.getItem('dfs.targetSavingsPct')||0);
@@ -186,3 +151,4 @@ async function renderKpisCloudFirst(){
   }catch{}
 }
 document.addEventListener('DOMContentLoaded', ()=>{ renderCounts(); renderKpisCloudFirst(); });
+window.addEventListener('dfs.contracts-changed', ()=>{ renderCounts(); renderKpisCloudFirst(); });

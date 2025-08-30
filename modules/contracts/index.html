@@ -13,6 +13,7 @@
   <script src="../../scripts/date.js"></script>
   <script src="../../scripts/storage.js"></script>
   <script type="module" src="../../scripts/firebase.js"></script>
+  <script type="module" src="../../scripts/data-contracts.js"></script>
   <script src="../../scripts/io.js"></script>
   <style>
     .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
@@ -136,13 +137,15 @@
             <th class="sortable" data-key="versicherer">Versicherer</th>
             <th class="sortable" data-key="policeNr">Police</th>
             <th>Sparten</th>
+            <th class="sortable" data-key="zahlweise">Zahlweise</th>
             <th class="sortable num" data-key="jahresbeitragBrutto">Beitrag (€/J)</th>
+            <th class="sortable" data-key="reminderDate">Reminder</th>
             <th>Aktion</th>
           </tr>
         </thead>
         <tbody id="tblBody"></tbody>
         <tfoot>
-          <tr><td colspan="3">Summe</td><td class="num" id="sumPremium">0,00 €</td><td></td></tr>
+          <tr><td colspan="4">Summe</td><td class="num" id="sumPremium">0,00 €</td><td></td></tr>
         </tfoot>
       </table>
     </div>

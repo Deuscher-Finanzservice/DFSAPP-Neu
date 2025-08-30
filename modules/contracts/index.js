@@ -1,25 +1,11 @@
-const LS_KEY = "dfs.contracts";
+const LS_KEY = "dfs.contracts"; // retained for legacy, no longer used for listing
 let contracts = [];
 let sortKey = null; let sortDir = 'asc';
 let __autoSaveTimerContract = null;
 const urlParams = new URLSearchParams(location.search);
 const currentCustomerId = urlParams.get('cid') || urlParams.get('customerId') || null;
 
-function readContracts(){
-  try{
-    const raw = localStorage.getItem(LS_KEY);
-    return Array.isArray(JSON.parse(raw)) ? JSON.parse(raw) : [];
-  }catch{
-    return [];
-  }
-}
-function writeContracts(arr){
-  try{
-    if(window.dfsStore && typeof window.dfsStore.set==='function') window.dfsStore.set(LS_KEY, arr);
-    else localStorage.setItem(LS_KEY, JSON.stringify(arr));
-  }catch(e){ try{ if(window.dfsToast) dfsToast('Speicherlimit erreicht! Bitte Daten exportieren.','error',4000); }catch{} }
-  try{ window.dispatchEvent(new Event('dfs.contracts-changed')); }catch{}
-}
+// remove local read/write for list view: use cloud-only loaders
 function normalizeNumber(str){
   if(typeof str !== 'string') str = String(str||'');
   const s = str.trim().replace(/\./g,'').replace(',', '.');
@@ -102,13 +88,23 @@ function getFilteredSortedContracts(){
 function renderTable(){
   const tbody = document.getElementById('tblBody');
   const rows = getFilteredSortedContracts();
-  tbody.innerHTML = rows.map((c,i)=>`<tr>
-    <td>${c.versicherer||''}</td>
-    <td>${c.policeNr||''}</td>
-    <td>${Array.isArray(c.sparten)?c.sparten.join(', '):''}</td>
-    <td class="num">${fmtCurrency(c.jahresbeitragBrutto)}</td>
-    <td><button data-row="${i}" class="btnDel">Löschen</button></td>
-  </tr>`).join('');
+  tbody.innerHTML = rows.map((c,i)=>{
+    const insurer = c.versicherer||'—';
+    const policy  = c.policeNr||'—';
+    const lines   = Array.isArray(c.sparten)?c.sparten.join(', '):'';
+    const pay     = c.zahlweise||'—';
+    const prem    = fmtCurrency(Number(c.jahresbeitragBrutto)||0);
+    const rem     = c.reminderDate ? (window.dfsFmt?.fmtDateDE(c.reminderDate)||c.reminderDate) : '—';
+    return `<tr>
+      <td>${insurer}</td>
+      <td>${policy}</td>
+      <td>${lines}</td>
+      <td>${pay}</td>
+      <td class="num">${prem}</td>
+      <td>${rem}</td>
+      <td><button data-row="${i}" class="btnDel">Löschen</button></td>
+    </tr>`;
+  }).join('');
   tbody.querySelectorAll('.btnDel').forEach(btn=>btn.addEventListener('click',e=>onDelete(parseInt(btn.dataset.row))));
   const sum = rows.reduce((a,c)=>a+(Number(c.jahresbeitragBrutto)||0),0);
   document.getElementById('sumPremium').textContent = fmtCurrency(sum);
@@ -152,7 +148,8 @@ function onAdd(){
     customerId: (currentCustomerId || hiddenCustomerId || undefined)
   });
   contracts.push(german);
-  writeContracts(contracts);
+  try{ if(window.dfsData && dfsData.saveContract) await dfsData.saveContract(german); }catch(e){ console.error(e); }
+  try{ window.dispatchEvent(new Event('dfs.contracts-changed')); }catch{}
   renderTable();
   ['insurer','policyNo','product','lines','begin','premiumYear','coverage','deductible','endDate','reminderDate'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
   document.getElementById('payCycle').value='jährlich';
@@ -167,13 +164,13 @@ function onDelete(idx){
     checkText:'Ja, ich will diesen Vertrag endgültig löschen.',
     onOk: async ()=>{
       try{
-        const map = dfsStore.get('dfs.contractFiles', {});
+        const map = (window.dfsStore&&dfsStore.get)? dfsStore.get('dfs.contractFiles', {}) : {};
         const files = map[item.id] || [];
         for(const f of files){ try{ await dfsFiles.removeByPath(f.id); }catch(_){} }
         delete map[item.id]; dfsStore.set('dfs.contractFiles', map);
         contracts.splice(idx,1);
-        writeContracts(contracts);
         try{ await dfsCloud.delete('dfs.contracts', item.id); }catch{}
+        try{ window.dispatchEvent(new Event('dfs.contracts-changed')); }catch{}
         renderTable();
         try{ window.dfsToast('Vertrag gelöscht','success'); }catch{}
       }catch(e){ console.error(e); try{ window.dfsToast('Löschen fehlgeschlagen','error'); }catch{} }
@@ -195,7 +192,6 @@ function importJSON(){
     const arr = JSON.parse(txt);
     if(Array.isArray(arr)){
       contracts = arr.map(normalizeToGerman).filter(Boolean);
-      writeContracts(contracts);
       renderTable();
     }
   }catch{}
@@ -224,10 +220,11 @@ function collectContractFromForm(){
 }
 function doSaveContract(){
   const c = collectContractFromForm();
-  let arr = (window.dfsStore&&dfsStore.get)? dfsStore.get(LS_KEY,[]) : readContracts();
-  const idx = arr.findIndex(x=>x.id===c.id);
-  if(idx>=0) arr[idx] = {...arr[idx], ...c, updatedAt:new Date().toISOString()}; else arr.push({...c, createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()});
-  writeContracts(arr); contracts = arr; renderTable();
+  try{ if(window.dfsData && dfsData.saveContract) await dfsData.saveContract(c); }catch(e){ console.error(e); }
+  // Update local view list entry
+  const idx = contracts.findIndex(x=>x.id===c.id);
+  if(idx>=0) contracts[idx] = {...contracts[idx], ...c}; else contracts.push(c);
+  renderTable();
   try{ window.dfsToast('Vertrag gespeichert','success'); }catch{}
 }
 function handleAutoSaveContract(){
@@ -245,15 +242,16 @@ function autoBindContractForm(){
   ids.forEach(k=>{ const el=document.getElementById(k); if(!el) return; el.addEventListener('input', handleAutoSaveContract); });
 }
 async function setup(){
-  // migrate to German schema if needed
   try{
-    const cloudFirst = await (window.dfsData && dfsData.getAllContracts ? dfsData.getAllContracts() : Promise.resolve(readContracts()));
-    contracts = (cloudFirst||[]).map(normalizeToGerman).filter(Boolean);
-    writeContracts(contracts);
+    const all = await (
+      window.dfsDataContracts?.loadAllContracts
+        ? window.dfsDataContracts.loadAllContracts()
+        : (window.dfsData && dfsData.getAllContracts ? dfsData.getAllContracts() : Promise.resolve([]))
+    );
+    contracts = (all||[]).map(normalizeToGerman).filter(Boolean);
     renderTable();
   }catch{
-    contracts = readContracts().map(normalizeToGerman).filter(Boolean);
-    writeContracts(contracts);
+    contracts = [];
     renderTable();
   }
   document.getElementById('btnAdd').addEventListener('click', onAdd);
@@ -283,7 +281,6 @@ async function setup(){
   });
   // Auto-Save bind
   autoBindContractForm();
-  // Initial cloud→local sync
-  (async ()=>{ try{ if(window.dfsStore&&dfsStore.syncFromCloud){ await dfsStore.syncFromCloud('dfs.contracts'); contracts = readContracts().map(normalizeToGerman).filter(Boolean); renderTable(); } }catch{} })();
+  // cloud-only: no local sync
 }
 document.addEventListener('DOMContentLoaded', ()=>{ setup(); });
