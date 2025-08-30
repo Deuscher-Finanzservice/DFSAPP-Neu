@@ -63,6 +63,15 @@ async function renderUpcomingWindow(days){
 }
 
 document.addEventListener('DOMContentLoaded', async ()=>{
+  try{
+    if(window.dfsFirebase && dfsFirebase.healthcheck){
+      const hc = await dfsFirebase.healthcheck();
+      if(window.dfsDebug){
+        if(hc.ok) window.dfsDebug.log('info','healthcheck ok');
+        else window.dfsDebug.log('error','healthcheck failed', hc);
+      }
+    }
+  }catch{}
   const tabs = document.querySelectorAll('#upcoming-tabs [data-window]');
   tabs.forEach(btn=> btn.addEventListener('click', ()=>{ tabs.forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderUpcomingWindow(Number(btn.dataset.window)); }));
   const first = document.querySelector('#upcoming-tabs [data-window="90"]'); if(first){ first.classList.add('active'); }

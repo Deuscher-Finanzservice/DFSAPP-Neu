@@ -1,6 +1,6 @@
 // scripts/firebaseClient.js
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js';
-import { initializeFirestore, serverTimestamp, memoryLocalCache, enableNetwork, disableNetwork } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
+import { initializeFirestore, serverTimestamp, memoryLocalCache, enableNetwork, disableNetwork, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
 const firebaseConfig = {
   apiKey: "AIzaSyA77RDdEQEwNpgVtoeaK1E2qTfOz2EkKWY",
   authDomain: "deutscher-finanzservice.firebaseapp.com",
@@ -22,13 +22,25 @@ export function initFirebase(){
     useFetchStreams: false,
     ignoreUndefinedProperties: true
   });
+  try{ enableNetwork(db).catch(()=>{}); }catch{}
   try{ console.info('DB: memory cache + auto long-polling aktiv'); }catch{}
   return {app,db};
 }
 export function getDB(){ if(!db) initFirebase(); return db; }
+export function getDb(){ return getDB(); }
+export function getAppSafe(){ if(!app) initFirebase(); return app; }
 export function getClientId(){ const KEY='dfs.cloud.clientId'; let id=localStorage.getItem(KEY); if(!id){ id=(crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random().toString(36).slice(2)}`); localStorage.setItem(KEY,id);} return id; }
 export function ts(){ return serverTimestamp(); }
 export async function forceOnline(){ try{ if(!db) initFirebase(); await enableNetwork(db); }catch{} }
 export async function forceOffline(){ try{ if(!db) initFirebase(); await disableNetwork(db); }catch{} }
 // expose network helpers globally for non-module scripts
 try{ window.dfsNet = window.dfsNet || { forceOnline, forceOffline }; }catch{}
+export async function healthcheck(){
+  try{
+    if(!db) initFirebase();
+    const ref = doc(getDB(), '__health__', 'ping');
+    await setDoc(ref, { ts:new Date().toISOString(), host: location.hostname }, { merge:true });
+    return { ok:true };
+  }catch(e){ return { ok:false, code:e?.code||'unknown', message:e?.message||String(e) }; }
+}
+try{ window.dfsFirebase = window.dfsFirebase || { getDb, getDB, getAppSafe, forceOnline, forceOffline, healthcheck }; }catch{}

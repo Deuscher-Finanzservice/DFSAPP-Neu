@@ -262,6 +262,7 @@
       if(!validateCustomerEmailOptional()) return;
       isSavingCustomer = true;
       try{
+        try{ const hc = await (window.dfsFirebase&&dfsFirebase.healthcheck? dfsFirebase.healthcheck():Promise.resolve({ok:true})); if(!hc.ok){ setErrorDirty(spinnerSel||'#btn-save-customer'); showRetry(); window.dfsToastKeyed && dfsToastKeyed('save-error','Cloud offline','error',4000); return; } }catch{}
         statusCustomer.set('saving',{withSpinnerOn: spinnerSel||'#btn-save-customer'});
         const c = collect();
         const res = await window.dfsCloud.saveOne((window.DFS_COLLECTIONS&&DFS_COLLECTIONS.customers)||'dfs.customers', c.id, c);
@@ -276,6 +277,7 @@
     document.getElementById('save-retry')?.addEventListener('click', async ()=>{
       if(isSavingCustomer) return; isSavingCustomer = true;
       const b=document.getElementById('save-retry'); if(b) b.disabled=true; statusCustomer.set('saving',{withSpinnerOn:'#btn-save-customer'});
+      try{ const hc = await (window.dfsFirebase&&dfsFirebase.healthcheck? dfsFirebase.healthcheck():Promise.resolve({ok:true})); if(!hc.ok){ setErrorDirty('#btn-save-customer'); if(b) b.disabled=false; showRetry(); window.dfsToastKeyed && dfsToastKeyed('save-error','Cloud offline','error',4000); isSavingCustomer=false; return; } }catch{}
       const c = collect();
       try{
         const res = await window.dfsCloud.saveOne((window.DFS_COLLECTIONS&&DFS_COLLECTIONS.customers)||'dfs.customers', c.id, c);
