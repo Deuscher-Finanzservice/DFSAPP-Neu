@@ -91,8 +91,7 @@ async function renderAnalysisOnDashboard(){
     const recoBox = document.getElementById('analysis-recos-dash');
     if(kpiBox) kpiBox.innerHTML = '<p class="text-secondary">Lade…</p>';
     let res = null;
-    try{ const snap = await (window.dfsCloud && dfsCloud.loadOne ? dfsCloud.loadOne('dfs.analysis','latest') : Promise.resolve(null)); if(snap){ res=snap; if(window.dfsStore&&dfsStore.set) dfsStore.set('dfs.analysis', snap); } }catch{}
-    if(!res){ res = (window.dfsStore && dfsStore.get) ? dfsStore.get('dfs.analysis', null) : JSON.parse(localStorage.getItem('dfs.analysis')||'null'); }
+    try{ const snap = await (window.dfsCloud && dfsCloud.loadOne ? dfsCloud.loadOne('dfs.analysis','latest') : Promise.resolve(null)); if(snap){ res=snap; } }catch(e){ console.error(e); }
     if(!kpiBox || !warnBox || !recoBox) return;
     if(!res){ kpiBox.innerHTML = '<p class="text-secondary">Noch keine Analyse durchgeführt.</p>'; warnBox.innerHTML=''; recoBox.innerHTML=''; return; }
     kpiBox.innerHTML = `
@@ -154,7 +153,7 @@ async function renderKpisCloudFirst(){
     );
     const sum = contracts.reduce((a,c)=> a + (window.dfsFmt?.parseDE(c.jahresbeitragBrutto)||0), 0);
     const el = document.getElementById('kpi-sum-annual'); if(el) el.textContent = window.dfsFmt? window.dfsFmt.fmtEUR(sum) : String(sum);
-    const pct = Number(localStorage.getItem('dfs.targetSavingsPct')||0);
+    const pct = 0;
     const monthlySaving = (sum - (sum * (1 - pct/100))) / 12;
     const msEl = document.getElementById('kpi-monthly-saving'); if(msEl) msEl.textContent = window.dfsFmt? window.dfsFmt.fmtEUR(monthlySaving) : String(monthlySaving);
   }catch{}

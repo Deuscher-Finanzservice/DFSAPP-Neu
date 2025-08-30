@@ -73,14 +73,11 @@
   });
 
   function upsertCustomerFile(id, meta){
-    const map = dfsStore.get('dfs.customerFiles', {});
-    const list = map[id] || []; list.push(meta); map[id] = list;
-    dfsStore.set('dfs.customerFiles', map);
     try{ dfsCloud && dfsCloud.save && dfsCloud.save('dfs.customerFiles', { id: `${id}:${meta.id}`, customerId: id, ...meta }); }catch{}
   }
-  function renderDocs(){
-    const map = dfsStore.get('dfs.customerFiles', {});
-    const list = map[customerId] || [];
+  async function renderDocs(){
+    let list=[];
+    try{ const all = await (window.dfsCloud&&dfsCloud.loadAll? dfsCloud.loadAll('dfs.customerFiles') : Promise.resolve([])); list = (all||[]).filter(m=> String(m.customerId||'')===String(customerId)); }catch{}
     const box = document.getElementById('cust-docs'); if(!box) return;
     box.innerHTML = list.length ? list.map(m=>`
       <div class="doc-row">
@@ -97,25 +94,14 @@
     box.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', async ()=>{
       const path = b.dataset.del; if(!confirm('Datei wirklich löschen?')) return;
       await dfsFiles.removeByPath(path);
-      const map = dfsStore.get('dfs.customerFiles', {});
-      map[customerId] = (map[customerId]||[]).filter(m=>m.id!==path);
-      dfsStore.set('dfs.customerFiles', map);
+      try{ dfsCloud && dfsCloud.delete && dfsCloud.delete('dfs.customerFiles', `${customerId}:${path}`); }catch{}
       try{ dfsToast('Dokument gelöscht','success'); }catch{}
       renderDocs();
     }));
   }
 
-  function currentCustomer(){
-    const all = dfsStore.get('dfs.customers', []);
-    return all.find(c=>c.id===customerId) || { id: customerId };
-  }
-  function saveCustomer(cust){
-    let all = dfsStore.get('dfs.customers', []);
-    const i = all.findIndex(x=>x.id===cust.id);
-    if(i>=0) all[i] = { ...all[i], ...cust, updatedAt: new Date().toISOString() };
-    else all.push({ ...cust, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-    dfsStore.set('dfs.customers', all);
-  }
+  function currentCustomer(){ return { id: customerId }; }
+  async function saveCustomer(cust){ try{ await (window.dfsCloud&&dfsCloud.saveOne? dfsCloud.saveOne('dfs.customers', cust.id, cust):Promise.resolve()); }catch(e){ console.error(e); } }
 
   document.addEventListener('DOMContentLoaded', ()=>{
     const c = currentCustomer();
@@ -125,4 +111,3 @@
     renderDocs();
   });
 })();
-

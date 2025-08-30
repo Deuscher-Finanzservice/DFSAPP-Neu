@@ -25,11 +25,22 @@
     </div>
   </div>
   <footer class="print-footer no-screen" id="print-footer"></footer>
+  <script type="module" src="../../scripts/firebaseClient.js"></script>
+  <script type="module" src="../../scripts/firebase.js"></script>
   <script>
     const fmt=(n)=> (Number(n)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
-    const customers = JSON.parse(localStorage.getItem('dfs.customers')||'[]');
-    const contracts = JSON.parse(localStorage.getItem('dfs.contracts')||'[]');
-    const a = JSON.parse(localStorage.getItem('dfs.analysis')||'{}');
+    let customers = [];
+    let contracts = [];
+    let a = {};
+    (async ()=>{
+      try{
+        customers = await (window.dfsCloud&&dfsCloud.loadAll? dfsCloud.loadAll('dfs.customers') : Promise.resolve([]));
+        contracts = await (window.dfsCloud&&dfsCloud.loadAll? dfsCloud.loadAll('dfs.contracts') : Promise.resolve([]));
+        a = await (window.dfsCloud&&dfsCloud.loadOne? dfsCloud.loadOne('dfs.analysis','latest') : Promise.resolve({})) || {};
+      }catch(e){ console.error(e); }
+      render();
+    })();
+    function render(){
     // Kunde (erste Zeile als „aktuell“)
     const k = Array.isArray(customers)&&customers.length? customers[0] : null;
     document.getElementById('kunde').innerHTML = k ? `
@@ -55,15 +66,18 @@
     document.getElementById('warn').innerHTML = (a.warnings||[]).length? a.warnings.map(w=>`<div class="badge">${w}</div>`).join('') : '<span style="color:var(--muted)">Keine</span>';
     document.getElementById('recs').innerHTML = (a.recommendations||[]).length? a.recommendations.map(w=>`<div class="badge">${w}</div>`).join('') : '<span style="color:var(--muted)">Keine</span>';
     // Print header/footer
-    try{
-      const cfg = JSON.parse(localStorage.getItem('dfs.config.print')||'null');
-      const head = document.getElementById('print-header');
-      const foot = document.getElementById('print-footer');
-      if(cfg){
-        if(head){ head.innerHTML=''; (cfg.logos||[]).forEach(url=>{ const img=document.createElement('img'); img.src=url; img.style.height='28px'; img.style.marginRight='8px'; head.appendChild(img); }); const h=document.createElement('h1'); h.textContent = cfg.headerText||'DFS Versicherungsanalyse'; head.appendChild(h); }
-        if(foot){ const version = localStorage.getItem('dfs.version')||'unversioniert'; const now=new Date(); const p=n=>String(n).padStart(2,'0'); const ts=`${p(now.getDate())}.${p(now.getMonth()+1)}.${now.getFullYear()}`; foot.textContent = `${cfg.footerText||''} – Version ${version}, gedruckt am ${ts}`; }
-      }
-    }catch{}
+    (async ()=>{
+      try{
+        const cfg = await (window.dfsCloud&&dfsCloud.loadOne? dfsCloud.loadOne('dfs.config','print') : Promise.resolve(null));
+        const head = document.getElementById('print-header');
+        const foot = document.getElementById('print-footer');
+        if(cfg){
+          if(head){ head.innerHTML=''; (cfg.logos||[]).forEach(url=>{ const img=document.createElement('img'); img.src=url; img.style.height='28px'; img.style.marginRight='8px'; head.appendChild(img); }); const h=document.createElement('h1'); h.textContent = cfg.headerText||'DFS Versicherungsanalyse'; head.appendChild(h); }
+          if(foot){ const version = (window.DFS_VERSION||'unversioniert'); const now=new Date(); const p=n=>String(n).padStart(2,'0'); const ts=`${p(now.getDate())}.${p(now.getMonth()+1)}.${now.getFullYear()}`; foot.textContent = `${cfg.footerText||''} – Version ${version}, gedruckt am ${ts}`; }
+        }
+      }catch{}
+    })();
+    }
   </script>
 </body>
 </html>

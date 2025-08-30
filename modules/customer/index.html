@@ -206,8 +206,7 @@
     import { saveCustomerToCloud, deleteCustomerFromCloud } from '../../scripts/firebase.js';
     const KEY='dfs.customers';
     const $=id=>document.getElementById(id);
-    function getLocal(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch{ return []; } }
-    function setLocal(a){ localStorage.setItem(KEY, JSON.stringify(a)); }
+    // Local storage removed (cloud-only)
     function fill(c){
       if(!c) return;
       ['firma','ansprech','email','telefon','mitarbeiter','umsatz','gruendung'].forEach(k=>{ const el=$(k); if(!el) return; const v=c[k]; el.value = (v===undefined||v===null)? '' : String(v); });
@@ -220,10 +219,8 @@
     const genId = () => (crypto && typeof crypto.randomUUID==='function') ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     let id = window._qs.get('id') || null;
     if(!id){ id = genId(); }
-    let list = getLocal();
-    let current = window._qs.get('id') ? list.find(x=>x.id===id) : null;
-    if(current){ $('delete').style.display='inline-block'; }
-    fill(current);
+    let current = null;
+    (async ()=>{ try{ if(window._qs.get('id')){ current = await (window.dfsCloud&&dfsCloud.loadOne? dfsCloud.loadOne('dfs.customers', id):Promise.resolve(null)); if(current){ $('delete').style.display='inline-block'; fill(current); } } }catch{} })();
     function toNum(v){ const n = Number(v); return Number.isFinite(n) ? n : undefined; }
     function collect(){
       return {
@@ -296,23 +293,11 @@
         checkText:'Ja, ich will diesen Kunden endgültig löschen.',
         onOk: async ()=>{
           try{
-            const filesMap = dfsStore.get('dfs.customerFiles', {});
-            const files = filesMap[id] || [];
-            for(const f of files){ try{ await dfsFiles.removeByPath(f.id); }catch(_){} }
-            delete filesMap[id]; dfsStore.set('dfs.customerFiles', filesMap);
-            const next = getLocal().filter(x=>x.id!==id); setLocal(next);
+            // Delete customer files metadata + storage
+            try{ const all = await (window.dfsCloud&&dfsCloud.loadAll? dfsCloud.loadAll('dfs.customerFiles'):Promise.resolve([])); const files = (all||[]).filter(m=> String(m.customerId||'')===String(id)); for(const f of files){ try{ await dfsFiles.removeByPath(f.id); }catch{} try{ await dfsCloud.delete('dfs.customerFiles', `${id}:${f.id}`); }catch{} } }catch{}
             try{ await deleteCustomerFromCloud(id); }catch(e){ console.warn('Cloud delete failed', e); }
             if(confirm('Auch verknüpfte Verträge dieses Kunden löschen?')){
-              let contracts = dfsStore.get('dfs.contracts', []);
-              const cfilesMap = dfsStore.get('dfs.contractFiles', {});
-              const toDelete = contracts.filter(v=> String(v.customerId||'')===String(id)).map(v=>v.id);
-              for(const cid of toDelete){
-                for(const f of (cfilesMap[cid]||[])){ try{ await dfsFiles.removeByPath(f.id); }catch(_){} }
-                delete cfilesMap[cid]; try{ await dfsCloud.delete('dfs.contracts', cid); }catch{}
-              }
-              dfsStore.set('dfs.contractFiles', cfilesMap);
-              contracts = contracts.filter(v=> String(v.customerId||'')!==String(id));
-              dfsStore.set('dfs.contracts', contracts);
+              try{ const allC = await (window.dfsCloud&&dfsCloud.loadAll? dfsCloud.loadAll('dfs.contracts'):Promise.resolve([])); const toDelete = (allC||[]).filter(v=> String(v.customerId||'')===String(id)); for(const c of toDelete){ try{ await dfsCloud.delete('dfs.contracts', c.id); }catch{} try{ const cf = await (window.dfsCloud&&dfsCloud.loadAll? dfsCloud.loadAll('dfs.contractFiles'):Promise.resolve([])); for(const f of (cf||[]).filter(x=>String(x.contractId||'')===String(c.id))){ try{ await dfsFiles.removeByPath(f.id); }catch{} try{ await dfsCloud.delete('dfs.contractFiles', `${c.id}:${f.id}`); }catch{} } }catch{} } }catch{}
             }
             location.href = '../customers/index.html';
           }catch(e){ console.error(e); dfsToast('Löschen fehlgeschlagen','error'); }
@@ -410,16 +395,16 @@
     });
     document.addEventListener('DOMContentLoaded', autoBindCustomerForm);
     // Initialer Cloud→Local Sync
-    document.addEventListener('DOMContentLoaded', async ()=>{ try{ if(window.dfsStore&&dfsStore.syncFromCloud){ await dfsStore.syncFromCloud('dfs.customers'); } }catch{} });
+    // no local sync in cloud-only mode
     // Print header/footer from config
     document.addEventListener('DOMContentLoaded', ()=>{
       try{
-        const cfg = (window.dfsStore && dfsStore.get) ? dfsStore.get('dfs.config.print', null) : JSON.parse(localStorage.getItem('dfs.config.print')||'null');
+        const cfg = null; // print config loaded elsewhere if needed
         const head = document.getElementById('print-header');
         const foot = document.getElementById('print-footer');
         if(cfg){
           if(head){ head.innerHTML=''; (cfg.logos||[]).forEach(url=>{ const img=document.createElement('img'); img.src=url; img.style.height='28px'; img.style.marginRight='8px'; head.appendChild(img); }); const h=document.createElement('h1'); h.textContent = cfg.headerText||'DFS Versicherungsanalyse'; head.appendChild(h); }
-          if(foot){ const version = localStorage.getItem('dfs.version')||'unversioniert'; const now=new Date(); const p=n=>String(n).padStart(2,'0'); const ts=`${p(now.getDate())}.${p(now.getMonth()+1)}.${now.getFullYear()}`; foot.textContent = `${cfg.footerText||''} – Version ${version}, gedruckt am ${ts}`; }
+          if(foot){ const version = (window.DFS_VERSION||'unversioniert'); const now=new Date(); const p=n=>String(n).padStart(2,'0'); const ts=`${p(now.getDate())}.${p(now.getMonth()+1)}.${now.getFullYear()}`; foot.textContent = `${(cfg&&cfg.footerText)||''} – Version ${version}, gedruckt am ${ts}`; }
         }
       }catch{}
     });
