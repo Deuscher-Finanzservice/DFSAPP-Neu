@@ -37,8 +37,8 @@
 
   const origError = console.error.bind(console);
   const origInfo  = console.info.bind(console);
-  console.error = (...args)=>{ append(`[ERR] ${args.map(safe).join(' ')}`); origError(...args); };
-  console.info  = (...args)=>{ append(`[INF] ${args.map(safe).join(' ')}`); origInfo(...args); };
+  console.error = (...args)=>{ try{ if(window.dfsDebug && (window.dfs?.debug!==false)){ window.dfsDebug.log('error', ...args); } else { append(`[ERR] ${args.map(safe).join(' ')}`); } }catch{ append(`[ERR] ${args.map(safe).join(' ')}`);} origError(...args); };
+  console.info  = (...args)=>{ try{ if(window.dfsDebug && (window.dfs?.debug!==false)){ window.dfsDebug.log('info', ...args); } else { append(`[INF] ${args.map(safe).join(' ')}`); } }catch{ append(`[INF] ${args.map(safe).join(' ')}`);} origInfo(...args); };
 
   window.debugLogClear = ()=>{ buffer.length=0; if(logEl) logEl.textContent=''; };
 

@@ -5,6 +5,7 @@
   <title>Dashboard</title>
   <link rel="stylesheet" href="../../styles/base.css">
   <link rel="stylesheet" href="../../styles/print.css" media="print">
+  <link rel="stylesheet" href="../../styles/debug-console.css">
   <script src="../../scripts/format.js"></script>
   <script src="../../scripts/toast.js"></script>
   <script src="../../scripts/date.js"></script>
@@ -12,9 +13,29 @@
   <script type="module" src="../../scripts/firebase.js"></script>
   <script type="module" src="../../scripts/data-contracts.js"></script>
   <script src="../../scripts/analysis.js"></script>
+  <script src="../../scripts/debug-console.js"></script>
   <style>.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}@media(max-width:900px){.grid{grid-template-columns:1fr}}</style>
-  </head>
+</head>
 <body>
+  <div id="dfs-debug" class="dfsdbg" aria-live="polite" aria-label="Debug-Konsole" hidden>
+    <div class="dfsdbg__head">
+      <strong>Debug-Mode</strong>
+      <span class="dfsdbg__meta" id="dfs-debug-meta"></span>
+      <div class="dfsdbg__actions">
+        <button id="dfsdbg-copy"  title="Alles kopieren">Kopieren</button>
+        <button id="dfsdbg-save"  title="Als TXT speichern">Als TXT</button>
+        <button id="dfsdbg-pause" title="Logging pausieren">Pausieren</button>
+        <button id="dfsdbg-clear" title="Alle Einträge löschen">Löschen</button>
+        <button id="dfsdbg-close" title="Konsole schließen">×</button>
+      </div>
+    </div>
+    <div class="dfsdbg__body" id="dfs-debug-body"></div>
+    <div class="dfsdbg__foot">
+      <label><input type="checkbox" id="dfsdbg-f-info"  checked> Info</label>
+      <label><input type="checkbox" id="dfsdbg-f-warn"  checked> Warn</label>
+      <label><input type="checkbox" id="dfsdbg-f-error" checked> Error</label>
+    </div>
+  </div>
   <div class="card">
     <h2>Übersicht</h2>
     <div class="actions-top no-print">

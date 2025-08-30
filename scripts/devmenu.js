@@ -31,12 +31,12 @@
 
     if(toggle){
       toggle.checked = !!window.dfs.debug;
-      // show/hide debug panel on init
-      try{ const panel=document.getElementById('debug-panel'); if(panel) panel.classList.toggle('hidden', !toggle.checked); }catch{}
+      // show/hide new debug console
+      try{ if(window.dfsDebug){ toggle.checked? window.dfsDebug.show(): window.dfsDebug.hide(); } }catch{}
       toggle.addEventListener('change', ()=>{
         window.dfs.debug = !!toggle.checked;
         try{ localStorage.setItem('dfs.debug', String(window.dfs.debug)); }catch{}
-        try{ const panel=document.getElementById('debug-panel'); if(panel) panel.classList.toggle('hidden', !toggle.checked); }catch{}
+        try{ if(window.dfsDebug){ toggle.checked? window.dfsDebug.show(): window.dfsDebug.hide(); } }catch{}
         showToast('Debug: ' + (window.dfs.debug?'AN':'AUS'));
       });
     }
