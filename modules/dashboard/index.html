@@ -41,11 +41,11 @@
         const in90 = new Date(now.getTime()); in90.setDate(in90.getDate()+90);
         const list = (Array.isArray(contracts)?contracts:[]).map(c=>{
           let d = c.reminderDate || '';
-          if(!d && c.beginISO){ // fallback compute if missing
-            const b = new Date(c.beginISO+'T00:00:00'); const t=new Date(b.getTime()); t.setFullYear(t.getFullYear()+3); t.setMonth(t.getMonth()-3);
+          if(!d && (c.beginISO||c.beginn)){ // fallback compute if missing
+            const b = new Date((c.beginISO||c.beginn)+'T00:00:00'); const t=new Date(b.getTime()); t.setFullYear(t.getFullYear()+3); t.setMonth(t.getMonth()-3);
             d = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
           }
-          return {insurer:c.insurer, policyNo:(c.policyNo||c.policyNumber||''), reminderDate:d};
+          return {insurer:(c.versicherer||c.insurer), policyNo:(c.policeNr||c.policyNo||c.policyNumber||''), reminderDate:d};
         }).filter(x=>x.reminderDate).map(x=>({
           ...x, date:new Date(x.reminderDate+'T00:00:00')
         })).filter(x=> x.date>=now && x.date<=in90 ).sort((a,b)=> a.date-b.date);

@@ -31,6 +31,38 @@ function pad(n){ return String(n).padStart(2,'0'); }
 function toISODateOnly(d){ if(!(d instanceof Date)) return ''; const y=d.getFullYear(); const m=pad(d.getMonth()+1); const da=pad(d.getDate()); return `${y}-${m}-${da}`; }
 function addYears(d, y){ const dd = new Date(d.getTime()); dd.setFullYear(dd.getFullYear()+y); return dd; }
 function addMonths(d, m){ const dd = new Date(d.getTime()); dd.setMonth(dd.getMonth()+m); return dd; }
+function computeEndAndReminder(beginnISO, laufzeitNum){
+  if(!beginnISO) return {endDate:'', reminderDate:''};
+  const b = new Date(beginnISO+'T00:00:00');
+  const end = addYears(b, Number(laufzeitNum)||3);
+  const reminder = addMonths(addYears(b, 3), -3);
+  return { endDate: toISODateOnly(end), reminderDate: toISODateOnly(reminder) };
+}
+function normalizeToGerman(c){
+  if(!c || typeof c !== 'object') return null;
+  const id = c.id || (crypto && typeof crypto.randomUUID==='function' ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  const versicherer = c.versicherer ?? c.insurer ?? '';
+  const produkt = c.produkt ?? c.product ?? '';
+  const policeNr = c.policeNr ?? c.policyNo ?? c.policyNumber ?? c.policy ?? '';
+  const sparten = Array.isArray(c.sparten) ? c.sparten : (Array.isArray(c.lines)? c.lines : linesToArray(c.risks || c.lines || ''));
+  const beginn = c.beginn ?? c.beginISO ?? c.begin ?? '';
+  const zahlweise = c.zahlweise ?? c.payCycle ?? c.paymentFrequency ?? c.pay ?? 'jährlich';
+  const jahresbeitragBrutto = Number(c.jahresbeitragBrutto ?? c.premiumYear ?? c.annualPremium ?? c.annual ?? c.premium ?? 0) || 0;
+  const deckungssumme = c.deckungssumme ?? c.coverage ?? null;
+  const selbstbehalt = c.selbstbehalt ?? c.deductible ?? null;
+  const gefahren = Array.isArray(c.gefahren)? c.gefahren : (Array.isArray(c.risks)? c.risks : undefined);
+  const hinweiseVertrag = c.hinweiseVertrag ?? c.notes ?? c.hinweise ?? undefined;
+  const internVermerk = c.internVermerk ?? c.internal ?? c.vermerk ?? undefined;
+  const laufzeit = Number(c.laufzeit ?? 3) || 3;
+  let endDate = c.endDate || '';
+  let reminderDate = c.reminderDate || '';
+  if((!endDate || !reminderDate) && beginn){ const r = computeEndAndReminder(beginn, laufzeit); endDate = r.endDate; reminderDate = r.reminderDate; }
+  const createdAt = c.createdAt || new Date().toISOString();
+  const updatedAt = c.updatedAt || new Date().toISOString();
+  const out = { id, versicherer, produkt, policeNr, sparten, beginn, zahlweise, jahresbeitragBrutto, deckungssumme, selbstbehalt, gefahren, hinweiseVertrag, internVermerk, laufzeit, endDate, reminderDate, createdAt, updatedAt };
+  if(c.customerId) out.customerId = c.customerId;
+  return out;
+}
 function calcDates(){
   const beginStr = document.getElementById('begin').value;
   const laufzeit = Number(document.getElementById('laufzeit').value||'3');
@@ -47,14 +79,14 @@ function calcDates(){
 function renderTable(){
   const tbody = document.getElementById('tblBody');
   tbody.innerHTML = contracts.map((c,i)=>`<tr>
-    <td>${c.insurer}</td>
-    <td>${c.policyNo}</td>
-    <td>${c.lines.join(', ')}</td>
-    <td class="num">${fmtCurrency(c.premiumYear)}</td>
+    <td>${c.versicherer||''}</td>
+    <td>${c.policeNr||''}</td>
+    <td>${Array.isArray(c.sparten)?c.sparten.join(', '):''}</td>
+    <td class="num">${fmtCurrency(c.jahresbeitragBrutto)}</td>
     <td><button data-row="${i}" class="btnDel">Löschen</button></td>
   </tr>`).join('');
   tbody.querySelectorAll('.btnDel').forEach(btn=>btn.addEventListener('click',e=>onDelete(parseInt(btn.dataset.row))));
-  const sum = contracts.reduce((a,c)=>a+(Number(c.premiumYear)||0),0);
+  const sum = contracts.reduce((a,c)=>a+(Number(c.jahresbeitragBrutto)||0),0);
   document.getElementById('sumPremium').textContent = fmtCurrency(sum);
 }
 function onAdd(){
@@ -73,9 +105,25 @@ function onAdd(){
   const ded = normalizeNumber(document.getElementById('deductible').value);
   const deductible = isNaN(ded) ? null : ded;
   const now = new Date().toISOString();
-  const base = {insurer,policyNo,product,lines,beginISO,payCycle,premiumYear,coverage,deductible,laufzeit,endDate,reminderDate,createdAt:now,updatedAt:now};
-  if(currentCustomerId) base.customerId = currentCustomerId;
-  contracts.push(base);
+  const german = normalizeToGerman({
+    id: undefined,
+    insurer,
+    policyNo,
+    product,
+    lines,
+    beginISO,
+    payCycle,
+    premiumYear,
+    coverage,
+    deductible,
+    laufzeit,
+    endDate,
+    reminderDate,
+    createdAt: now,
+    updatedAt: now,
+    customerId: currentCustomerId || undefined
+  });
+  contracts.push(german);
   writeContracts(contracts);
   renderTable();
   ['insurer','policyNo','product','lines','begin','premiumYear','coverage','deductible','endDate','reminderDate'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
@@ -101,14 +149,16 @@ function importJSON(){
   try{
     const arr = JSON.parse(txt);
     if(Array.isArray(arr)){
-      contracts = arr;
+      contracts = arr.map(normalizeToGerman).filter(Boolean);
       writeContracts(contracts);
       renderTable();
     }
   }catch{}
 }
 function setup(){
-  contracts = readContracts();
+  // migrate to German schema if needed
+  contracts = readContracts().map(normalizeToGerman).filter(Boolean);
+  writeContracts(contracts);
   renderTable();
   document.getElementById('btnAdd').addEventListener('click', onAdd);
   document.getElementById('btnExport').addEventListener('click', exportJSON);

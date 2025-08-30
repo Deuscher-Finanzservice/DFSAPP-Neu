@@ -152,14 +152,15 @@
         var total = 0;
         rows.forEach(function(r){
           var tr = document.createElement('tr');
-          var risks = Array.isArray(r.risks) ? r.risks.join(', ') : (r.risks||'');
-          var pay = r.paymentFrequency||r.payCycle||r.pay||'';
-          var premium = Number(r.annualPremium||r.annual||r.premiumYear||r.premium||0) || 0;
+          var risksArr = Array.isArray(r.sparten)? r.sparten : (Array.isArray(r.risks)? r.risks : []);
+          var risks = Array.isArray(risksArr) ? risksArr.join(', ') : (r.risks||'');
+          var pay = r.zahlweise||r.paymentFrequency||r.payCycle||r.pay||'';
+          var premium = Number(r.jahresbeitragBrutto||r.annualPremium||r.annual||r.premiumYear||r.premium||0) || 0;
           total += premium;
 
           tr.innerHTML = [
-            `<td>${r.insurer||''}</td>`,
-            `<td>${r.policyNumber||r.policyNo||r.policy||''}</td>`,
+            `<td>${r.versicherer||r.insurer||''}</td>`,
+            `<td>${r.policeNr||r.policyNumber||r.policyNo||r.policy||''}</td>`,
             `<td>${risks}</td>`,
             `<td>${pay}</td>`,
             `<td style="text-align:right">${fmtMoney(premium)}</td>`,
