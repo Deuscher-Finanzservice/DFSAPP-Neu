@@ -81,29 +81,16 @@ window.dfsSync = window.dfsSync || {
 // ---- Cloud-first Data Loader + Safe Merge ----
 window.dfsData = window.dfsData || {
   async getAllCustomers(){
-    let local = readLocal('dfs.customers');
     const cloud = await safeLoadAll('dfs.customers');
-    if(cloud.length>0){
-      local = mergeById(local, cloud);
-      try{ localStorage.setItem('dfs.customers', JSON.stringify(local)); }catch{}
-    }
-    return (local||[]).filter(Boolean);
+    return cloud;
   },
   async getAllContracts(){
-    let local = readLocal('dfs.contracts');
     const cloud = await safeLoadAll('dfs.contracts');
-    if(cloud.length>0){
-      local = mergeById(local, cloud);
-      try{ localStorage.setItem('dfs.contracts', JSON.stringify(local)); }catch{}
-    }
-    return (local||[]).filter(Boolean);
+    return cloud;
   }
 };
 
-function readLocal(key){
-  try{ const v = localStorage.getItem(key); return v? JSON.parse(v) : []; }
-  catch{ return []; }
-}
+function readLocal(key){ try{ const v = localStorage.getItem(key); return v? JSON.parse(v) : []; } catch{ return []; } }
 async function safeLoadAll(key){
   try{ const arr = await (window.dfsCloud?.loadAll(key)); return Array.isArray(arr)? arr.filter(Boolean) : []; }
   catch{ return []; }

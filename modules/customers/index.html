@@ -24,8 +24,6 @@
     <div class="table-search">
       <input id="customer-search" type="text" placeholder="Suche Kunde/Firma…">
       <a class="btn" href="../customer/index.html">Neu</a>
-      <button class="btn outline" id="btn-save-cloud">In Cloud speichern</button>
-      <button class="btn outline" id="btn-load-cloud">Aus Cloud laden</button>
     </div>
     <div class="card">
       <table id="customers-table" class="table">
@@ -79,8 +77,6 @@
             const next = current==='asc'?'desc':'asc'; th.classList.add(next); applySort(key,next);
           });
         });
-        document.getElementById('btn-save-cloud').onclick = async ()=>{ try{ await saveCustomersToCloud(); dfsToast('In Cloud gespeichert','success'); }catch(e){ console.error(e); dfsToast('Cloud-Fehler beim Speichern','error'); } };
-        document.getElementById('btn-load-cloud').onclick = async ()=>{ try{ await dfsData.getAllCustomers(); await loadAndRender(); dfsToast('Aus Cloud geladen','success'); }catch(e){ console.error(e); dfsToast('Cloud-Fehler beim Laden','error'); } };
         loadAndRender();
       });
       window.deleteCustomer = async function(id){
