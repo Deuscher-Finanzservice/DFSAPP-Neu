@@ -33,6 +33,14 @@
     <h3>Demnächst fällig (≤ 90 Tage)</h3>
     <div id="upcoming-list" class="stack"></div>
   </section>
+  <section id="analysis-results" class="card" style="margin-top:16px;">
+    <h3>Analyse-Ergebnisse</h3>
+    <div id="analysis-kpis-dash" class="grid" style="margin-top:8px;"></div>
+    <h4>Warnungen</h4>
+    <div id="analysis-warnings-dash" class="stack"></div>
+    <h4>Empfehlungen</h4>
+    <div id="analysis-recos-dash" class="stack"></div>
+  </section>
   <div id="reminders" style="display:none"></div>
   <script>
     const fmt=(n)=> (Number(n)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});

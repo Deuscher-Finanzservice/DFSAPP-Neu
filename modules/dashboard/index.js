@@ -72,3 +72,30 @@ function renderKpis(){
 document.addEventListener('DOMContentLoaded', renderKpis);
 window.addEventListener('dfs.contracts-changed', renderKpis);
 window.addEventListener('storage', (e)=>{ if(e && e.key && ['dfs.contracts','dfs.targetSavingsPct'].includes(e.key)) renderKpis(); });
+
+// === Analyse-Ergebnisse (KPI, Warnungen, Empfehlungen) ===
+function renderAnalysisOnDashboard(){
+  try{
+    const res = (window.dfsStore && dfsStore.get) ? dfsStore.get('dfs.analysis', null) : JSON.parse(localStorage.getItem('dfs.analysis')||'null');
+    const kpiBox = document.getElementById('analysis-kpis-dash');
+    const warnBox = document.getElementById('analysis-warnings-dash');
+    const recoBox = document.getElementById('analysis-recos-dash');
+    if(!kpiBox || !warnBox || !recoBox) return;
+    if(!res){ kpiBox.innerHTML = '<p class="text-secondary">Noch keine Analyse durchgeführt.</p>'; warnBox.innerHTML=''; recoBox.innerHTML=''; return; }
+    kpiBox.innerHTML = `
+      <div class="card"><div class="label">Summe Jahresbeiträge</div><strong>${window.dfsFmt? dfsFmt.fmtEUR(res.sumAnnual||0): String(res.sumAnnual||0)}</strong></div>
+      <div class="card"><div class="label">Einsparziel</div><strong>${res.targetPct??0}%</strong></div>
+      <div class="card"><div class="label">Monatliche Ersparnis</div><strong>${window.dfsFmt? dfsFmt.fmtEUR(res.monthlySaving||0): String(res.monthlySaving||0)}</strong></div>
+      <div class="card"><div class="label">Risiko-Score</div><strong>${res.riskScore??'–'}/100</strong></div>
+    `;
+    warnBox.innerHTML = (Array.isArray(res.warnings) && res.warnings.length)
+      ? res.warnings.map(w=>`<span class="badge" style="border-color:#D97706;color:#D97706">${w}</span>`).join('')
+      : '<p class="text-secondary">Keine Warnungen</p>';
+    recoBox.innerHTML = (Array.isArray(res.recommendations) && res.recommendations.length)
+      ? res.recommendations.map(r=>`<span class="badge">${r}</span>`).join('')
+      : '<p class="text-secondary">Keine Empfehlungen</p>';
+  }catch(e){}
+}
+document.addEventListener('DOMContentLoaded', renderAnalysisOnDashboard);
+window.addEventListener('dfs.analysis-changed', renderAnalysisOnDashboard);
+window.addEventListener('storage', (e)=>{ if(e && e.key==='dfs.analysis') renderAnalysisOnDashboard(); });
