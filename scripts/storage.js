@@ -8,7 +8,10 @@ window.dfsStore = (function(){
     try{
       localStorage.setItem(key, JSON.stringify(val));
       if(Array.isArray(val)){
-        val.forEach(o=>{ try{ if(o && o.id) syncWithCloud(key,o); }catch(e){} });
+        const saveCfg = (typeof window!=='undefined' && window.dfsStore && dfsStore.get)? dfsStore.get('dfs.config.save',{cloudSync:true}) : {cloudSync:true};
+        if(saveCfg.cloudSync){
+          val.forEach(o=>{ try{ if(o && o.id) syncWithCloud(key,o); }catch(e){} });
+        }
       }
       return true;
     }

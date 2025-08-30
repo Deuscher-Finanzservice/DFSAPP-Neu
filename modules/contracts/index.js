@@ -1,6 +1,7 @@
 const LS_KEY = "dfs.contracts";
 let contracts = [];
 let sortKey = null; let sortDir = 'asc';
+let __autoSaveTimerContract = null;
 const urlParams = new URLSearchParams(location.search);
 const currentCustomerId = urlParams.get('cid') || urlParams.get('customerId') || null;
 
@@ -205,18 +206,27 @@ function collectContractFromForm(){
   const obj = normalizeToGerman({ id, insurer, policyNo, product, lines, beginISO, payCycle, premiumYear, coverage, deductible, laufzeit, endDate, reminderDate, createdAt: now, updatedAt: now, customerId: (currentCustomerId || hiddenCustomerId || undefined) });
   return obj;
 }
+function doSaveContract(){
+  const c = collectContractFromForm();
+  let arr = (window.dfsStore&&dfsStore.get)? dfsStore.get(LS_KEY,[]) : readContracts();
+  const idx = arr.findIndex(x=>x.id===c.id);
+  if(idx>=0) arr[idx] = {...arr[idx], ...c, updatedAt:new Date().toISOString()}; else arr.push({...c, createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()});
+  writeContracts(arr); contracts = arr; renderTable();
+  try{ window.dfsToast('Vertrag gespeichert','success'); }catch{}
+}
+function handleAutoSaveContract(){
+  const cfg = (window.dfsStore&&dfsStore.get)? dfsStore.get('dfs.config.save',{autoSaveMode:'immediate',autoSaveInterval:10,cloudSync:true}) : {autoSaveMode:'immediate',autoSaveInterval:10,cloudSync:true};
+  if(cfg.autoSaveMode==='manual') return;
+  if(cfg.autoSaveMode==='immediate'){
+    doSaveContract();
+  }else if(cfg.autoSaveMode==='interval'){
+    if(__autoSaveTimerContract) clearTimeout(__autoSaveTimerContract);
+    __autoSaveTimerContract = setTimeout(doSaveContract, Math.max(5, Number(cfg.autoSaveInterval||10))*1000);
+  }
+}
 function autoBindContractForm(){
   const ids=['insurer','policyNo','product','lines','begin','laufzeit','payCycle','premiumYear','coverage','deductible'];
-  ids.forEach(k=>{ const el=document.getElementById(k); if(!el) return; el.addEventListener('input', ()=>{
-    const c = collectContractFromForm();
-    let arr = (window.dfsStore&&dfsStore.get)? dfsStore.get(LS_KEY,[]) : readContracts();
-    const idx = arr.findIndex(x=>x.id===c.id);
-    if(idx>=0) arr[idx] = {...arr[idx], ...c, updatedAt:new Date().toISOString()}; else arr.push({...c, createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()});
-    writeContracts(arr);
-    contracts = arr;
-    renderTable();
-    try{ window.dfsToast('Auto-Save Vertrag','success'); }catch{}
-  }); });
+  ids.forEach(k=>{ const el=document.getElementById(k); if(!el) return; el.addEventListener('input', handleAutoSaveContract); });
 }
 function setup(){
   // migrate to German schema if needed

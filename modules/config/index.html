@@ -33,6 +33,23 @@
       <button class="btn" id="cfg-save">Speichern</button>
     </div>
   </div>
+  <div class="card" style="margin-top:12px">
+    <h3>Speichern & Sync</h3>
+    <label class="label" for="cfg-autosave">Auto-Save-Modus</label>
+    <select id="cfg-autosave" class="input">
+      <option value="immediate">Sofort (bei Eingabe)</option>
+      <option value="interval">Intervall (alle 10s)</option>
+      <option value="manual">Manuell (Speichern-Button)</option>
+    </select>
+
+    <label class="label" for="cfg-interval" style="margin-top:8px">Intervall (Sekunden)</label>
+    <input id="cfg-interval" class="input" type="number" min="5" value="10">
+
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+      <label style="display:flex;gap:8px;align-items:center;cursor:pointer">
+        <input type="checkbox" id="cfg-cloudsync"> Cloud-Sync aktivieren
+      </label>
+    </div>
+  </div>
 </body>
 </html>
-

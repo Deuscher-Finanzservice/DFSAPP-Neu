@@ -202,16 +202,28 @@
       window.__dfsCustomersRenderContractsSummary = renderContractsSummary;
     })();
     // Auto-Save (Kunde)
+    let __autoSaveTimerCustomer = null;
+    function doSaveCustomer(){
+      const c = collect();
+      let arr = (window.dfsStore&&dfsStore.get)? dfsStore.get(KEY,[]) : getLocal();
+      const idx = arr.findIndex(x=>x.id===c.id);
+      if(idx>=0) arr[idx] = {...arr[idx], ...c, updatedAt:new Date().toISOString()}; else arr.push({...c, createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()});
+      if(window.dfsStore&&dfsStore.set) dfsStore.set(KEY, arr); else setLocal(arr);
+      try{ dfsToast('Kunde gespeichert','success'); }catch{}
+    }
+    function handleAutoSaveCustomer(){
+      const cfg = (window.dfsStore&&dfsStore.get)? dfsStore.get('dfs.config.save',{autoSaveMode:'immediate',autoSaveInterval:10,cloudSync:true}) : {autoSaveMode:'immediate',autoSaveInterval:10,cloudSync:true};
+      if(cfg.autoSaveMode==='manual') return;
+      if(cfg.autoSaveMode==='immediate'){
+        doSaveCustomer();
+      }else if(cfg.autoSaveMode==='interval'){
+        if(__autoSaveTimerCustomer) clearTimeout(__autoSaveTimerCustomer);
+        __autoSaveTimerCustomer = setTimeout(doSaveCustomer, Math.max(5, Number(cfg.autoSaveInterval||10))*1000);
+      }
+    }
     function autoBindCustomerForm(){
       const ids=['firma','ansprech','email','telefon','branche','mitarbeiter','umsatz','gruendung','standort'];
-      ids.forEach(k=>{ const el=document.getElementById(k); if(!el) return; el.addEventListener('input', ()=>{
-        const c = collect();
-        let arr = (window.dfsStore&&dfsStore.get)? dfsStore.get(KEY,[]) : getLocal();
-        const idx = arr.findIndex(x=>x.id===c.id);
-        if(idx>=0) arr[idx] = {...arr[idx], ...c, updatedAt:new Date().toISOString()}; else arr.push({...c, createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()});
-        if(window.dfsStore&&dfsStore.set) dfsStore.set(KEY, arr); else setLocal(arr);
-        try{ dfsToast('Auto-Save Kunde','success'); }catch{}
-      }); });
+      ids.forEach(k=>{ const el=document.getElementById(k); if(!el) return; el.addEventListener('input', handleAutoSaveCustomer); });
     }
     document.addEventListener('DOMContentLoaded', autoBindCustomerForm);
     // Initialer Cloud→Local Sync
