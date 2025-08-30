@@ -1,5 +1,5 @@
 (function(){
-  const status = (window.dfsSaveStatus? dfsSaveStatus.bind('save-status-config') : {set:()=>{}});
+  const status = (window.dfsSaveStatus? dfsSaveStatus.bind('save-status-config','save-meta-config') : {set:()=>{}});
   async function load(){
     const cfg = (window.dfsStore && dfsStore.get) ? dfsStore.get('dfs.config.print', {
       logos: ["./assets/logo.png"],
@@ -22,7 +22,7 @@
   }
 
   function save(){
-    status.set('saving');
+    status.set('saving',{withSpinnerOn:'#cfg-save'});
     const logos = document.getElementById('cfg-logos').value.split(',').map(s=>s.trim()).filter(Boolean);
     const headerText = document.getElementById('cfg-header').value.trim();
     const footerText = document.getElementById('cfg-footer').value.trim();
@@ -36,7 +36,7 @@
       cloudSync: !!(document.getElementById('cfg-cloudsync')?.checked)
     };
     saveCfg.autoSaveInterval = Math.min(120, Math.max(2, Number(saveCfg.autoSaveInterval||10)));
-    (async ()=>{ try{ await dfsCloud.save('dfs.config', { id:'default', ...saveCfg }); status.set('saved'); dfsToast&&dfsToast('Konfiguration gespeichert','success'); }catch(e){ console.error(e); status.set('error'); dfsToast&&dfsToast('Cloud-Speichern fehlgeschlagen','error'); } })();
+    (async ()=>{ try{ await dfsCloud.save('dfs.config', { id:'default', ...saveCfg }); status.set('saved',{withSpinnerOn:'#cfg-save'}); dfsToast&&dfsToast('Konfiguration gespeichert','success'); }catch(e){ console.error(e); status.set('error',{withSpinnerOn:'#cfg-save'}); dfsToast&&dfsToast('Cloud-Speichern fehlgeschlagen','error'); } })();
 
     try{ dfsToast('Konfiguration gespeichert.','success'); }catch{}
   }

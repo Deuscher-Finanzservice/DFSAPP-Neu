@@ -29,6 +29,7 @@
       <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
         <button id="btn-save-contract" class="btn">Speichern</button>
         <span id="save-status-contract" class="pill text-secondary">Ungespeichert</span>
+        <span id="save-meta-contract" class="save-meta">—</span>
       </div>
     </div>
     <header class="print-header no-screen" id="print-header"></header>
@@ -152,9 +153,9 @@
   <script>
     (function(){
       let cfg={autoSaveMode:'immediate',autoSaveInterval:10}; let dirty=false; let deb=null; let timer=null;
-      const status = (window.dfsSaveStatus? dfsSaveStatus.bind('save-status-contract') : {set:()=>{}});
+      const status = (window.dfsSaveStatus? dfsSaveStatus.bind('save-status-contract','save-meta-contract') : {set:()=>{}});
       async function loadCfg(){ try{ const c=await dfsCloud.loadOne('dfs.config','default'); if(c){ cfg.autoSaveMode=c.autoSaveMode||'immediate'; cfg.autoSaveInterval=Math.min(120,Math.max(2,Number(c.autoSaveInterval||10))); } }catch{} }
-      async function saveNow(){ try{ status.set('saving'); const c= (window.collectContractFromForm? collectContractFromForm():null); if(!c){ status.set('error'); return; } await dfsData.saveContract(c); dirty=false; status.set('saved'); dfsToast&&dfsToast('Vertrag gespeichert (Cloud)','success'); }catch(e){ console.error(e); status.set('error'); dfsToast&&dfsToast('Cloud-Speichern fehlgeschlagen','error'); } }
+      async function saveNow(){ try{ status.set('saving',{withSpinnerOn:'#btn-save-contract'}); const c= (window.collectContractFromForm? collectContractFromForm():null); if(!c){ status.set('error',{withSpinnerOn:'#btn-save-contract'}); return; } await dfsData.saveContract(c); dirty=false; status.set('saved',{withSpinnerOn:'#btn-save-contract'}); dfsToast&&dfsToast('Vertrag gespeichert (Cloud)','success'); }catch(e){ console.error(e); status.set('error',{withSpinnerOn:'#btn-save-contract'}); dfsToast&&dfsToast('Cloud-Speichern fehlgeschlagen','error'); } }
       function markDirty(){ dirty=true; status.set('dirty'); if(cfg.autoSaveMode==='immediate'){ if(deb) clearTimeout(deb); deb=setTimeout(saveNow,600); } }
       function setupInterval(){ if(timer) clearInterval(timer); if(cfg.autoSaveMode==='interval'){ timer=setInterval(()=>{ if(dirty) saveNow(); }, Math.max(2,cfg.autoSaveInterval)*1000); } }
       document.addEventListener('DOMContentLoaded', async ()=>{
