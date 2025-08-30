@@ -22,6 +22,7 @@ function normalizeNumber(str){
   return isNaN(n) ? NaN : n;
 }
 function fmtCurrency(n){
+  if(window.dfsFmt && window.dfsFmt.fmtEUR) return window.dfsFmt.fmtEUR(n);
   return (Number(n)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
 }
 function linesToArray(s){
@@ -91,18 +92,21 @@ function renderTable(){
 }
 function onAdd(){
   const insurer = document.getElementById('insurer').value.trim();
-  if(!insurer) return;
   const policyNo = document.getElementById('policyNo').value.trim();
+  const beginISO = document.getElementById('begin').value || "";
+  let premIn = document.getElementById('premiumYear').value;
+  let premiumYear = (window.dfsFmt? window.dfsFmt.parseDE(premIn) : normalizeNumber(premIn));
+  if(!insurer){ try{ window.dfsToast('Bitte Versicherer angeben.','error'); }catch{} return; }
+  if(!policyNo){ try{ window.dfsToast('Bitte Policen-Nummer angeben.','error'); }catch{} return; }
+  if(!beginISO){ try{ window.dfsToast('Bitte Beginn-Datum setzen.','error'); }catch{} return; }
+  if(!(premiumYear>0)){ try{ window.dfsToast('Jahresbeitrag (brutto) muss > 0 sein.','error'); }catch{} return; }
   const product = document.getElementById('product').value.trim();
   const lines = linesToArray(document.getElementById('lines').value);
-  const beginISO = document.getElementById('begin').value || "";
   const { laufzeit, endDate, reminderDate } = calcDates();
   const payCycle = document.getElementById('payCycle').value;
-  let premiumYear = normalizeNumber(document.getElementById('premiumYear').value);
-  if(isNaN(premiumYear) || premiumYear < 0) premiumYear = 0;
-  const cov = normalizeNumber(document.getElementById('coverage').value);
+  const cov = (window.dfsFmt? window.dfsFmt.parseDE(document.getElementById('coverage').value) : normalizeNumber(document.getElementById('coverage').value));
   const coverage = isNaN(cov) ? null : cov;
-  const ded = normalizeNumber(document.getElementById('deductible').value);
+  const ded = (window.dfsFmt? window.dfsFmt.parseDE(document.getElementById('deductible').value) : normalizeNumber(document.getElementById('deductible').value));
   const deductible = isNaN(ded) ? null : ded;
   const now = new Date().toISOString();
   const hiddenCustomerId = (document.getElementById('c-customerId')?.value || '').trim();
@@ -130,6 +134,7 @@ function onAdd(){
   ['insurer','policyNo','product','lines','begin','premiumYear','coverage','deductible','endDate','reminderDate'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
   document.getElementById('payCycle').value='jährlich';
   document.getElementById('laufzeit').value='3';
+  try{ window.dfsToast('Vertrag gespeichert.','success'); }catch{}
 }
 function onDelete(idx){
   contracts.splice(idx,1);
@@ -168,6 +173,9 @@ function setup(){
   // Recalculate dates on change
   document.getElementById('begin').addEventListener('change', calcDates);
   document.getElementById('laufzeit').addEventListener('change', calcDates);
+  const premEl = document.getElementById('premiumYear');
+  const premHint = document.getElementById('c-jahresbeitragBrutto-hint');
+  if(premEl && premHint){ premEl.addEventListener('input', ()=>{ const val = window.dfsFmt? window.dfsFmt.parseDE(premEl.value) : normalizeNumber(premEl.value); premHint.textContent = (window.dfsFmt? window.dfsFmt.fmtEUR(val) : fmtCurrency(val)); }); }
   // Initialize calculated fields if begin preset
   calcDates();
   // Prefill hidden customerId if present

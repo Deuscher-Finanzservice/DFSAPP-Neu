@@ -54,3 +54,21 @@ document.addEventListener('DOMContentLoaded', renderUpcoming);
 window.addEventListener('dfs.contracts-changed', renderUpcoming);
 window.addEventListener('storage', (e)=>{ if(e && e.key==='dfs.contracts') renderUpcoming(); });
 
+// === KPI Summe (EUR) ===
+function calcAnnualSum(){
+  const list = (window.dfsStore?.get('dfs.contracts', []) || JSON.parse(localStorage.getItem('dfs.contracts')||'[]') || []).filter(Boolean);
+  const sum = list.reduce((acc, c) => acc + (window.dfsFmt?.parseDE(c.jahresbeitragBrutto) || Number(c.jahresbeitragBrutto)||0), 0);
+  return sum;
+}
+function renderKpis(){
+  try{
+    const sum = calcAnnualSum();
+    const el = document.getElementById('kpi-sum-annual'); if(el) el.textContent = window.dfsFmt? window.dfsFmt.fmtEUR(sum) : String(sum);
+    const pct = Number(window.localStorage.getItem('dfs.targetSavingsPct') || 0);
+    const monthlySaving = (sum - (sum * (1 - pct/100))) / 12;
+    const msEl = document.getElementById('kpi-monthly-saving'); if(msEl) msEl.textContent = window.dfsFmt? window.dfsFmt.fmtEUR(monthlySaving) : String(monthlySaving);
+  }catch(e){}
+}
+document.addEventListener('DOMContentLoaded', renderKpis);
+window.addEventListener('dfs.contracts-changed', renderKpis);
+window.addEventListener('storage', (e)=>{ if(e && e.key && ['dfs.contracts','dfs.targetSavingsPct'].includes(e.key)) renderKpis(); });

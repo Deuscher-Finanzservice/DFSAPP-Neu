@@ -20,3 +20,13 @@ iframe#content{border:0;width:100%;height:calc(100% - 58px)}
 .toast{position:fixed;right:16px;bottom:16px;background:#0f172a;border:1px solid var(--card-bd);border-radius:12px;padding:10px 14px;opacity:0;transform:translateY(8px);transition:.2s}
 .toast.show{opacity:1;transform:translateY(0)}
 @media print{body{background:#fff;color:#000}.sidebar,.topbar{display:none}iframe#content{height:auto}}
+
+/* Fokuszustände sichtbar (WCAG AA) */
+:focus { outline: 2px solid #896c20 !important; outline-offset: 2px !important; }
+
+/* Toasts */
+#dfs-toast-root { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 9999; }
+.dfs-toast { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 10px 12px; border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.25); transform: translateY(0); opacity: 1; transition: all .35s ease; }
+.dfs-toast.out { transform: translateY(10px); opacity: 0; }
+.dfs-toast--success { border-color: rgba(137,108,32,0.6); }
+.dfs-toast--error { border-color: var(--warn); }

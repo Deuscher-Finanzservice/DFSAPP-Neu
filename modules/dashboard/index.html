@@ -5,6 +5,8 @@
   <title>Dashboard</title>
   <link rel="stylesheet" href="../../styles/base.css">
   <link rel="stylesheet" href="../../styles/print.css" media="print">
+  <script src="../../scripts/format.js"></script>
+  <script src="../../scripts/toast.js"></script>
   <style>.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}@media(max-width:900px){.grid{grid-template-columns:1fr}}</style>
   </head>
 <body>
@@ -17,6 +19,12 @@
       <div class="card"><div class="label">Kunden</div><div id="nCustomers" style="font-size:28px;font-weight:700">0</div><div style="margin-top:8px"><a class="btn outline" href="../customers/index.html" target="_parent">Zur Kundenliste</a></div></div>
       <div class="card"><div class="label">Verträge</div><div id="nContracts" style="font-size:28px;font-weight:700">0</div><div style="margin-top:8px"><a class="btn outline" href="../contracts/index.html" target="_parent">Zu Verträgen</a></div></div>
       <div class="card"><div class="label">Analyse</div><div>Jahressumme: <strong id="sumAnnual">–</strong></div><div>Monatliche Ersparnis (Soll): <strong id="saving">–</strong></div><div>Risiko-Score: <strong id="risk">–</strong></div><div style="margin-top:8px"><a class="btn outline" href="../analysis/index.html" target="_parent">Zur Analyse</a></div></div>
+      <div class="card">
+        <div class="label">Jahressumme</div>
+        <strong id="kpi-sum-annual">0,00 €</strong>
+        <div class="label" style="margin-top:8px">Monatliche Ersparnis (Ziel)</div>
+        <strong id="kpi-monthly-saving">0,00 €</strong>
+      </div>
     </div>
   </div>
   <section id="upcoming-reminders" class="card" style="margin-top:16px;">

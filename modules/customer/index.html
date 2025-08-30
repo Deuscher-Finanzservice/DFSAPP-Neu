@@ -5,6 +5,8 @@
   <title>Kunde bearbeiten</title>
   <link rel="stylesheet" href="../../styles/base.css">
   <link rel="stylesheet" href="../../styles/print.css" media="print">
+  <script src="../../scripts/format.js"></script>
+  <script src="../../scripts/toast.js"></script>
   <style>
     .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
     @media (max-width:720px){.grid{grid-template-columns:1fr}}
@@ -100,7 +102,15 @@
         createdAt: current?.createdAt || new Date().toISOString()
       };
     }
+    function validateCustomerEmailOptional(){
+      const el = document.getElementById('email');
+      if(!el) return true; const v=(el.value||'').trim(); if(v==='') return true;
+      const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+      if(!ok){ try{ dfsToast('E-Mail-Format prüfen (optional, aber wenn gefüllt, dann gültig).','error'); }catch{} }
+      return ok;
+    }
     document.getElementById('save').onclick = async ()=>{
+      if(!validateCustomerEmailOptional()) return;
       const c = collect();
       const arr = getLocal();
       const idx = arr.findIndex(x=>x.id===c.id);
@@ -109,7 +119,7 @@
       try{ await saveCustomerToCloud(c); }catch(e){ console.warn('Cloud save failed', e); }
       if(!window._qs.get('id')){ history.replaceState({},'',`?id=${encodeURIComponent(id)}`); $('delete').style.display='inline-block'; }
       if(window.__dfsCustomersRenderContractsSummary) window.__dfsCustomersRenderContractsSummary();
-      alert('Gespeichert');
+      try{ dfsToast('Kunde gespeichert.','success'); }catch{}
     };
     document.getElementById('delete').onclick = async ()=>{
       if(!id) return;
