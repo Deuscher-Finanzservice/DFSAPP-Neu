@@ -8,6 +8,7 @@
   <script src="../../scripts/toast.js"></script>
   <script src="../../scripts/date.js"></script>
   <script src="../../scripts/storage.js"></script>
+  <script src="../../scripts/ui.js"></script>
   <script src="../../scripts/io.js"></script>
 </head>
 <body>
@@ -33,6 +34,7 @@
             <th class="sortable" data-key="firma">Firma</th>
             <th class="sortable" data-key="ansprech">Ansprechpartner</th>
             <th class="sortable" data-key="telefon">Telefon</th>
+            <th>Aktion</th>
           </tr>
         </thead>
         <tbody id="customers-body"></tbody>
@@ -45,12 +47,13 @@
       let allCustomers = [];
       function renderCustomers(list){
         const body = document.getElementById('customers-body'); if(!body) return;
-        if(!list || list.length===0){ body.innerHTML = '<tr><td colspan="3" class="text-secondary">Keine Kunden gefunden.</td></tr>'; return; }
+        if(!list || list.length===0){ body.innerHTML = '<tr><td colspan="4" class="text-secondary">Keine Kunden gefunden.</td></tr>'; return; }
         body.innerHTML = list.map(c=>`
-          <tr onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">
-            <td>${c.firma||'—'}</td>
-            <td>${c.ansprech||'—'}</td>
-            <td>${c.telefon||'—'}</td>
+          <tr>
+            <td onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">${c.firma||'—'}</td>
+            <td onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">${c.ansprech||'—'}</td>
+            <td onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">${c.telefon||'—'}</td>
+            <td><button class="btn-ghost" onclick="deleteCustomer('${c.id}')">Löschen</button></td>
           </tr>`).join('');
       }
       function applySearch(){
@@ -80,6 +83,38 @@
         document.getElementById('btn-load-cloud').onclick = async ()=>{ try{ await dfsData.getAllCustomers(); await loadAndRender(); dfsToast('Aus Cloud geladen','success'); }catch(e){ console.error(e); dfsToast('Cloud-Fehler beim Laden','error'); } };
         loadAndRender();
       });
+      window.deleteCustomer = async function(id){
+        dfsUI.show({
+          title:'Kunden löschen',
+          text:'Der Kunde und seine Dokumente werden entfernt. Optional können verknüpfte Verträge ebenfalls gelöscht werden.',
+          checkText:'Ja, ich will diesen Kunden endgültig löschen.',
+          onOk: async ()=>{
+            try{
+              const filesMap = dfsStore.get('dfs.customerFiles', {});
+              const files = filesMap[id] || [];
+              for(const f of files){ try{ await dfsFiles.removeByPath(f.id); }catch(_){} }
+              delete filesMap[id]; dfsStore.set('dfs.customerFiles', filesMap);
+              let all = dfsStore.get('dfs.customers', []); all = all.filter(c=>c.id!==id); dfsStore.set('dfs.customers', all);
+              try{ await dfsCloud.delete('dfs.customers', id); }catch{}
+              if(confirm('Auch verknüpfte Verträge dieses Kunden löschen?')){
+                let contracts = await (window.dfsData&&dfsData.getAllContracts? dfsData.getAllContracts():Promise.resolve(dfsStore.get('dfs.contracts',[])));
+                const toDelete = contracts.filter(v=> String(v.customerId||'')===String(id)).map(v=>v.id);
+                const cfilesMap = dfsStore.get('dfs.contractFiles', {});
+                for(const cid of toDelete){
+                  for(const f of (cfilesMap[cid]||[])){ try{ await dfsFiles.removeByPath(f.id); }catch(_){} }
+                  delete cfilesMap[cid];
+                  try{ await dfsCloud.delete('dfs.contracts', cid); }catch{}
+                }
+                dfsStore.set('dfs.contractFiles', cfilesMap);
+                contracts = contracts.filter(v=> String(v.customerId||'')!==String(id));
+                dfsStore.set('dfs.contracts', contracts);
+              }
+              dfsToast('Kunde gelöscht','success');
+              location.reload();
+            }catch(e){ console.error(e); dfsToast('Löschen fehlgeschlagen','error'); }
+          }
+        });
+      }
     })();
   </script>
 </body>

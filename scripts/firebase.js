@@ -52,6 +52,12 @@ if(typeof window !== 'undefined'){
     },
     async removeByPath(path){ try{ if(!storage) return false; await deleteObject(storageRef(storage, path)); return true; }catch(e){ console.warn('delete failed', e); return false; } }
   };
+  // Generic delete helper
+  window.dfsCloud = window.dfsCloud || {};
+  window.dfsCloud.delete = window.dfsCloud.delete || (async function(key,id){
+    try{ const db=getDB(); await deleteDoc(doc(collection(db,key), id)); return true; }
+    catch(e){ console.warn('cloud delete error', e); return false; }
+  });
   try{
     window.addEventListener('online', ()=>{ try{ window.dfsSync && window.dfsSync.processQueue(); }catch{} });
     document.addEventListener('DOMContentLoaded', ()=>{ try{ window.dfsSync && window.dfsSync.processQueue(); }catch{} });

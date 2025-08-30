@@ -160,9 +160,25 @@ function onAdd(){
   try{ window.dfsToast('Vertrag gespeichert.','success'); }catch{}
 }
 function onDelete(idx){
-  contracts.splice(idx,1);
-  writeContracts(contracts);
-  renderTable();
+  const item = contracts[idx]; if(!item || !item.id){ return; }
+  dfsUI.show({
+    title:'Vertrag löschen',
+    text:'Der Vertrag und seine Policen-Dokumente werden entfernt. Dieser Vorgang ist endgültig.',
+    checkText:'Ja, ich will diesen Vertrag endgültig löschen.',
+    onOk: async ()=>{
+      try{
+        const map = dfsStore.get('dfs.contractFiles', {});
+        const files = map[item.id] || [];
+        for(const f of files){ try{ await dfsFiles.removeByPath(f.id); }catch(_){} }
+        delete map[item.id]; dfsStore.set('dfs.contractFiles', map);
+        contracts.splice(idx,1);
+        writeContracts(contracts);
+        try{ await dfsCloud.delete('dfs.contracts', item.id); }catch{}
+        renderTable();
+        try{ window.dfsToast('Vertrag gelöscht','success'); }catch{}
+      }catch(e){ console.error(e); try{ window.dfsToast('Löschen fehlgeschlagen','error'); }catch{} }
+    }
+  });
 }
 function exportJSON(){
   const blob = new Blob([JSON.stringify(contracts,null,2)],{type:'application/json'});
