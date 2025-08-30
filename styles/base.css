@@ -10,6 +10,8 @@ a{color:var(--muted);text-decoration:none}a:hover{color:#fff}
 .label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
 .badge{display:inline-block;padding:2px 8px;border-radius:999px;background:var(--card-bg);border:1px solid var(--card-bd);margin:0 6px 6px 0}
 table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.12);text-align:left}
+/* Screen: dezente Grenzen auf dunklem Grund (DFS-CI) */
+.table th,.table td{border:1px solid rgba(255,255,255,0.12)}
 .shell{display:flex;height:100%}.sidebar{width:260px;padding:16px;background:rgba(0,0,0,.2);border-right:1px solid var(--card-bd)}
 .sidebar .logo{display:flex;gap:10px;align-items:center;margin-bottom:10px}.nav a{display:block;padding:10px 12px;border-radius:12px}
 .nav a.active,.nav a:hover{background:rgba(255,255,255,.08);color:#fff}

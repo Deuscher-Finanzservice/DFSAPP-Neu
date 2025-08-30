@@ -4,11 +4,15 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dashboard</title>
   <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/print.css" media="print">
   <style>.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}@media(max-width:900px){.grid{grid-template-columns:1fr}}</style>
   </head>
 <body>
   <div class="card">
     <h2>Übersicht</h2>
+    <div class="actions no-print" style="display:flex; gap:8px; justify-content:flex-end;">
+      <button class="btn btn-primary" onclick="window.print()">Als PDF speichern</button>
+    </div>
     <div class="grid">
       <div class="card"><div class="label">Kunden</div><div id="nCustomers" style="font-size:28px;font-weight:700">0</div><div style="margin-top:8px"><a class="btn outline" href="../customers/index.html" target="_parent">Zur Kundenliste</a></div></div>
       <div class="card"><div class="label">Verträge</div><div id="nContracts" style="font-size:28px;font-weight:700">0</div><div style="margin-top:8px"><a class="btn outline" href="../contracts/index.html" target="_parent">Zu Verträgen</a></div></div>

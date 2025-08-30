@@ -1,0 +1,61 @@
+/* styles/print.css */
+/* Basis: helle Druckansicht, klare Ränder, gute Lesbarkeit */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  /* Hintergrund & Textfarben für Druck umkehren/vereinfachen */
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* Dunkle Karten aufhellen + klare Rahmen */
+  .card {
+    background: #ffffff !important;
+    border: 1px solid #bfbfbf !important;
+    box-shadow: none !important;
+  }
+
+  /* Tabellen lesbar machen */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  th, td {
+    border: 1px solid #bfbfbf !important;
+    padding: 6px 8px !important;
+    vertical-align: top !important;
+  }
+  thead th {
+    background: #f3f3f3 !important;
+    font-weight: 600 !important;
+  }
+
+  /* Chips/Badges unaufdringlich */
+  .chip {
+    border: 1px solid #bfbfbf !important;
+    background: #f6f6f6 !important;
+    color: #000 !important;
+  }
+
+  /* Navigation, Buttons, interner Kram nicht drucken */
+  .sidebar, .nav, .btn, .actions, .no-print, .print-hidden {
+    display: none !important;
+  }
+
+  /* Interner Vermerk niemals drucken */
+  .intern-only {
+    display: none !important;
+  }
+
+  /* Vermeidet Seitenumbrüche mitten in Karten/Tabellenköpfen */
+  .card, section, table {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
+

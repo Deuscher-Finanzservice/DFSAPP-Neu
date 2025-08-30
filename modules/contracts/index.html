@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Verträge</title>
   <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/print.css" media="print">
   <style>
     .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
     @media(max-width:900px){.grid{grid-template-columns:1fr}}
@@ -15,6 +16,9 @@
 <body>
   <div class="card">
     <h2>Verträge</h2>
+    <div class="actions no-print" style="display:flex; gap:8px; justify-content:flex-end;">
+      <button class="btn btn-primary" onclick="window.print()">Als PDF speichern</button>
+    </div>
     <div class="grid">
       <div>
         <label class="label" for="insurer">Versicherer</label>
@@ -74,6 +78,10 @@
       </div>
     </div>
     <input id="c-customerId" name="customerId" type="hidden">
+    <div class="card intern-only" style="margin-top:12px">
+      <h4>Interner Vermerk (nur intern)</h4>
+      <div id="c-internVermerk-view"></div>
+    </div>
 
     <div class="toolbar">
       <button class="btn" id="btnAdd">Vertrag hinzufügen</button>

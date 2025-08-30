@@ -4,6 +4,7 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Kunde bearbeiten</title>
   <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/print.css" media="print">
   <style>
     .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
     @media (max-width:720px){.grid{grid-template-columns:1fr}}
@@ -16,6 +17,9 @@
 <body>
   <div class="card">
     <h2>Kundenstammdaten</h2>
+    <div class="actions no-print" style="display:flex; gap:8px; justify-content:flex-end; margin-bottom:8px;">
+      <button class="btn btn-primary" onclick="window.print()">Als PDF speichern</button>
+    </div>
     <div class="grid">
       <div><label class="label">Firma</label><input class="input" id="firma"></div>
       <div><label class="label">Ansprechpartner</label><input class="input" id="ansprech"></div>
@@ -59,6 +63,10 @@
           </tfoot>
         </table>
       </div>
+    </div>
+    <div class="card intern-only" style="margin-top:16px">
+      <h3>Interner Vermerk (nur intern)</h3>
+      <div id="customer-intern-vermerk"></div>
     </div>
   </div>
   <script type="module">
