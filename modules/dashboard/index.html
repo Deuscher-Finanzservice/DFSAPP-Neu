@@ -10,6 +10,7 @@
   <script src="../../scripts/date.js"></script>
   <script src="../../scripts/storage.js"></script>
   <script type="module" src="../../scripts/firebase.js"></script>
+  <script src="../../scripts/analysis.js"></script>
   <style>.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}@media(max-width:900px){.grid{grid-template-columns:1fr}}</style>
   </head>
 <body>
@@ -59,7 +60,7 @@
   </section>
   <footer class="print-footer no-screen" id="print-footer"></footer>
   <section id="analysis-results" class="card" style="margin-top:16px;">
-    <h3>Analyse-Ergebnisse</h3>
+    <h3>Analyse-Ergebnisse <button class="btn-ghost no-print" id="btn-recalc-global" style="margin-left:8px">Analyse neu berechnen</button></h3>
     <div id="analysis-kpis-dash" class="grid" style="margin-top:8px;"></div>
     <h4>Warnungen</h4>
     <div id="analysis-warnings-dash" class="stack"></div>

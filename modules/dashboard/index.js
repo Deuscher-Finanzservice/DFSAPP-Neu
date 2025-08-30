@@ -144,6 +144,17 @@ async function renderAnalysisOnDashboard(){
 document.addEventListener('DOMContentLoaded', renderAnalysisOnDashboard);
 window.addEventListener('dfs.analysis-changed', renderAnalysisOnDashboard);
 window.addEventListener('storage', (e)=>{ if(e && e.key==='dfs.analysis') renderAnalysisOnDashboard(); });
+// Recalc global analysis
+document.addEventListener('DOMContentLoaded', ()=>{
+  const b=document.getElementById('btn-recalc-global');
+  if(b && window.dfsAnalysis){
+    b.addEventListener('click', async ()=>{
+      try{ b.disabled=true; await dfsAnalysis.analyzeGlobal(); await renderAnalysisOnDashboard(); dfsToast&&dfsToast('Analyse aktualisiert','success'); }
+      catch(e){ console.error(e); dfsToast&&dfsToast('Analyse-Fehler','error'); }
+      finally{ b.disabled=false; }
+    });
+  }
+});
 
 // === Cloud-first counts and KPIs ===
 async function renderCounts(){

@@ -26,7 +26,7 @@
       </div>
       <div class="actions no-print" style="display:flex;gap:8px;align-items:center">
         <a class="btn" id="btn-new-contract" href="#">Vertrag anlegen</a>
-        <a class="btn-ghost" id="btn-recalc" href="../analysis/index.html" target="_parent">Analyse jetzt berechnen</a>
+        <button class="btn-ghost" id="btn-recalc">Analyse jetzt berechnen</button>
         <button class="btn outline" onclick="window.print()">Als PDF speichern</button>
       </div>
     </div>
@@ -93,16 +93,7 @@
     async function ensureAnalysis(contracts){
       let res = await loadAnalysis();
       if(res) return res;
-      // compute quick analysis for this customer
-      const warnings=[]; const recos=[];
-      (contracts||[]).forEach(c=>{ const sp=c.sparten||[]; const gf=c.gefahren||[]; if(sp.includes('Betriebshaftpflicht') && (Number(c.deckungssumme)||0)<5000000) warnings.push(`BHV-Deckung unter 5 Mio. (Police ${c.policeNr||'—'})`); if(sp.includes('Inhalt')&&gf.length<3) warnings.push(`Inhalt <3 Gefahren (Police ${c.policeNr||'—'})`); if(sp.includes('Gebäude')&&gf.length<3) warnings.push(`Gebäude <3 Gefahren (Police ${c.policeNr||'—'})`); if(sp.includes('Cyber')&&gf.length===0) warnings.push(`Cyber ohne Bausteine (Police ${c.policeNr||'—'})`); });
-      const allS=contracts.flatMap(c=>c.sparten||[]); if(!allS.includes('Cyber')) recos.push('Cyber ergänzen'); if(!allS.includes('Ertragsausfall/BU')) recos.push('Betriebsunterbrechung absichern'); if(!allS.includes('Rechtsschutz')) recos.push('Rechtsschutz prüfen');
-      const sumAnnual = contracts.reduce((a,c)=> a + parseDE(c.jahresbeitragBrutto),0);
-      const targetPct = Number(localStorage.getItem('dfs.targetSavingsPct')||10);
-      const monthlySaving = (sumAnnual - (sumAnnual*(1 - targetPct/100))) / 12;
-      const riskScore = Math.max(5, 95 - 10*warnings.length);
-      res = { warnings, recommendations: recos, sumAnnual, targetPct, monthlySaving, riskScore, ts:new Date().toISOString() };
-      await saveAnalysisCustomer(res);
+      if(window.dfsAnalysis && dfsAnalysis.analyzeCustomer){ res = await dfsAnalysis.analyzeCustomer(customerId); }
       return res;
     }
 
@@ -160,8 +151,7 @@
       renderDocs();
     }
 
-    document.addEventListener('DOMContentLoaded', render);
+    document.addEventListener('DOMContentLoaded', ()=>{ render(); const b=document.getElementById('btn-recalc'); if(b && window.dfsAnalysis){ b.addEventListener('click', async ()=>{ try{ b.disabled=true; await dfsAnalysis.analyzeCustomer(customerId); await render(); dfsToast&&dfsToast('Analyse aktualisiert','success'); }catch(e){ console.error(e); dfsToast&&dfsToast('Analyse-Fehler','error'); } finally{ b.disabled=false; } }); } });
   </script>
 </body>
 </html>
-
