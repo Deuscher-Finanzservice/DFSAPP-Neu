@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kunden-Dashboard</title>
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/print.css" media="print">
+  <script src="../../scripts/storage.js"></script>
+  <script src="../../scripts/format.js"></script>
+  <script src="../../scripts/date.js"></script>
+  <script src="../../scripts/toast.js"></script>
+  <script type="module" src="../../scripts/firebase.js"></script>
+  <style>
+    .grid2{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+    @media(max-width:1024px){.grid2{grid-template-columns:1fr}}
+    .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    @media(max-width:1024px){.kpi{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <div>
+        <h2 style="margin:0">Kunden-Dashboard</h2>
+        <div id="cust-title" class="label">–</div>
+      </div>
+      <div class="actions no-print" style="display:flex;gap:8px;align-items:center">
+        <a class="btn" id="btn-new-contract" href="#">Vertrag anlegen</a>
+        <a class="btn-ghost" id="btn-recalc" href="../analysis/index.html" target="_parent">Analyse jetzt berechnen</a>
+        <button class="btn outline" onclick="window.print()">Als PDF speichern</button>
+      </div>
+    </div>
+
+    <header class="print-header no-screen" id="print-header"></header>
+
+    <div class="kpi" style="margin-top:12px">
+      <div class="card"><div class="label">Jahresbeiträge gesamt</div><div id="kpi-sum-annual" style="font-size:22px;font-weight:700">–</div></div>
+      <div class="card"><div class="label">Einsparziel / Monat</div><div id="kpi-monthly-saving" style="font-size:22px;font-weight:700">–</div></div>
+      <div class="card"><div class="label">Risiko-Score</div><div id="kpi-risk" style="font-size:22px;font-weight:700">–</div></div>
+      <div class="card"><div class="label">Fällig ≤ 90 Tage</div><div id="kpi-reminders-count" style="font-size:22px;font-weight:700">0</div></div>
+    </div>
+
+    <div class="grid2" style="margin-top:12px">
+      <div>
+        <div class="card">
+          <h3 style="margin-top:0">Verträge</h3>
+          <table class="table" id="tbl-contracts"><thead><tr><th>Versicherer</th><th>Produkt</th><th>Police</th><th>Beitrag</th><th>Beginn</th><th>Reminder</th></tr></thead><tbody></tbody></table>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <h3 style="margin-top:0">Demnächst fällig (≤ 90 Tage)</h3>
+          <div id="cust-upcoming-list"></div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h3 style="margin-top:0">Warnungen</h3>
+          <div id="cust-warn"></div>
+          <h3 style="margin-top:12px">Empfehlungen</h3>
+          <div id="cust-reco"></div>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <h3 style="margin-top:0">Einsparung (Delta)</h3>
+          <div id="cust-saving-delta" class="label">–</div>
+          <table class="table" id="tbl-delta"><thead><tr><th>Police</th><th>Alt €</th><th>Empf. €</th><th>Δ €</th></tr></thead><tbody></tbody></table>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <h3 style="margin-top:0">Dokumente</h3>
+          <div class="docs-list" id="cust-docs"></div>
+          <div style="margin-top:8px">
+            <label class="btn btn-secondary">Datei hochladen
+              <input id="cust-file-input" type="file" accept=".pdf,.png,.jpg,.jpeg" style="display:none">
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="print-footer no-screen" id="print-footer"></footer>
+  </div>
+
+  <script>
+    const qs = new URLSearchParams(location.search); const customerId = qs.get('id');
+    const fmtEUR = (n)=> window.dfsFmt? dfsFmt.fmtEUR(n): String(n);
+    const parseDE = (v)=> window.dfsFmt? dfsFmt.parseDE(v): (Number(v)||0);
+    async function loadCustomer(){ try{ return await dfsCloud.loadOne('dfs.customers', customerId); }catch{return null;} }
+    async function loadContracts(){ try{ const all = await dfsCloud.loadAll('dfs.contracts'); return (all||[]).filter(c=> String(c.customerId||'')===String(customerId)); }catch{return [];} }
+    async function loadAnalysis(){ try{ return await dfsCloud.loadOne('dfs.analysis.customer', customerId); }catch{return null;} }
+    async function saveAnalysisCustomer(res){ try{ await dfsCloud.save('dfs.analysis.customer', { id: customerId, ...res }); }catch{} }
+    function withinDays(iso, days){ if(!iso) return false; const d=new Date(iso); if(isNaN(d)) return false; const now=new Date(); const diff=(d-now)/(1000*60*60*24); return diff>=0 && diff<=days; }
+
+    function renderHeaderFooter(){ try{ const cfg = dfsStore.get('dfs.config.print', null); const head=document.getElementById('print-header'); const foot=document.getElementById('print-footer'); if(cfg){ if(head){ head.innerHTML=''; (cfg.logos||[]).forEach(url=>{ const img=new Image(); img.src=url; img.style.height='28px'; img.style.marginRight='8px'; head.appendChild(img); }); const h=document.createElement('h1'); h.textContent=cfg.headerText||'DFS Versicherungsanalyse'; head.appendChild(h);} if(foot){ const version=localStorage.getItem('dfs.version')||'unversioniert'; const now=new Date(); const p=n=>String(n).padStart(2,'0'); foot.textContent = `${cfg.footerText||''} – Version ${version}, gedruckt am ${p(now.getDate())}.${p(now.getMonth()+1)}.${now.getFullYear()}`; } } }catch{} }
+
+    async function ensureAnalysis(contracts){
+      let res = await loadAnalysis();
+      if(res) return res;
+      // compute quick analysis for this customer
+      const warnings=[]; const recos=[];
+      (contracts||[]).forEach(c=>{ const sp=c.sparten||[]; const gf=c.gefahren||[]; if(sp.includes('Betriebshaftpflicht') && (Number(c.deckungssumme)||0)<5000000) warnings.push(`BHV-Deckung unter 5 Mio. (Police ${c.policeNr||'—'})`); if(sp.includes('Inhalt')&&gf.length<3) warnings.push(`Inhalt <3 Gefahren (Police ${c.policeNr||'—'})`); if(sp.includes('Gebäude')&&gf.length<3) warnings.push(`Gebäude <3 Gefahren (Police ${c.policeNr||'—'})`); if(sp.includes('Cyber')&&gf.length===0) warnings.push(`Cyber ohne Bausteine (Police ${c.policeNr||'—'})`); });
+      const allS=contracts.flatMap(c=>c.sparten||[]); if(!allS.includes('Cyber')) recos.push('Cyber ergänzen'); if(!allS.includes('Ertragsausfall/BU')) recos.push('Betriebsunterbrechung absichern'); if(!allS.includes('Rechtsschutz')) recos.push('Rechtsschutz prüfen');
+      const sumAnnual = contracts.reduce((a,c)=> a + parseDE(c.jahresbeitragBrutto),0);
+      const targetPct = Number(localStorage.getItem('dfs.targetSavingsPct')||10);
+      const monthlySaving = (sumAnnual - (sumAnnual*(1 - targetPct/100))) / 12;
+      const riskScore = Math.max(5, 95 - 10*warnings.length);
+      res = { warnings, recommendations: recos, sumAnnual, targetPct, monthlySaving, riskScore, ts:new Date().toISOString() };
+      await saveAnalysisCustomer(res);
+      return res;
+    }
+
+    async function render(){
+      renderHeaderFooter();
+      const cust = await loadCustomer();
+      const contracts = await loadContracts();
+      document.getElementById('cust-title').textContent = cust? `${cust.firma||'—'}${cust.ansprech?(' · '+cust.ansprech):''}` : '–';
+      const link = document.getElementById('btn-new-contract'); if(link) link.href = `../contracts/index.html?customerId=${encodeURIComponent(customerId)}`;
+
+      // KPIs
+      const sumAnnual = contracts.reduce((a,c)=> a + parseDE(c.jahresbeitragBrutto), 0);
+      document.getElementById('kpi-sum-annual').textContent = fmtEUR(sumAnnual);
+      const analysis = await ensureAnalysis(contracts);
+      document.getElementById('kpi-monthly-saving').textContent = fmtEUR(analysis.monthlySaving||0);
+      document.getElementById('kpi-risk').textContent = String(analysis.riskScore||'–');
+      const upcoming = contracts.filter(c=> withinDays(c.reminderDate,90));
+      document.getElementById('kpi-reminders-count').textContent = String(upcoming.length);
+
+      // Verträge Tabelle
+      const tbody = document.querySelector('#tbl-contracts tbody');
+      tbody.innerHTML = contracts.map(c=>`<tr>
+        <td>${c.versicherer||'—'}</td><td>${c.produkt||'—'}</td><td>${c.policeNr||'—'}</td>
+        <td style="text-align:right">${fmtEUR(parseDE(c.jahresbeitragBrutto))}</td><td>${c.beginn||'—'}</td><td>${c.reminderDate||'—'}</td>
+      </tr>`).join('');
+
+      // Demnächst fällig (≤90)
+      const upEl = document.getElementById('cust-upcoming-list');
+      if(upcoming.length===0){ upEl.innerHTML = '<p class="text-secondary">Keine Reminder in den nächsten 90 Tagen.</p>'; }
+      else{
+        upEl.innerHTML = upcoming.sort((a,b)=> new Date(a.reminderDate)-new Date(b.reminderDate)).map(c=>{
+          return `<div class="doc-row"><div>${c.versicherer||'—'} · <span class="text-secondary">${c.policeNr||'—'}</span></div><div>${dfsFmt.fmtDateDE(c.reminderDate)} · <strong>${fmtEUR(c.jahresbeitragBrutto||0)}</strong></div></div>`;
+        }).join('');
+      }
+
+      // Warnungen/Empfehlungen
+      document.getElementById('cust-warn').innerHTML = (analysis.warnings||[]).length? analysis.warnings.map(w=>`<span class="badge" style="border-color:#D97706;color:#D97706">${w}</span>`).join('') : '<span class="text-secondary">Keine</span>';
+      document.getElementById('cust-reco').innerHTML = (analysis.recommendations||[]).length? analysis.recommendations.map(r=>`<span class="badge">${r}</span>`).join('') : '<span class="text-secondary">Keine</span>';
+
+      // Einsparungs-Delta (optional Felder empfehlung*)
+      const deltaRows = contracts.map(c=>{
+        const alt = parseDE(c.jahresbeitragBrutto);
+        const emp = parseDE(c.empfehlungBeitrag);
+        if(!emp || emp<=0) return null; const d = (alt-emp);
+        return { police:c.policeNr||'—', alt, emp, d };
+      }).filter(Boolean);
+      document.getElementById('cust-saving-delta').textContent = deltaRows.length? `Gesamt-Einsparung: ${fmtEUR(deltaRows.reduce((a,x)=>a+x.d,0))}` : '–';
+      document.querySelector('#tbl-delta tbody').innerHTML = deltaRows.length? deltaRows.map(r=>`<tr><td>${r.police}</td><td style="text-align:right">${fmtEUR(r.alt)}</td><td style="text-align:right">${fmtEUR(r.emp)}</td><td style="text-align:right">${fmtEUR(r.d)}</td></tr>`).join('') : '<tr><td colspan="4" class="text-secondary">Keine Empfehlungen vorhanden</td></tr>';
+
+      // Dokumente cloud-only
+      const docsBox = document.getElementById('cust-docs');
+      async function loadDocs(){ try{ const all=await dfsCloud.loadAll('dfs.customerFiles'); return (all||[]).filter(x=> String(x.customerId||'')===String(customerId)); }catch{return [];} }
+      async function renderDocs(){ const list=await loadDocs(); docsBox.innerHTML = list.length? list.map(m=>`<div class="doc-row"><span class="pill">${m.type||'datei'}</span><a href="${m.url}" target="_blank">${m.name}</a><span class="text-secondary">${(Number(m.size||0)/1024).toFixed(0)} KB</span><div class="doc-actions"><button class="btn-ghost" data-open="${m.url}">Öffnen</button><button class="btn-ghost" data-del="${m.id}">Löschen</button></div></div>`).join('') : '<p class="text-secondary">Keine Dokumente.</p>'; docsBox.querySelectorAll('[data-open]').forEach(b=> b.addEventListener('click', ()=> window.open(b.dataset.open,'_blank'))); docsBox.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', async ()=>{ if(!confirm('Datei wirklich löschen?')) return; await dfsFiles.removeByPath(b.dataset.del); try{ await dfsCloud.delete('dfs.customerFiles', `${customerId}:${b.dataset.del}`);}catch{} renderDocs(); })); }
+      document.getElementById('cust-file-input')?.addEventListener('change', async (e)=>{ const f=e.target.files?.[0]; if(!f) return; try{ const meta=await dfsFiles.uploadCustomerFile(customerId,f); await dfsCloud.save('dfs.customerFiles',{ id:`${customerId}:${meta.id}`, customerId, ...meta }); dfsToast('Dokument hochgeladen','success'); }catch{ dfsToast('Upload fehlgeschlagen','error'); } finally{ e.target.value=''; renderDocs(); } });
+      renderDocs();
+    }
+
+    document.addEventListener('DOMContentLoaded', render);
+  </script>
+</body>
+</html>
+

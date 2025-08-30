@@ -55,7 +55,10 @@
             <td onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">${c.telefon||'—'}</td>
             <td onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">${(c.standort?.ort||'—')}${c.standort?.plz?(' / '+c.standort.plz):''}</td>
             <td onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">${c.branche||'—'}</td>
-            <td><button class="btn-ghost" onclick="deleteCustomer('${c.id}')">Löschen</button></td>
+            <td>
+              <a class="btn-ghost" href="./dashboard.html?id=${encodeURIComponent(c.id)}">Dashboard</a>
+              <button class="btn-ghost" onclick="deleteCustomer('${c.id}')">Löschen</button>
+            </td>
           </tr>`).join('');
       }
       function applySearch(){

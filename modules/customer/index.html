@@ -135,6 +135,7 @@
       <button class="btn" id="save">Speichern</button>
       <button class="btn outline" id="delete" style="display:none">Löschen</button>
       <a class="btn outline" href="../customers/index.html">Zur Liste</a>
+      <a class="btn outline" id="btn-dashboard" href="#">Kunden-Dashboard</a>
     </div>
     <div class="card" id="customer-contracts-card" style="margin-top:16px">
       <h3>Verträge dieses Kunden</h3>
@@ -326,6 +327,8 @@
       document.addEventListener('DOMContentLoaded', renderContractsSummary);
       window.__dfsCustomersRenderContractsSummary = renderContractsSummary;
     })();
+    // Link zum Kunden-Dashboard
+    document.addEventListener('DOMContentLoaded', ()=>{ const a=document.getElementById('btn-dashboard'); if(a){ a.href = `../customers/dashboard.html?id=${encodeURIComponent(id)}`; } });
     // Auto-Save (Kunde)
     let __autoSaveTimerCustomer = null;
     function doSaveCustomer(){
