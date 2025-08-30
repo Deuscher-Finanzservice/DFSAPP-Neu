@@ -1,6 +1,6 @@
 // scripts/firebaseClient.js
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js';
-import { initializeFirestore, serverTimestamp, memoryLocalCache } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
+import { initializeFirestore, serverTimestamp, memoryLocalCache, enableNetwork, disableNetwork } from 'https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js';
 const firebaseConfig = {
   apiKey: "AIzaSyA77RDdEQEwNpgVtoeaK1E2qTfOz2EkKWY",
   authDomain: "deutscher-finanzservice.firebaseapp.com",
@@ -18,7 +18,7 @@ export function initFirebase(){
   // - ignoreUndefinedProperties: prevents 400 from undefined payloads
   db = initializeFirestore(app, {
     localCache: memoryLocalCache(),
-    experimentalAutoDetectLongPolling: true,
+    experimentalForceLongPolling: true,
     useFetchStreams: false,
     ignoreUndefinedProperties: true
   });
@@ -28,3 +28,7 @@ export function initFirebase(){
 export function getDB(){ if(!db) initFirebase(); return db; }
 export function getClientId(){ const KEY='dfs.cloud.clientId'; let id=localStorage.getItem(KEY); if(!id){ id=(crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random().toString(36).slice(2)}`); localStorage.setItem(KEY,id);} return id; }
 export function ts(){ return serverTimestamp(); }
+export async function forceOnline(){ try{ if(!db) initFirebase(); await enableNetwork(db); }catch{} }
+export async function forceOffline(){ try{ if(!db) initFirebase(); await disableNetwork(db); }catch{} }
+// expose network helpers globally for non-module scripts
+try{ window.dfsNet = window.dfsNet || { forceOnline, forceOffline }; }catch{}

@@ -21,6 +21,18 @@
     }
     return input; // string/boolean/finite number
   }
+  async function withRetry(fn, {tries=3, delay=400}={}){
+    let lastErr;
+    for(let i=0;i<tries;i++){
+      try{ return await fn(); }
+      catch(e){
+        lastErr = e;
+        try{ const code=String(e?.code||''); const msg=String(e?.message||''); if(code.includes('unavailable')||/offline/i.test(msg)){ await (window.dfsNet&&window.dfsNet.forceOnline? window.dfsNet.forceOnline():Promise.resolve()); } }catch{}
+        await new Promise(r=>setTimeout(r, delay*(i+1)));
+      }
+    }
+    throw lastErr;
+  }
   async function saveOne(collection, id, data){
     try{
       const obj = { ...(data||{}) };
@@ -34,7 +46,7 @@
       if(obj.gruendung != null) obj.gruendung = Number(obj.gruendung);
       const clean = sanitizeForFirestore(obj);
       if(!(window.dfsCloud && window.dfsCloud.save)) throw new Error('dfsCloud.save unavailable');
-      const ok = await window.dfsCloud.save(collection, clean);
+      const ok = await withRetry(()=> window.dfsCloud.save(collection, clean));
       if(!ok) return { ok:false, code:'unknown', message:'save returned false', id: obj.id };
       return { ok:true, id: obj.id };
     }catch(e){
@@ -48,7 +60,7 @@
   async function loadAll(collection){
     try{
       if(!(window.dfsCloud && window.dfsCloud.loadAll)) throw new Error('dfsCloud.loadAll unavailable');
-      const arr = await window.dfsCloud.loadAll(collection);
+      const arr = await withRetry(()=> window.dfsCloud.loadAll(collection));
       return Array.isArray(arr) ? arr : [];
     }catch(e){ console.error('[DFS] loadAll error', e); return []; }
   }
