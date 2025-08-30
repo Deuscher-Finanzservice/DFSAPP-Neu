@@ -42,27 +42,31 @@
     </div>
   </div>
   <script type="module">
-    import { loadCustomersFromCloud, saveCustomersToCloud } from '../../scripts/firebase.js';
+    import { loadAllCustomers } from '../../scripts/data-customers.js';
     (function(){
       let allCustomers = [];
       function renderCustomers(list){
         const body = document.getElementById('customers-body'); if(!body) return;
         if(!list || list.length===0){ body.innerHTML = '<tr><td colspan="6" class="text-secondary">Keine Kunden gefunden.</td></tr>'; return; }
-        body.innerHTML = list.map(c=>`
+        body.innerHTML = list.map(c=>{
+          const loc = (((c.standort?.ort||'') + ' ' + (c.standort?.plz||'')).trim()) || '—';
+          return `
           <tr>
             <td onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">${c.firma||'—'}</td>
             <td onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">${c.ansprech||'—'}</td>
             <td onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">${c.telefon||'—'}</td>
-            <td onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">${(c.standort?.ort||'—')}${c.standort?.plz?(' / '+c.standort.plz):''}</td>
+            <td onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">${loc}</td>
             <td onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">${c.branche||'—'}</td>
             <td>
               <a class="btn-ghost" href="./dashboard.html?id=${encodeURIComponent(c.id)}">Dashboard</a>
               <button class="btn-ghost" onclick="deleteCustomer('${c.id}')">Löschen</button>
             </td>
-          </tr>`).join('');
+          </tr>`;
+        }).join('');
       }
       function applySearch(){
         const q = (document.getElementById('customer-search')?.value||'').toLowerCase();
+        if(!q){ renderCustomers(allCustomers); return; }
         const filtered = allCustomers.filter(c=>
           (c.firma||'').toLowerCase().includes(q) ||
           (c.ansprech||'').toLowerCase().includes(q) ||
@@ -77,9 +81,9 @@
         applySearch();
       }
       async function loadAndRender(){
-        try{ allCustomers = await (window.dfsData && dfsData.getAllCustomers ? dfsData.getAllCustomers() : Promise.resolve([])); }
+        try{ allCustomers = await loadAllCustomers(); }
         catch{ allCustomers = []; }
-        applySearch();
+        renderCustomers(allCustomers);
       }
       document.addEventListener('DOMContentLoaded', ()=>{
         document.getElementById('customer-search')?.addEventListener('input', applySearch);
@@ -103,7 +107,7 @@
               const files = filesMap[id] || [];
               for(const f of files){ try{ await dfsFiles.removeByPath(f.id); }catch(_){} }
               delete filesMap[id]; dfsStore.set('dfs.customerFiles', filesMap);
-              let all = dfsStore.get('dfs.customers', []); all = all.filter(c=>c.id!==id); dfsStore.set('dfs.customers', all);
+              // Cloud-only: do not modify local dfs.customers store
               try{ await dfsCloud.delete('dfs.customers', id); }catch{}
               if(confirm('Auch verknüpfte Verträge dieses Kunden löschen?')){
                 let contracts = await (window.dfsData&&dfsData.getAllContracts? dfsData.getAllContracts():Promise.resolve(dfsStore.get('dfs.contracts',[])));

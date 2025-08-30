@@ -159,12 +159,21 @@ document.addEventListener('DOMContentLoaded', ()=>{
 // === Cloud-first counts and KPIs ===
 async function renderCounts(){
   try{
-    const customers = await (window.dfsData&&dfsData.getAllCustomers ? dfsData.getAllCustomers() : Promise.resolve([]));
-    const contracts = await (window.dfsData&&dfsData.getAllContracts ? dfsData.getAllContracts() : Promise.resolve([]));
-    const cEl = document.getElementById('nCustomers') || document.getElementById('kpi-customers-count');
+    const customers = await (
+      window.dfsDataCustomers?.loadAllCustomers
+        ? window.dfsDataCustomers.loadAllCustomers()
+        : (window.dfsData?.getAllCustomers ? window.dfsData.getAllCustomers() : Promise.resolve([]))
+    );
+    const contracts = await (
+      window.dfsData?.getAllContracts ? window.dfsData.getAllContracts() : Promise.resolve([])
+    );
+    const cEl = document.getElementById('kpi-customers')
+            || document.getElementById('nCustomers')
+            || document.getElementById('kpi-customers-count');
     const vEl = document.getElementById('nContracts') || document.getElementById('kpi-contracts-count');
-    if(cEl) cEl.textContent = customers.length; if(vEl) vEl.textContent = contracts.length;
-  }catch{}
+    if(cEl) cEl.textContent = customers.length;
+    if(vEl) vEl.textContent = contracts.length;
+  }catch(e){ console.error(e); }
 }
 async function renderKpisCloudFirst(){
   try{

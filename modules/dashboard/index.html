@@ -117,12 +117,7 @@
         }).join('') : '<span style="color:var(--muted)">Keine</span>';
       }catch(e){ document.getElementById('reminders').textContent = '—'; }
     }
-    renderDashboard();
-    window.addEventListener('dfs.contracts-changed', renderDashboard);
-    window.addEventListener('dfs.analysis-changed', renderDashboard);
-    window.addEventListener('storage', (e)=>{
-      if(['dfs.contracts','dfs.analysis','dfs.customers'].includes(e.key)) renderDashboard();
-    });
+    // Cloud-only: disable localStorage-driven dashboard rendering
   </script>
   <script src="./index.js"></script>
 </body>
