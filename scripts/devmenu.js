@@ -29,7 +29,17 @@
     const verInfo = getEl('dev-version-info');
     const fsLink = getEl('dev-open-firestore');
 
-    if(toggle){ toggle.checked = !!window.dfs.debug; toggle.addEventListener('change', ()=>{ window.dfs.debug = !!toggle.checked; try{ localStorage.setItem('dfs.debug', String(window.dfs.debug)); }catch{} showToast('Debug: ' + (window.dfs.debug?'AN':'AUS')); }); }
+    if(toggle){
+      toggle.checked = !!window.dfs.debug;
+      // show/hide debug panel on init
+      try{ const panel=document.getElementById('debug-panel'); if(panel) panel.classList.toggle('hidden', !toggle.checked); }catch{}
+      toggle.addEventListener('change', ()=>{
+        window.dfs.debug = !!toggle.checked;
+        try{ localStorage.setItem('dfs.debug', String(window.dfs.debug)); }catch{}
+        try{ const panel=document.getElementById('debug-panel'); if(panel) panel.classList.toggle('hidden', !toggle.checked); }catch{}
+        showToast('Debug: ' + (window.dfs.debug?'AN':'AUS'));
+      });
+    }
     if(gear){ gear.addEventListener('click', (e)=>{ e.stopPropagation(); toggleMenu(); }); }
     if(menu){ document.addEventListener('click', (e)=>{ if(!menu.contains(e.target) && e.target!==gear){ hideMenu(); } }); }
     if(hard){ hard.addEventListener('click', ()=>{ location.href = withCacheBust(); }); }
@@ -50,4 +60,3 @@
     }
   });
 })();
-

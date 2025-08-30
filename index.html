@@ -22,6 +22,8 @@
     .nav-group.active{color:#fff;background:rgba(255,255,255,.06)}
     .nav-sub a{padding-left:22px}
     .divider{border:0;border-top:1px solid rgba(255,255,255,.12);margin:8px 0}
+    .debug-panel{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.2);padding:8px;margin-top:4px;max-height:200px;overflow-y:auto;font-family:monospace;font-size:12px;color:#C0C0C0}
+    .debug-panel.hidden{display:none}
   </style>
 </head>
 <body>
@@ -67,6 +69,10 @@
               <div class="text-secondary" id="dev-env-info"></div>
               <div class="text-secondary" id="dev-version-info"></div>
               <a class="btn-ghost" id="dev-open-firestore" target="_blank" rel="noopener">Firestore-Console</a>
+              <div id="debug-panel" class="debug-panel hidden">
+                <pre id="debug-log"></pre>
+                <button id="debug-copy" class="btn-ghost sm">Alles kopieren</button>
+              </div>
             </div>
           </div>
         </div>
