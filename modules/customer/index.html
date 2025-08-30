@@ -36,7 +36,42 @@
       <div><label class="label">Ansprechpartner</label><input class="input" id="ansprech"></div>
       <div><label class="label">E‑Mail</label><input class="input" id="email" type="email"></div>
       <div><label class="label">Telefon</label><input class="input" id="telefon"></div>
-      <div><label class="label">Branche (optional)</label><input class="input" id="branche"></div>
+      <div>
+        <label class="label" for="cust-branche">Branche (optional)</label>
+        <select class="input" id="cust-branche">
+          <option value="">– bitte wählen –</option>
+          <option>Baugewerbe allgemein</option>
+          <option>Dachdecker</option>
+          <option>Maler / Lackierer</option>
+          <option>Elektroinstallateur</option>
+          <option>Sanitär / Heizung / Klima</option>
+          <option>Tischler / Schreiner</option>
+          <option>Metallbauer</option>
+          <option>Maurer / Betonbauer</option>
+          <option>Garten- & Landschaftsbau</option>
+          <option>Kfz-Werkstatt / Kfz-Service</option>
+          <option>Friseur / Kosmetik</option>
+          <option>Bäckerei / Konditorei</option>
+          <option>Gastronomie / Restaurant / Café</option>
+          <option>Hotel / Pension</option>
+          <option>Einzelhandel allgemein</option>
+          <option>Lebensmittelhandel</option>
+          <option>Großhandel</option>
+          <option>IT / Software / Systemhaus</option>
+          <option>Marketing / Werbung / Agentur</option>
+          <option>Architekt / Ingenieurbüro</option>
+          <option>Rechtsanwalt / Notar</option>
+          <option>Steuerberater / Wirtschaftsprüfer</option>
+          <option>Arztpraxis</option>
+          <option>Pflege / Pflegedienst</option>
+          <option>Spedition / Transport</option>
+          <option>Logistik / Lager</option>
+          <option>Landwirtschaft</option>
+          <option>Immobilien / Hausverwaltung</option>
+          <option>Energie / erneuerbare Energien</option>
+          <option>Sonstige Dienstleistungen</option>
+        </select>
+      </div>
       <div><label class="label">Mitarbeiter (optional)</label><input class="input" id="mitarbeiter" type="number" step="1" min="0"></div>
       <div><label class="label">Umsatz in € (optional)</label><input class="input" id="umsatz" type="number" step="0.01" min="0"></div>
       <div><label class="label">Gründungsjahr (optional)</label><input class="input" id="gruendung" type="number" step="1" min="0"></div>
@@ -130,7 +165,7 @@
     const $=id=>document.getElementById(id);
     function getLocal(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch{ return []; } }
     function setLocal(a){ localStorage.setItem(KEY, JSON.stringify(a)); }
-    function fill(c){ if(!c) return; ['firma','ansprech','email','telefon','branche','mitarbeiter','umsatz','gruendung','standort'].forEach(k=>{ const el=$(k); if(!el) return; const v=c[k]; el.value = (v===undefined||v===null)? '' : String(v); }); }
+    function fill(c){ if(!c) return; ['firma','ansprech','email','telefon','mitarbeiter','umsatz','gruendung','standort'].forEach(k=>{ const el=$(k); if(!el) return; const v=c[k]; el.value = (v===undefined||v===null)? '' : String(v); }); const sb=document.getElementById('cust-branche'); if(sb) sb.value = c?.branche || ''; }
     const genId = () => (crypto && typeof crypto.randomUUID==='function') ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     let id = window._qs.get('id') || null;
     if(!id){ id = genId(); }
@@ -146,7 +181,7 @@
         ansprech: $('ansprech').value.trim(),
         email: $('email').value.trim(),
         telefon: $('telefon').value.trim(),
-        branche: $('branche').value.trim() || undefined,
+        branche: (document.getElementById('cust-branche')?.value || '').trim() || undefined,
         mitarbeiter: toNum($('mitarbeiter').value),
         umsatz: toNum($('umsatz').value),
         gruendung: toNum($('gruendung').value),
@@ -289,8 +324,8 @@
       }
     }
     function autoBindCustomerForm(){
-      const ids=['firma','ansprech','email','telefon','branche','mitarbeiter','umsatz','gruendung','standort'];
-      ids.forEach(k=>{ const el=document.getElementById(k); if(!el) return; el.addEventListener('input', handleAutoSaveCustomer); });
+      const ids=['firma','ansprech','email','telefon','cust-branche','mitarbeiter','umsatz','gruendung','standort'];
+      ids.forEach(k=>{ const el=document.getElementById(k); if(!el) return; const evt = (el.tagName==='SELECT')?'change':'input'; el.addEventListener(evt, handleAutoSaveCustomer); });
     }
     document.addEventListener('DOMContentLoaded', autoBindCustomerForm);
     // Initialer Cloud→Local Sync
