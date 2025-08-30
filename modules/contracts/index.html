@@ -32,6 +32,7 @@
         <button id="btn-save-contract" class="btn">Speichern</button>
         <span id="save-status-contract" class="pill text-secondary">Ungespeichert</span>
         <span id="save-meta-contract" class="save-meta">—</span>
+        <button id="save-retry" class="btn-ghost sm no-print" style="display:none">Erneut senden</button>
       </div>
     </div>
     <header class="print-header no-screen" id="print-header"></header>
@@ -166,16 +167,25 @@
           if(!c){ status.set('error',{withSpinnerOn:'#btn-save-contract'}); return; }
           const res = await dfsCloud.saveOne('dfs.contracts', c.id, c);
           if(window.dfs && window.dfs.debug) console.info('[DFS] save contract', { id:c.id, ok:res?.ok, code:res?.code });
-          if(res && res.ok){ dirty=false; status.set('saved',{withSpinnerOn:'#btn-save-contract'}); window.dfsToastKeyed && dfsToastKeyed('save-ok','Vertrag gespeichert','success',1500); }
-          else { status.set('error',{withSpinnerOn:'#btn-save-contract'}); window.dfsToastKeyed && dfsToastKeyed('save-error',`Cloud-Sync fehlgeschlagen (${res?.code||'error'})`,'error',4000); }
-        }catch(e){ console.error(e); status.set('error',{withSpinnerOn:'#btn-save-contract'}); window.dfsToastKeyed && dfsToastKeyed('save-error','Cloud-Speichern fehlgeschlagen','error',4000); }
+          if(res && res.ok){ dirty=false; status.set('saved',{withSpinnerOn:'#btn-save-contract'}); const rb=document.getElementById('save-retry'); if(rb) rb.style.display='none'; window.dfsToastKeyed && dfsToastKeyed('save-ok','Vertrag gespeichert','success',1500); }
+          else { status.set('error',{withSpinnerOn:'#btn-save-contract'}); const s=document.getElementById('save-status-contract'); if(s) s.textContent='Ungespeichert (Fehler)'; const rb=document.getElementById('save-retry'); if(rb) rb.style.display='inline-flex'; window.dfsToastKeyed && dfsToastKeyed('save-error',`Cloud-Sync fehlgeschlagen (${res?.code||'error'})`,'error',4000); }
+        }catch(e){ console.error(e); status.set('error',{withSpinnerOn:'#btn-save-contract'}); const s=document.getElementById('save-status-contract'); if(s) s.textContent='Ungespeichert (Fehler)'; const rb=document.getElementById('save-retry'); if(rb) rb.style.display='inline-flex'; window.dfsToastKeyed && dfsToastKeyed('save-error','Cloud-Speichern fehlgeschlagen','error',4000); }
       }
-      function markDirty(){ dirty=true; status.set('dirty'); if(cfg.autoSaveMode==='immediate'){ if(deb) clearTimeout(deb); deb=setTimeout(saveNow,800); } }
+      function markDirty(){ dirty=true; status.set('dirty'); const rb=document.getElementById('save-retry'); if(rb) rb.style.display='none'; if(cfg.autoSaveMode==='immediate'){ if(deb) clearTimeout(deb); deb=setTimeout(saveNow,800); } }
       function setupInterval(){ if(timer) clearInterval(timer); if(cfg.autoSaveMode==='interval'){ timer=setInterval(()=>{ if(dirty) saveNow(); }, Math.max(2,cfg.autoSaveInterval)*1000); } }
       document.addEventListener('DOMContentLoaded', async ()=>{
         await loadCfg(); setupInterval();
         ['insurer','policyNo','product','lines','begin','laufzeit','payCycle','premiumYear','coverage','deductible'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; const evt=(el.tagName==='SELECT'||el.type==='date')?'change':'input'; el.addEventListener(evt, markDirty); });
         document.getElementById('btn-save-contract')?.addEventListener('click',(e)=>{ e.preventDefault(); saveNow(); });
+        document.getElementById('save-retry')?.addEventListener('click', async ()=>{
+          const rb=document.getElementById('save-retry'); if(rb) rb.disabled=true;
+          status.set('saving',{withSpinnerOn:'#btn-save-contract'});
+          const c= (window.collectContractFromForm? collectContractFromForm():null);
+          const res = await dfsCloud.saveOne('dfs.contracts', c.id, c);
+          if(res && res.ok){ dirty=false; status.set('saved',{withSpinnerOn:'#btn-save-contract'}); if(rb){ rb.disabled=false; rb.style.display='none'; } window.dfsToastKeyed && dfsToastKeyed('save-ok','Gespeichert','success',1500); }
+          else { status.set('error',{withSpinnerOn:'#btn-save-contract'}); const s=document.getElementById('save-status-contract'); if(s) s.textContent='Ungespeichert (Fehler)'; if(rb){ rb.disabled=false; rb.style.display='inline-flex'; } window.dfsToastKeyed && dfsToastKeyed('save-error',`Cloud-Sync fehlgeschlagen (${res?.code||'unknown'})`,'error',4000); }
+          if(window.dfs && window.dfs.debug) console.info('[DFS] save-retry', res);
+        });
         window.addEventListener('keydown',(e)=>{ if((e.ctrlKey||e.metaKey) && e.key==='s'){ e.preventDefault(); saveNow(); }});
         window.addEventListener('beforeunload',()=>{ if(dirty) saveNow(); });
       });

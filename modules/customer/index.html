@@ -230,18 +230,34 @@
       if(!ok){ try{ dfsToast('E-Mail-Format prüfen (optional, aber wenn gefüllt, dann gültig).','error'); }catch{} }
       return ok;
     }
-    document.getElementById('save').onclick = async ()=>{
+    // Enhanced save flow with retry
+    const statusCustomer = (window.dfsSaveStatus? dfsSaveStatus.bind('save-status-customer','save-meta-customer') : { set:()=>{} });
+    function setErrorDirty(){ try{ statusCustomer.set('error'); const el=document.getElementById('save-status-customer'); if(el) el.textContent='Ungespeichert (Fehler)'; }catch{} }
+    function hideRetry(){ const b=document.getElementById('save-retry'); if(b){ b.style.display='none'; b.disabled=false; } }
+    function showRetry(){ const b=document.getElementById('save-retry'); if(b){ b.style.display='inline-flex'; b.disabled=false; } }
+    async function saveCustomerNow(spinnerSel){
       if(!validateCustomerEmailOptional()) return;
+      try{
+        statusCustomer.set('saving',{withSpinnerOn: spinnerSel||'#save'});
+        const c = collect();
+        const res = await saveCustomerToCloud(c);
+        if(window.dfs && window.dfs.debug) console.info('[DFS] save customer', { id:c.id, ok:res?.ok, code:res?.code });
+        if(res && res.ok){ statusCustomer.set('saved',{withSpinnerOn: spinnerSel||'#save'}); hideRetry(); window.dfsToastKeyed && dfsToastKeyed('save-ok','Kunde gespeichert','success',1500); if(!window._qs.get('id')){ history.replaceState({},'',`?id=${encodeURIComponent(id)}`); $('delete').style.display='inline-block'; } }
+        else { setErrorDirty(); showRetry(); window.dfsToastKeyed && dfsToastKeyed('save-error',`Cloud-Sync fehlgeschlagen (${res?.code||'error'})`,'error',4000); }
+      }catch(e){ console.error(e); setErrorDirty(); showRetry(); window.dfsToastKeyed && dfsToastKeyed('save-error','Cloud-Speichern fehlgeschlagen','error',4000); }
+    }
+    document.getElementById('save').onclick = async ()=>{ await saveCustomerNow('#save'); };
+    document.getElementById('btn-save-customer').onclick = async ()=>{ await saveCustomerNow('#btn-save-customer'); };
+    document.getElementById('save-retry')?.addEventListener('click', async ()=>{
+      const b=document.getElementById('save-retry'); if(b) b.disabled=true; statusCustomer.set('saving',{withSpinnerOn:'#btn-save-customer'});
       const c = collect();
-      const arr = getLocal();
-      const idx = arr.findIndex(x=>x.id===c.id);
-      if(idx>=0) arr[idx]=c; else arr.push(c);
-      setLocal(arr);
-      try{ await saveCustomerToCloud(c); }catch(e){ console.warn('Cloud save failed', e); }
-      if(!window._qs.get('id')){ history.replaceState({},'',`?id=${encodeURIComponent(id)}`); $('delete').style.display='inline-block'; }
-      if(window.__dfsCustomersRenderContractsSummary) window.__dfsCustomersRenderContractsSummary();
-      try{ dfsToast('Kunde gespeichert.','success'); }catch{}
-    };
+      try{
+        const res = await saveCustomerToCloud(c);
+        if(res && res.ok){ statusCustomer.set('saved',{withSpinnerOn:'#btn-save-customer'}); hideRetry(); window.dfsToastKeyed && dfsToastKeyed('save-ok','Gespeichert','success',1500); }
+        else { setErrorDirty(); if(b) b.disabled=false; showRetry(); window.dfsToastKeyed && dfsToastKeyed('save-error',`Cloud-Sync fehlgeschlagen (${res?.code||'unknown'})`,'error',4000); }
+        if(window.dfs && window.dfs.debug) console.info('[DFS] save-retry', res);
+      }catch(e){ console.error(e); setErrorDirty(); if(b) b.disabled=false; showRetry(); window.dfsToastKeyed && dfsToastKeyed('save-error','Cloud-Speichern fehlgeschlagen','error',4000); }
+    });
     document.getElementById('delete').onclick = async ()=>{
       if(!id) return;
       dfsUI.show({
@@ -365,7 +381,7 @@
     }
     function autoBindCustomerForm(){
       const ids=['firma','ansprech','email','telefon','cust-branche','mitarbeiter','umsatz','gruendung','cust-addr-adresse','cust-addr-plz','cust-addr-ort'];
-      ids.forEach(k=>{ const el=document.getElementById(k); if(!el) return; const evt = (el.tagName==='SELECT')?'change':'input'; el.addEventListener(evt, handleAutoSaveCustomer); });
+      ids.forEach(k=>{ const el=document.getElementById(k); if(!el) return; const evt = (el.tagName==='SELECT')?'change':'input'; el.addEventListener(evt, (e)=>{ try{ const s=document.getElementById('save-status-customer'); if(s) s.textContent='Ungespeichert'; }catch{} hideRetry && hideRetry(); handleAutoSaveCustomer(e); }); });
     }
     // Migration: wenn standort Freitext war → in standortLegacy sichern und struktur anlegen
     document.addEventListener('DOMContentLoaded', ()=>{
