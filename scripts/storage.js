@@ -1,4 +1,7 @@
 // scripts/storage.js
+// Global DFS debug flag (DEV only)
+window.dfs = window.dfs || {};
+window.dfs.debug = true; // set to false for production
 window.dfsStore = (function(){
   function get(key, fallback){
     try{ const raw = localStorage.getItem(key); if(raw==null) return fallback; return JSON.parse(raw); }

@@ -88,6 +88,7 @@ function getFilteredSortedContracts(){
 function renderTable(){
   const tbody = document.getElementById('tblBody');
   const rows = getFilteredSortedContracts();
+  try{ if(window.dfs && window.dfs.debug){ const searchTerm=(document.getElementById('contracts-search')?.value||''); console.info('[DFS] renderContracts: filter="%s", rows=%d', searchTerm, Array.isArray(rows)?rows.length:0); } }catch{}
   tbody.innerHTML = rows.map((c,i)=>{
     const insurer = c.versicherer||'—';
     const policy  = c.policeNr||'—';

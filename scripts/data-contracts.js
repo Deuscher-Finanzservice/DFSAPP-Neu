@@ -3,14 +3,18 @@
 export async function loadAllContracts(){
   try{
     const arr = await dfsCloud.loadAll('dfs.contracts');
-    return Array.isArray(arr) ? arr : [];
+    const result = Array.isArray(arr) ? arr : [];
+    try{ if(window.dfs && window.dfs.debug) console.info('[DFS] contracts loaded:', result.length, result); }catch{}
+    return result;
   }catch(e){ console.error('[DFS] loadAllContracts error', e); return []; }
 }
 
 export async function loadContractsByCustomer(customerId){
   try{
     const all = await dfsCloud.loadAll('dfs.contracts');
-    return (Array.isArray(all) ? all : []).filter(c => String(c?.customerId||'') === String(customerId||''));
+    const list = (Array.isArray(all) ? all : []);
+    try{ if(window.dfs && window.dfs.debug) console.info('[DFS] contracts loaded:', list.length, list); }catch{}
+    return list.filter(c => String(c?.customerId||'') === String(customerId||''));
   }catch(e){ console.error('[DFS] loadContractsByCustomer error', e); return []; }
 }
 
@@ -18,4 +22,3 @@ export async function loadContractsByCustomer(customerId){
 if(typeof window !== 'undefined'){
   window.dfsDataContracts = { loadAllContracts, loadContractsByCustomer };
 }
-

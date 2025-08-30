@@ -3,7 +3,9 @@
 export async function loadAllCustomers(){
   try{
     const arr = await dfsCloud.loadAll('dfs.customers');
-    return Array.isArray(arr) ? arr : [];
+    const result = Array.isArray(arr) ? arr : [];
+    try{ if(window.dfs && window.dfs.debug) console.info('[DFS] customers loaded:', result.length, result); }catch{}
+    return result;
   }catch(e){ console.error('[DFS] loadAllCustomers error', e); return []; }
 }
 
@@ -16,4 +18,3 @@ export async function loadCustomer(id){
 if(typeof window !== 'undefined'){
   window.dfsDataCustomers = { loadAllCustomers, loadCustomer };
 }
-

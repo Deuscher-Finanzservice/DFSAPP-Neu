@@ -47,6 +47,7 @@
       let allCustomers = [];
       function renderCustomers(list){
         const body = document.getElementById('customers-body'); if(!body) return;
+        try{ if(window.dfs && window.dfs.debug){ const searchTerm=(document.getElementById('customer-search')?.value||''); console.info('[DFS] renderCustomers: filter="%s", rows=%d', searchTerm, Array.isArray(list)?list.length:0); } }catch{}
         if(!list || list.length===0){ body.innerHTML = '<tr><td colspan="6" class="text-secondary">Keine Kunden gefunden.</td></tr>'; return; }
         body.innerHTML = list.map(c=>{
           const loc = (((c.standort?.ort||'') + ' ' + (c.standort?.plz||'')).trim()) || '—';
