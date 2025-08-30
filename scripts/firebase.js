@@ -30,4 +30,8 @@ if(typeof window !== 'undefined'){
     },
     async loadOne(key,id){ try{ const db=getDB(); const ref=doc(db,key,id); const s=await getDoc(ref); return s.exists()? s.data() : null; }catch(e){ console.error('Cloud get error', e); return null; } }
   };
+  try{
+    window.addEventListener('online', ()=>{ try{ window.dfsSync && window.dfsSync.processQueue(); }catch{} });
+    document.addEventListener('DOMContentLoaded', ()=>{ try{ window.dfsSync && window.dfsSync.processQueue(); }catch{} });
+  }catch{}
 }
