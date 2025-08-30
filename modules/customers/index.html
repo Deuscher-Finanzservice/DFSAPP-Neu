@@ -32,6 +32,7 @@
             <th class="sortable" data-key="firma">Firma</th>
             <th class="sortable" data-key="ansprech">Ansprechpartner</th>
             <th class="sortable" data-key="telefon">Telefon</th>
+            <th class="sortable" data-key="ort">Ort/PLZ</th>
             <th class="sortable" data-key="branche">Branche</th>
             <th>Aktion</th>
           </tr>
@@ -46,19 +47,26 @@
       let allCustomers = [];
       function renderCustomers(list){
         const body = document.getElementById('customers-body'); if(!body) return;
-        if(!list || list.length===0){ body.innerHTML = '<tr><td colspan="5" class="text-secondary">Keine Kunden gefunden.</td></tr>'; return; }
+        if(!list || list.length===0){ body.innerHTML = '<tr><td colspan="6" class="text-secondary">Keine Kunden gefunden.</td></tr>'; return; }
         body.innerHTML = list.map(c=>`
           <tr>
             <td onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">${c.firma||'—'}</td>
             <td onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">${c.ansprech||'—'}</td>
             <td onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">${c.telefon||'—'}</td>
+            <td onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">${(c.standort?.ort||'—')}${c.standort?.plz?(' / '+c.standort.plz):''}</td>
             <td onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">${c.branche||'—'}</td>
             <td><button class="btn-ghost" onclick="deleteCustomer('${c.id}')">Löschen</button></td>
           </tr>`).join('');
       }
       function applySearch(){
         const q = (document.getElementById('customer-search')?.value||'').toLowerCase();
-        const filtered = allCustomers.filter(c=> (c.firma||'').toLowerCase().includes(q) || (c.ansprech||'').toLowerCase().includes(q) || (c.branche||'').toLowerCase().includes(q) );
+        const filtered = allCustomers.filter(c=>
+          (c.firma||'').toLowerCase().includes(q) ||
+          (c.ansprech||'').toLowerCase().includes(q) ||
+          (c.branche||'').toLowerCase().includes(q) ||
+          ((c.standort?.ort||'').toLowerCase().includes(q)) ||
+          ((c.standort?.plz||'').toLowerCase().includes(q))
+        );
         renderCustomers(filtered);
       }
       function applySort(key, dir){

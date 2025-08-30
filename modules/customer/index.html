@@ -75,7 +75,18 @@
       <div><label class="label">Mitarbeiter (optional)</label><input class="input" id="mitarbeiter" type="number" step="1" min="0"></div>
       <div><label class="label">Umsatz in € (optional)</label><input class="input" id="umsatz" type="number" step="0.01" min="0"></div>
       <div><label class="label">Gründungsjahr (optional)</label><input class="input" id="gruendung" type="number" step="1" min="0"></div>
-      <div style="grid-column:1/-1"><label class="label">Standort (optional)</label><input class="input" id="standort"></div>
+      <div style="grid-column:1/-1">
+        <label class="label">Adresse (Straße + Nr.)</label>
+        <input class="input" id="cust-addr-adresse" placeholder="z. B. Musterstraße 12">
+      </div>
+      <div>
+        <label class="label">PLZ</label>
+        <input class="input" id="cust-addr-plz" maxlength="10" placeholder="z. B. 22111">
+      </div>
+      <div>
+        <label class="label">Ort</label>
+        <input class="input" id="cust-addr-ort" placeholder="z. B. Hamburg">
+      </div>
     </div>
     <section class="card" style="margin-top:16px;">
       <h3>Erweiterte Daten</h3>
@@ -165,7 +176,15 @@
     const $=id=>document.getElementById(id);
     function getLocal(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch{ return []; } }
     function setLocal(a){ localStorage.setItem(KEY, JSON.stringify(a)); }
-    function fill(c){ if(!c) return; ['firma','ansprech','email','telefon','mitarbeiter','umsatz','gruendung','standort'].forEach(k=>{ const el=$(k); if(!el) return; const v=c[k]; el.value = (v===undefined||v===null)? '' : String(v); }); const sb=document.getElementById('cust-branche'); if(sb) sb.value = c?.branche || ''; }
+    function fill(c){
+      if(!c) return;
+      ['firma','ansprech','email','telefon','mitarbeiter','umsatz','gruendung'].forEach(k=>{ const el=$(k); if(!el) return; const v=c[k]; el.value = (v===undefined||v===null)? '' : String(v); });
+      const sb=document.getElementById('cust-branche'); if(sb) sb.value = c?.branche || '';
+      const addr = c?.standort || {};
+      const a=document.getElementById('cust-addr-adresse'); if(a) a.value = addr.adresse||'';
+      const p=document.getElementById('cust-addr-plz'); if(p) p.value = addr.plz||'';
+      const o=document.getElementById('cust-addr-ort'); if(o) o.value = addr.ort||'';
+    }
     const genId = () => (crypto && typeof crypto.randomUUID==='function') ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     let id = window._qs.get('id') || null;
     if(!id){ id = genId(); }
@@ -185,7 +204,11 @@
         mitarbeiter: toNum($('mitarbeiter').value),
         umsatz: toNum($('umsatz').value),
         gruendung: toNum($('gruendung').value),
-        standort: $('standort').value.trim() || undefined,
+        standort: {
+          adresse: (document.getElementById('cust-addr-adresse')?.value||'').trim(),
+          plz: (document.getElementById('cust-addr-plz')?.value||'').trim().slice(0,10),
+          ort: (document.getElementById('cust-addr-ort')?.value||'').trim()
+        },
         updatedAt: new Date().toISOString(),
         createdAt: current?.createdAt || new Date().toISOString()
       };
@@ -324,9 +347,21 @@
       }
     }
     function autoBindCustomerForm(){
-      const ids=['firma','ansprech','email','telefon','cust-branche','mitarbeiter','umsatz','gruendung','standort'];
+      const ids=['firma','ansprech','email','telefon','cust-branche','mitarbeiter','umsatz','gruendung','cust-addr-adresse','cust-addr-plz','cust-addr-ort'];
       ids.forEach(k=>{ const el=document.getElementById(k); if(!el) return; const evt = (el.tagName==='SELECT')?'change':'input'; el.addEventListener(evt, handleAutoSaveCustomer); });
     }
+    // Migration: wenn standort Freitext war → in standortLegacy sichern und struktur anlegen
+    document.addEventListener('DOMContentLoaded', ()=>{
+      try{
+        const arr = dfsStore.get('dfs.customers', []);
+        const idx = arr.findIndex(x=>x.id===id);
+        if(idx>=0 && typeof arr[idx].standort === 'string' && arr[idx].standort){
+          arr[idx].standortLegacy = arr[idx].standort;
+          arr[idx].standort = { adresse:'', plz:'', ort:'' };
+          dfsStore.set('dfs.customers', arr);
+        }
+      }catch{}
+    });
     document.addEventListener('DOMContentLoaded', autoBindCustomerForm);
     // Initialer Cloud→Local Sync
     document.addEventListener('DOMContentLoaded', async ()=>{ try{ if(window.dfsStore&&dfsStore.syncFromCloud){ await dfsStore.syncFromCloud('dfs.customers'); } }catch{} });
