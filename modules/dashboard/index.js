@@ -99,3 +99,25 @@ function renderAnalysisOnDashboard(){
 document.addEventListener('DOMContentLoaded', renderAnalysisOnDashboard);
 window.addEventListener('dfs.analysis-changed', renderAnalysisOnDashboard);
 window.addEventListener('storage', (e)=>{ if(e && e.key==='dfs.analysis') renderAnalysisOnDashboard(); });
+
+// === Cloud-first counts and KPIs ===
+async function renderCounts(){
+  try{
+    const customers = await (window.dfsData&&dfsData.getAllCustomers ? dfsData.getAllCustomers() : Promise.resolve([]));
+    const contracts = await (window.dfsData&&dfsData.getAllContracts ? dfsData.getAllContracts() : Promise.resolve([]));
+    const cEl = document.getElementById('nCustomers') || document.getElementById('kpi-customers-count');
+    const vEl = document.getElementById('nContracts') || document.getElementById('kpi-contracts-count');
+    if(cEl) cEl.textContent = customers.length; if(vEl) vEl.textContent = contracts.length;
+  }catch{}
+}
+async function renderKpisCloudFirst(){
+  try{
+    const contracts = await (window.dfsData&&dfsData.getAllContracts ? dfsData.getAllContracts() : Promise.resolve([]));
+    const sum = contracts.reduce((a,c)=> a + (window.dfsFmt?.parseDE(c.jahresbeitragBrutto)||0), 0);
+    const el = document.getElementById('kpi-sum-annual'); if(el) el.textContent = window.dfsFmt? window.dfsFmt.fmtEUR(sum) : String(sum);
+    const pct = Number(localStorage.getItem('dfs.targetSavingsPct')||0);
+    const monthlySaving = (sum - (sum * (1 - pct/100))) / 12;
+    const msEl = document.getElementById('kpi-monthly-saving'); if(msEl) msEl.textContent = window.dfsFmt? window.dfsFmt.fmtEUR(monthlySaving) : String(monthlySaving);
+  }catch{}
+}
+document.addEventListener('DOMContentLoaded', ()=>{ renderCounts(); renderKpisCloudFirst(); });

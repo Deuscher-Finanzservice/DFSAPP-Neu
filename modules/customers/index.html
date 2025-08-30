@@ -40,15 +40,11 @@
     </div>
   </div>
   <script type="module">
-    import { loadCustomersFromCloud, saveCustomersToCloud, deleteCustomerFromCloud } from '../../scripts/firebase.js';
-    const KEY='dfs.customers';
+    import { loadCustomersFromCloud, saveCustomersToCloud } from '../../scripts/firebase.js';
     (function(){
       let allCustomers = [];
-      function getLocal(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch{ return []; } }
-      function setLocal(a){ try{ localStorage.setItem(KEY, JSON.stringify(a)); }catch(e){ try{ dfsToast('Speicherlimit erreicht! Bitte Daten exportieren.','error',4000); }catch{} } }
       function renderCustomers(list){
-        const body = document.getElementById('customers-body');
-        if(!body) return;
+        const body = document.getElementById('customers-body'); if(!body) return;
         if(!list || list.length===0){ body.innerHTML = '<tr><td colspan="3" class="text-secondary">Keine Kunden gefunden.</td></tr>'; return; }
         body.innerHTML = list.map(c=>`
           <tr onclick="location.href='../customer/index.html?id=${encodeURIComponent(c.id)}'">
@@ -57,7 +53,6 @@
             <td>${c.telefon||'—'}</td>
           </tr>`).join('');
       }
-      function load(){ allCustomers = (getLocal().filter(Boolean)); renderCustomers(allCustomers); }
       function applySearch(){
         const q = (document.getElementById('customer-search')?.value||'').toLowerCase();
         const filtered = allCustomers.filter(c=> (c.firma||'').toLowerCase().includes(q) || (c.ansprech||'').toLowerCase().includes(q) );
@@ -67,9 +62,12 @@
         allCustomers.sort((a,b)=>{ const va=(a[key]||'').toString().toLowerCase(); const vb=(b[key]||'').toString().toLowerCase(); if(va<vb) return dir==='asc'?-1:1; if(va>vb) return dir==='asc'?1:-1; return 0; });
         applySearch();
       }
-      document.addEventListener('DOMContentLoaded', async ()=>{
-        try{ if(window.dfsStore&&dfsStore.syncFromCloud){ await dfsStore.syncFromCloud('dfs.customers'); } }catch{}
-        load();
+      async function loadAndRender(){
+        try{ allCustomers = await (window.dfsData && dfsData.getAllCustomers ? dfsData.getAllCustomers() : Promise.resolve([])); }
+        catch{ allCustomers = []; }
+        applySearch();
+      }
+      document.addEventListener('DOMContentLoaded', ()=>{
         document.getElementById('customer-search')?.addEventListener('input', applySearch);
         document.querySelectorAll('th.sortable').forEach(th=>{
           th.addEventListener('click', ()=>{
@@ -78,20 +76,11 @@
             const next = current==='asc'?'desc':'asc'; th.classList.add(next); applySort(key,next);
           });
         });
-        // keep cloud buttons
-        document.getElementById('btn-save-cloud').onclick = async ()=>{ try{ await saveCustomersToCloud(); dfsToast('In Cloud gespeichert','success'); } catch(e){ console.error(e); dfsToast('Cloud-Fehler beim Speichern','error'); } };
-        document.getElementById('btn-load-cloud').onclick = async ()=>{ try{ const cloud = await loadCustomersFromCloud(); setLocal(cloud||[]); load(); dfsToast('Aus Cloud geladen','success'); } catch(e){ console.error(e); dfsToast('Cloud-Fehler beim Laden','error'); } };
+        document.getElementById('btn-save-cloud').onclick = async ()=>{ try{ await saveCustomersToCloud(); dfsToast('In Cloud gespeichert','success'); }catch(e){ console.error(e); dfsToast('Cloud-Fehler beim Speichern','error'); } };
+        document.getElementById('btn-load-cloud').onclick = async ()=>{ try{ await dfsData.getAllCustomers(); await loadAndRender(); dfsToast('Aus Cloud geladen','success'); }catch(e){ console.error(e); dfsToast('Cloud-Fehler beim Laden','error'); } };
+        loadAndRender();
       });
     })();
-    document.getElementById('btn-save-cloud').onclick = async ()=>{
-      try{ await saveCustomersToCloud(); dfsToast('In Cloud gespeichert','success'); }
-      catch(e){ console.error(e); dfsToast('Cloud-Fehler beim Speichern','error'); }
-    };
-    document.getElementById('btn-load-cloud').onclick = async ()=>{
-      try{ const cloud = await loadCustomersFromCloud(); setLocal(cloud||[]); render(); dfsToast('Aus Cloud geladen','success'); }
-      catch(e){ console.error(e); dfsToast('Cloud-Fehler beim Laden','error'); }
-    };
-    render();
   </script>
 </body>
 </html>

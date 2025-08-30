@@ -228,11 +228,18 @@ function autoBindContractForm(){
   const ids=['insurer','policyNo','product','lines','begin','laufzeit','payCycle','premiumYear','coverage','deductible'];
   ids.forEach(k=>{ const el=document.getElementById(k); if(!el) return; el.addEventListener('input', handleAutoSaveContract); });
 }
-function setup(){
+async function setup(){
   // migrate to German schema if needed
-  contracts = readContracts().map(normalizeToGerman).filter(Boolean);
-  writeContracts(contracts);
-  renderTable();
+  try{
+    const cloudFirst = await (window.dfsData && dfsData.getAllContracts ? dfsData.getAllContracts() : Promise.resolve(readContracts()));
+    contracts = (cloudFirst||[]).map(normalizeToGerman).filter(Boolean);
+    writeContracts(contracts);
+    renderTable();
+  }catch{
+    contracts = readContracts().map(normalizeToGerman).filter(Boolean);
+    writeContracts(contracts);
+    renderTable();
+  }
   document.getElementById('btnAdd').addEventListener('click', onAdd);
   document.getElementById('btnExport').addEventListener('click', exportJSON);
   document.getElementById('btnImport').addEventListener('click', importJSON);
@@ -263,4 +270,4 @@ function setup(){
   // Initial cloud→local sync
   (async ()=>{ try{ if(window.dfsStore&&dfsStore.syncFromCloud){ await dfsStore.syncFromCloud('dfs.contracts'); contracts = readContracts().map(normalizeToGerman).filter(Boolean); renderTable(); } }catch{} })();
 }
-document.addEventListener('DOMContentLoaded', setup);
+document.addEventListener('DOMContentLoaded', ()=>{ setup(); });
