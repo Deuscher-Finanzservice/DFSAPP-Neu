@@ -208,3 +208,146 @@ Sammlung: dfs.config, Dokument id: "default"
 	• Keine sensiblen Daten außerhalb Firestore/Storage.
 	• Print blendet interne Vermerke aus.
 	• Nur authentifizierte Zugriffe (Regeln je Projektkonfiguration, getrennt gepflegt).
+# DFSAPP – Technical Specification (Stand: 2025-08-30)
+
+## 1. Architektur
+- App-Shell (index.html) mit Sidebar, Inhalte via Module (iframe / Section pro View).
+- Module: Dashboard, Kunden, Verträge, Analyse, Konfiguration, PDF-Export.
+- Storage: Firebase Firestore (Cloud-only) – keine LocalStorage-Fallbacks.
+- Deploy: Firebase Hosting; Prod-Domain deutscher-finanzservice.web.app (verwenden), firebaseapp.com nur legacy.
+- CI/CD: GitHub Actions → Deploy bei Push auf `main`.
+
+## 2. Firestore
+- Projekt: `deutscher-finanzservice`
+- Collections (Namensraumpräfix `dfs.`):
+  - `dfs.customers`
+  - `dfs.contracts`
+  - `dfs.config` (UI/Branding/Intervall etc.)
+  - `dfs.files` (Metadaten von Uploads: Logos, Policen)
+- Dokument-Schlüssel: vom Client generierte UUIDv4.
+
+### 2.1 Schemas
+
+#### Customer (`dfs.customers/{id}`)
+```json
+{
+  "id": "uuid",
+  "createdAt": "serverTimestamp",
+  "updatedAt": "serverTimestamp",
+  "company": "string",
+  "contactPerson": "string",
+  "email": "string|null",
+  "phone": "string|null",
+  "industry": "string|null",
+  "employees": 0,
+  "foundedYear": 0,
+  "address": { "street": "", "zip": "", "city": "" },
+  "branches": [ { "street":"", "zip":"", "city":"" } ],
+  "bank": { "iban":"", "bic":"", "bankName":"" },
+  "tax": { "taxId":"", "vatId":"" },
+  "noteInternal": "string",
+  "documents": [ { "fileId":"", "label":"", "type":"customer-doc" } ]
+}
+
+Contract (dfs.contracts/{id})
+
+{
+  "id": "uuid",
+  "createdAt": "serverTimestamp",
+  "updatedAt": "serverTimestamp",
+  "customerId": "uuid",
+  "insurer": "string",
+  "policyNo": "string",
+  "risks": ["Betriebshaftpflicht", "Inhalt", "..."],
+  "paymentMode": "monthly|quarterly|semiannual|annual",
+  "annualPremiumEUR": 0,
+  "termYears": 3,
+  "startDate": "YYYY-MM-DD",
+  "endDate": "YYYY-MM-DD",
+  "reminderDate": "YYYY-MM-DD",
+  "cancelableFrom": "YYYY-MM-DD",
+  "status": "active|canceled|expired",
+  "documents": [ { "fileId":"", "label":"", "type":"policy" } ]
+}
+```
+
+### 2.2 Indizes (Empfehlung)
+- dfs.contracts:
+  - customerId
+  - reminderDate (asc)
+  - Kombi: customerId + updatedAt desc
+- dfs.customers:
+  - company (für Suchpräfixe), updatedAt desc
+
+## 3. Daten-/API-Layer
+
+### 3.1 Firebase Init (Web v9)
+- Konfig:
+  - experimentalForceLongPolling: true
+  - useFetchStreams: false
+  - Keine Offline-Persistenz aktivieren (Cloud-only).
+- Namespace: alle Zugriffe über window.dfsCloud.
+
+### 3.2 Einheitliche API
+
+```
+// Rückgabe: { ok: boolean, id?: string, code?: string, message?: string }
+dfsCloud.saveOne(collection: string, id: string, payload: object): Promise<Result>
+dfsCloud.loadAll(collection: string): Promise<Array<any>>
+dfsCloud.loadOne(collection: string, id: string): Promise<any|null>
+dfsCloud.deleteOne(collection: string, id: string): Promise<Result>
+```
+
+- Fehler-Policy: API wirft nicht, sondern liefert {ok:false, code, message}.
+  UI zeigt Status/Toast; Logs gehen in Debug-Konsole.
+
+## 4. Save-Flow (State-Machine)
+
+Zentral in scripts/save-status.js + pro Modul verwendet.
+
+Zustände: idle → saving → saved | error
+UI-Kontrakte:
+- saving: Button disabled + Spinner sichtbar
+- saved: „Gespeichert“ Badge (timeout ~2s)
+- error: Badge „Fehler“, Retry-Button sichtbar; Spinner immer zurücksetzen
+
+Debounce: 800 ms (Input → Autosave).
+Parallel-Guard: isSaving lock + Queue drop (nur letzte Änderung speichern).
+
+## 5. Debug-Mode (Overlay)
+- Sticky Pane (rechts oben), z-index 9999, opaker Hintergrund.
+- Filter: Info / Warn / Error; Pause, Kopieren, Als TXT herunterladen.
+- logger.ts kapselt console (Keyed-Throttling), schreibt zusätzlich in Overlay.
+
+## 6. UI/Design
+- Farben: Navy #0E2740, Gold #C6A35A, Dunkelblau #0B1D2B, Grau #1F2B38, Text #E6EDF3.
+- Font: Inter (Fallback Roboto, system-ui).
+- Komponenten: Breadcrumbs, Karten, Tabellen mit sortierbaren Spalten.
+
+## 7. Navigation/Flows
+- Dashboard (Global): Zähler Kunden/Verträge; „Demnächst fällig“ (90/60/30, Summe Umsätze + Fokus-Kunden).
+- Kundenliste: Suche (company/contact/zip/city), CRUD, Link zu Kunden-Dashboard.
+- Kunden-Dashboard: Kennzahlen, verknüpfte Verträge, „Vertrag anlegen“ mit customerId.
+- Verträge: CRUD, Laufzeit/Enddatum/Reminder auto-berechnet.
+- Konfiguration: Branding (Logos A/B), PDF-Fußzeilen, Autosave-Intervall (Anzeige).
+
+## 8. Sicherheit/Privacy
+- Zugriff per Auth (Google/IAM Service Account über CI für Deploy; App ohne Login: nur Eigentümer nutzt).
+- Firestore Rules (High-Level):
+  - read/write nur für authentifizierte Owner (später optional E-Mail Allow-List).
+  - Keine sensiblen Daten wie Personalausweisbilder speichern.
+
+## 9. Fehlerbilder & Abwehr
+- „client is offline“, „RPC Write stream transport errored“
+  → Firestore Init wie oben (Long-Polling, keine Persistence), Retry mit exponentiellem Backoff, gut sichtbare Status/Logs.
+- Spinner hängt
+  → error-Zweig immer withSpinnerOn setzen.
+
+## 10. PDF-Export
+- Client-seitig (html2pdf/print styles).
+- Branding: Logo A/B + Fußzeilen aus dfs.config.
+
+## 11. Tests & QA
+- Smoke: Kunden anlegen/bearbeiten, Vertrag anlegen, Reminder prüfen.
+- Regress: Save-Flow (manuell + Autosave), Debug-Overlay sichtbar, keine LocalStorage-Writes.
+- Checkliste nach Deploy: siehe WORKING-MODE.md.
