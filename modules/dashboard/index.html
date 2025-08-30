@@ -14,6 +14,7 @@
 <body>
   <div class="card">
     <h2>Übersicht</h2>
+    <header class="print-header no-screen" id="print-header"></header>
     <div class="actions no-print" style="display:flex; gap:8px; justify-content:flex-end;">
       <button class="btn btn-primary" onclick="window.print()">Als PDF speichern</button>
     </div>
@@ -33,6 +34,7 @@
     <h3>Demnächst fällig (≤ 90 Tage)</h3>
     <div id="upcoming-list" class="stack"></div>
   </section>
+  <footer class="print-footer no-screen" id="print-footer"></footer>
   <section id="analysis-results" class="card" style="margin-top:16px;">
     <h3>Analyse-Ergebnisse</h3>
     <div id="analysis-kpis-dash" class="grid" style="margin-top:8px;"></div>
@@ -43,6 +45,25 @@
   </section>
   <div id="reminders" style="display:none"></div>
   <script>
+    document.addEventListener('DOMContentLoaded', ()=>{
+      try{
+        const cfg = (window.dfsStore && dfsStore.get) ? dfsStore.get('dfs.config.print', null) : JSON.parse(localStorage.getItem('dfs.config.print')||'null');
+        const head = document.getElementById('print-header');
+        const foot = document.getElementById('print-footer');
+        if(cfg){
+          if(head){
+            head.innerHTML='';
+            (cfg.logos||[]).forEach(url=>{ const img=document.createElement('img'); img.src=url; img.style.height='28px'; img.style.marginRight='8px'; head.appendChild(img); });
+            const h=document.createElement('h1'); h.textContent = cfg.headerText||'DFS Versicherungsanalyse'; head.appendChild(h);
+          }
+          if(foot){
+            const version = localStorage.getItem('dfs.version')||'unversioniert';
+            const now = new Date(); const p=n=>String(n).padStart(2,'0'); const ts=`${p(now.getDate())}.${p(now.getMonth()+1)}.${now.getFullYear()}`;
+            foot.textContent = `${cfg.footerText||''} – Version ${version}, gedruckt am ${ts}`;
+          }
+        }
+      }catch{}
+    });
     const fmt=(n)=> (Number(n)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
     function renderDashboard(){
       const customers = JSON.parse(localStorage.getItem('dfs.customers')||'[]');

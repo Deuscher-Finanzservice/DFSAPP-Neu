@@ -50,3 +50,6 @@ th.sortable.desc:after { content: '↓'; opacity: .8; }
 .sidebar-nav a.nav-link{display:block;padding:8px 12px;border-radius:8px;color:#fff;text-decoration:none;transition:background .2s}
 .sidebar-nav a.nav-link:hover{background:rgba(255,255,255,.08)}
 .sidebar-nav a.nav-link.active{background:var(--gold);color:#fff;font-weight:600}
+
+/* Screen-hidden elements (only for print) */
+.no-screen{display:none}

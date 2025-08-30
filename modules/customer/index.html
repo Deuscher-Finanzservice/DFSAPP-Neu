@@ -21,6 +21,7 @@
 <body>
   <div class="card">
     <h2>Kundenstammdaten</h2>
+    <header class="print-header no-screen" id="print-header"></header>
     <div class="actions no-print" style="display:flex; gap:8px; justify-content:flex-end; margin-bottom:8px;">
       <button class="btn btn-primary" onclick="window.print()">Als PDF speichern</button>
     </div>
@@ -72,6 +73,7 @@
       <h3>Interner Vermerk (nur intern)</h3>
       <div id="customer-intern-vermerk"></div>
     </div>
+    <footer class="print-footer no-screen" id="print-footer"></footer>
   </div>
   <script type="module">
     import { saveCustomerToCloud, deleteCustomerFromCloud } from '../../scripts/firebase.js';
@@ -194,6 +196,18 @@
       document.addEventListener('DOMContentLoaded', renderContractsSummary);
       window.__dfsCustomersRenderContractsSummary = renderContractsSummary;
     })();
+    // Print header/footer from config
+    document.addEventListener('DOMContentLoaded', ()=>{
+      try{
+        const cfg = (window.dfsStore && dfsStore.get) ? dfsStore.get('dfs.config.print', null) : JSON.parse(localStorage.getItem('dfs.config.print')||'null');
+        const head = document.getElementById('print-header');
+        const foot = document.getElementById('print-footer');
+        if(cfg){
+          if(head){ head.innerHTML=''; (cfg.logos||[]).forEach(url=>{ const img=document.createElement('img'); img.src=url; img.style.height='28px'; img.style.marginRight='8px'; head.appendChild(img); }); const h=document.createElement('h1'); h.textContent = cfg.headerText||'DFS Versicherungsanalyse'; head.appendChild(h); }
+          if(foot){ const version = localStorage.getItem('dfs.version')||'unversioniert'; const now=new Date(); const p=n=>String(n).padStart(2,'0'); const ts=`${p(now.getDate())}.${p(now.getMonth()+1)}.${now.getFullYear()}`; foot.textContent = `${cfg.footerText||''} – Version ${version}, gedruckt am ${ts}`; }
+        }
+      }catch{}
+    });
   </script>
 </body>
 </html>

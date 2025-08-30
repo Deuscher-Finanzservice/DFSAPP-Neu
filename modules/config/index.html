@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Konfiguration</title>
+  <link rel="stylesheet" href="../../styles/base.css">
+  <script src="../../scripts/storage.js"></script>
+  <script src="../../scripts/toast.js"></script>
+  <script src="./config.js" defer></script>
+</head>
+<body>
+  <div class="card">
+    <h2>Konfiguration</h2>
+
+    <div class="card" style="margin-top:12px">
+      <h3>Logos</h3>
+      <p class="label">Logo-URLs oder relative Pfade (Komma-getrennt)</p>
+      <input id="cfg-logos" class="input" type="text" style="width:100%">
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h3>Kopfzeile</h3>
+      <input id="cfg-header" class="input" type="text" style="width:100%">
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h3>Fußzeile</h3>
+      <input id="cfg-footer" class="input" type="text" style="width:100%">
+    </div>
+
+    <div class="actions" style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn" id="cfg-save">Speichern</button>
+    </div>
+  </div>
+</body>
+</html>
+

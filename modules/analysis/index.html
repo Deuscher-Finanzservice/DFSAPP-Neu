@@ -15,6 +15,7 @@
 <body>
   <div class="card">
     <h2>Analyse</h2>
+    <header class="print-header no-screen" id="print-header"></header>
     <div id="analysis-kpis" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px"></div>
     <h3 style="margin-top:16px">Warnungen</h3>
     <div id="analysis-warnings" class="stack"></div>
@@ -24,6 +25,19 @@
       <button class="btn btn-primary" onclick="window.print()">Als PDF speichern</button>
     </div>
   </div>
+  <footer class="print-footer no-screen" id="print-footer"></footer>
 </body>
 </html>
-
+<script>
+document.addEventListener('DOMContentLoaded', ()=>{
+  try{
+    const cfg = (window.dfsStore && dfsStore.get) ? dfsStore.get('dfs.config.print', null) : JSON.parse(localStorage.getItem('dfs.config.print')||'null');
+    const head = document.getElementById('print-header');
+    const foot = document.getElementById('print-footer');
+    if(cfg){
+      if(head){ head.innerHTML=''; (cfg.logos||[]).forEach(url=>{ const img=document.createElement('img'); img.src=url; img.style.height='28px'; img.style.marginRight='8px'; head.appendChild(img); }); const h=document.createElement('h1'); h.textContent = cfg.headerText||'DFS Versicherungsanalyse'; head.appendChild(h); }
+      if(foot){ const version = localStorage.getItem('dfs.version')||'unversioniert'; const now=new Date(); const p=n=>String(n).padStart(2,'0'); const ts=`${p(now.getDate())}.${p(now.getMonth()+1)}.${now.getFullYear()}`; foot.textContent = `${cfg.footerText||''} – Version ${version}, gedruckt am ${ts}`; }
+    }
+  }catch{}
+});
+</script>
