@@ -1,54 +1,29 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Analyse</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Analyse-Wizard</title>
   <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/print.css" media="print">
+  <script src="../../scripts/storage.js"></script>
+  <script src="../../scripts/format.js"></script>
+  <script src="../../scripts/date.js"></script>
+  <script src="../../scripts/toast.js"></script>
+  <script src="./analysis.js" defer></script>
 </head>
 <body>
   <div class="card">
     <h2>Analyse</h2>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
-      <div class="card">
-        <div><span class="label">Jahressumme Beiträge</span><strong id="sumAnnual">0,00 €</strong></div>
-        <div style="margin-top:8px">
-          <label class="label">Zielersparnis (%)</label>
-          <input class="input" id="pct" type="number" min="0" max="100" step="1">
-        </div>
-        <div style="margin-top:8px"><span class="label">Monatliche Ersparnis (Soll)</span><strong id="saving">0,00 €</strong></div>
-        <div style="margin-top:8px"><span class="label">Risiko-Score</span><strong id="risk">–</strong></div>
-      </div>
-      <div class="card">
-        <div><span class="label">Warnungen</span><div id="warn"></div></div>
-        <div style="margin-top:12px"><span class="label">Empfehlungen</span><div id="recs"></div></div>
-      </div>
+    <div id="analysis-kpis" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px"></div>
+    <h3 style="margin-top:16px">Warnungen</h3>
+    <div id="analysis-warnings" class="stack"></div>
+    <h3 style="margin-top:16px">Empfehlungen</h3>
+    <div id="analysis-recos" class="stack"></div>
+    <div class="actions no-print" style="margin-top:16px;display:flex;justify-content:flex-end;gap:8px;">
+      <button class="btn btn-primary" onclick="window.print()">Als PDF speichern</button>
     </div>
   </div>
-  <script>
-    const fmt=(n)=> (Number(n)||0).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
-    const getA=()=>{ try{ return JSON.parse(localStorage.getItem('dfs.analysis')||'{}'); }catch{ return {}; } };
-    const setA=(a)=> localStorage.setItem('dfs.analysis', JSON.stringify(a));
-    function render(){
-      const contracts = JSON.parse(localStorage.getItem('dfs.contracts')||'[]');
-      const a=getA();
-      const sum = Array.isArray(contracts)?contracts.reduce((acc,c)=>acc+(Number(c.jahresbeitragBrutto||c.premiumYear||c.annualPremium||c.annual||c.premium)||0),0):0;
-      a.sumAnnual = sum;
-      const pct = Number(localStorage.getItem('dfs.targetSavingsPct')||'15');
-      document.getElementById('sumAnnual').textContent = fmt(a.sumAnnual||0);
-      document.getElementById('pct').value = pct;
-      const saving = ((a.sumAnnual||0) - ((a.sumAnnual||0)*(1 - pct/100)))/12;
-      document.getElementById('saving').textContent = fmt(saving);
-      document.getElementById('risk').textContent = (a.riskScore??'–');
-      const warn = Array.isArray(a.warnings)?a.warnings:[]; const recs = Array.isArray(a.recommendations)?a.recommendations:[];
-      document.getElementById('warn').innerHTML = warn.length? warn.map(w=>`<div class="badge">${w}</div>`).join('') : '<span style="color:var(--muted)">Keine</span>';
-      document.getElementById('recs').innerHTML = recs.length? recs.map(w=>`<div class="badge">${w}</div>`).join('') : '<span style="color:var(--muted)">Keine</span>';
-      a.targetPct = pct; a.monthlySaving = saving; a.ts = new Date().toISOString(); setA(a);
-    }
-    document.addEventListener('input', (e)=>{ if(e.target && e.target.id==='pct'){ localStorage.setItem('dfs.targetSavingsPct', String(Math.max(0,Math.min(100, Number(e.target.value)||0)))); render(); }});
-    window.addEventListener('dfs.contracts-changed', render);
-    window.addEventListener('dfs.analysis-changed', render);
-    window.addEventListener('storage', (e)=>{ if(['dfs.contracts','dfs.analysis','dfs.targetSavingsPct'].includes(e.key)) render(); });
-    render();
-  </script>
 </body>
 </html>
+
