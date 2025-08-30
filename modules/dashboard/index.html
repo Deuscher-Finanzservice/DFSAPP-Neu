@@ -9,6 +9,7 @@
   <script src="../../scripts/toast.js"></script>
   <script src="../../scripts/date.js"></script>
   <script src="../../scripts/storage.js"></script>
+  <script type="module" src="../../scripts/firebase.js"></script>
   <style>.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}@media(max-width:900px){.grid{grid-template-columns:1fr}}</style>
   </head>
 <body>
@@ -36,8 +37,25 @@
     </div>
   </div>
   <section id="upcoming-reminders" class="card" style="margin-top:16px;">
-    <h3>Demnächst fällig (≤ 90 Tage)</h3>
-    <div id="upcoming-list" class="stack"></div>
+    <h3>Demnächst fällig</h3>
+    <div id="upcoming-tabs" style="display:flex;gap:8px;margin:8px 0 12px 0;">
+      <button class="btn-ghost" data-window="90">90 Tage</button>
+      <button class="btn-ghost" data-window="60">60 Tage</button>
+      <button class="btn-ghost" data-window="30">30 Tage</button>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;align-items:start">
+      <div>
+        <div id="upcoming-sum" class="label" style="margin-bottom:8px">Zu sichernde Jahresbeiträge: –</div>
+        <div id="upcoming-list" style="max-height:340px;overflow:auto"></div>
+      </div>
+      <div>
+        <h4 style="margin:0 0 6px 0">Fokus-Kunden</h4>
+        <table class="table">
+          <thead><tr><th>Kunde</th><th>Verträge</th><th>Summe €</th></tr></thead>
+          <tbody id="upcoming-focus"></tbody>
+        </table>
+      </div>
+    </div>
   </section>
   <footer class="print-footer no-screen" id="print-footer"></footer>
   <section id="analysis-results" class="card" style="margin-top:16px;">
